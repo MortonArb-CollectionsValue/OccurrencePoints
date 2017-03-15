@@ -14,3 +14,7 @@ genspec <- str_c(gen3, spec3) #combine genus and species strings
 webadd <- "https://esp.cr.usgs.gov/data/little/" #create string for beginning of web address
 zip <- ".zip" #create string for end of web address
 webadd2 <- str_c(webadd, genspec, zip) #combine all strings to make complete web address
+
+wd1 <- getwd() #get working directory
+wd2 <- str_c(wd1, genspec, sep = "/") #format working directory to include filename 
+curl_download(webadd2, wd2) #download file to working directory with filename
