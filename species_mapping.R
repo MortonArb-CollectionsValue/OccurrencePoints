@@ -1,5 +1,6 @@
 library(stringr)
 library(rgdal)
+library(raster)
 
 https://esp.cr.usgs.gov/data/little/querdoug.zip
 
@@ -28,4 +29,8 @@ unzip(zipped) #extract shapefiles from zipped file
 
 shapename <- paste0(genspec, ".shp") #create name of shapefile
 shapefile1 <- readOGR(dsn = shape_name) #import shapefile
+crs(shapefile1) <- "+init=epsg:4267" #set reference?
+
+loc <- get_map(location = c(-130, 20, -65, 50), maptype = "toner-background") #get US map
+us_map <- ggmap(loc) + geom_polygon(data = shapefile1, colour = "blue", fill = "blue") #not working yet
 
