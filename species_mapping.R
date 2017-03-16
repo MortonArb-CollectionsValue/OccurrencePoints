@@ -22,6 +22,10 @@ wd1 <- getwd() #get working directory
 wd2 <- str_c(wd1, genspec, sep = "/") #format working directory to include filename 
 wd3 <- str_c(wd2, zip) #add .zip extension
 download.file(webadd2, wd3) #download zip file from web
-unzip("queralba.zip", "queralba.shp") #extract shapefile from zip file
-shapefile1 <- readOGR(dsn = shape_name) #DOES NOT WORK
-shape_name = "~/Forest_Ecology/IMLS_Mapping/queralba.shp"
+
+zipped <- str_c(genspec, zip) #create name of zipped file
+unzip(zipped) #extract shapefiles from zipped file
+
+shapename <- paste0(genspec, ".shp") #create name of shapefile
+shapefile1 <- readOGR(dsn = shape_name) #import shapefile
+
