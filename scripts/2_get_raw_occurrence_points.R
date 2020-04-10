@@ -1,8 +1,8 @@
 ### Author: Emily Beckman  ###  Date: 02/05/2020                                |
 
 ### DESCRIPTION:
-  # This script provides instructions and code chunks for downloading wild
-  #   occurrence points from:
+  # This script provides instructions and code chunks for downloading and
+  #   standardizing wild occurrence points from:
     # GLOBAL DATABASES (though all likely have U.S. bias?)
       # Global Biodiversity Information Facility (GBIF)
       # Integrated Digitized Biocollections (iDigBio)
@@ -11,13 +11,16 @@
     # NATIONAL DATABASES
       # Forest Inventory and Analysis (FIA) Program of the USDA Forest Service
 
-### INPUT:
+### INPUTS:
   # target_taxa_with_syn.csv (list of target taxa)
     # columns:
       # 1. "taxon_name" (genus, species, infra rank, and infra name, all
       #    separated by one space each; hybrid symbol should be " x ", rather
       #    than "_" or "✕", and go between genus and species)
       # 2. (optional) other data you want to keep with taxa info
+  # extra files needed for FIA data download/standardization:
+  #   FIA_AppendixF_TreeSpeciesCodes_2016.csv
+  #   US_state_county_FIPS_codes.csv
 
 ### OUTPUTS:
     # gbif_raw.csv
@@ -39,6 +42,35 @@ library(BIEN)
 library(ridigbio)
 library(batchtools)
 library(googledrive)
+library(textclean)
+
+#################
+### FUNCTIONS ###
+#################
+
+# searches for data frame columns with only NAs and removes them
+remove.empty.col <- function(df){
+  remove <- vector(mode = "character")
+  for(i in 1:ncol(df)){
+    if(sum(is.na(df[,i])) == nrow(df)){
+      remove <- c(remove,names(df)[i])
+      print(names(df)[i])
+    }
+  }
+  if(length(remove)>0){
+    df <-  df[,-which(names(df) %in% remove)]
+  }
+  return(df)
+}
+
+# calculates percent of each data frame column that is not NA
+percent.filled <- function(df){
+  for(i in 1:ncol(df)){
+    print(paste(names(df)[i],": ",
+      round((nrow(df)-sum(is.na(df[,i])))/nrow(df),3)*100,"%",sep=""))
+  }
+}
+
 
 ################################################################################
 # A) Read in target taxa list
@@ -50,26 +82,29 @@ setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
 # read in taxa list
 taxon_list <- read.csv("target_taxa_with_syn.csv", header = T,
   na.strings=c("","NA"), colClasses="character")
+head(taxon_list)
 
-# filter out cultivars
-taxon_list <- taxon_list %>% filter(is.na(taxon_type) |
-  taxon_type != "cultivar") %>% filter(!is.na(taxon_name))
-nrow(taxon_list) #784
+# filter out cultivars and blank rows
+taxon_list <- taxon_list %>%
+              filter(taxon_type != "cultivar" & !is.na(taxon_name))
+nrow(taxon_list) #804
 
 # list of target taxon names
-taxon_names <- taxon_list[,1]
-# list of target species names
-species_names <- unique(taxon_list[,2])
+taxon_names <- taxon_list$taxon_name
 
 # create vector of target genera
 target_genera <- c("Malus","Quercus","Tilia","Ulmus")
 
-# set working directory to folder where you want the raw data
-setwd("./raw_occurrence_point_data")
+################################################################################
+# B) Download/compile data from each target database
+################################################################################
 
-################################################################################
-# B) Global Biodiversity Information Facility (GBIF) download
-################################################################################
+# you can pick and choose any/all sections below, depending on which databases
+# you'd like to use
+
+###############
+# 1) Global Biodiversity Information Facility (GBIF)
+###############
 
 # GBIF account user information
   # if you don't have account yet, go to https://www.gbif.org then click
@@ -96,10 +131,10 @@ for(i in 2:length(keys_nodup)){
 # download GBIF data (Darwin Core Archive format)
 gbif_download <- occ_download(
                      pred_in("taxonKey", gbif_taxon_keys),
-                     pred_in("basisOfRecord", c("PRESERVED_SPECIMEN",
-                        "HUMAN_OBSERVATION","FOSSIL_SPECIMEN","OBSERVATION",
-                        "UNKNOWN","MACHINE_OBSERVATION","MATERIAL_SAMPLE",
-                        "LITERATURE")),
+                     #pred_in("basisOfRecord", c("PRESERVED_SPECIMEN",
+                     #    "HUMAN_OBSERVATION","FOSSIL_SPECIMEN","OBSERVATION",
+                     #    "UNKNOWN","MACHINE_OBSERVATION","MATERIAL_SAMPLE",
+                     #    "LITERATURE")),
                      #pred("hasCoordinate", TRUE),
                      #pred("hasGeospatialIssue", FALSE),
                      format = "DWCA", #"SIMPLE_CSV"
@@ -107,8 +142,8 @@ gbif_download <- occ_download(
                      email=email)
 # load gbif data just downloaded
   # create new folder for data and set as working directory
-dir.create(file.path(getwd(),"gbif_read_in"))
-setwd(file.path(getwd(),"gbif_read_in"))
+dir.create(file.path(getwd(),"raw_occurrence_point_data/gbif_read_in"))
+setwd(file.path(getwd(),"raw_occurrence_point_data/gbif_read_in"))
 
 # must wait for download to complete before continuing;
 # it may take a while (up to 3 hours) if you have a large taxa list;
@@ -116,18 +151,104 @@ setwd(file.path(getwd(),"gbif_read_in"))
 
   # download and unzip before reading in
 gbif_download # !!! PASTE "Download key" as first argument in next two lines !!!
-occ_download_get(key="0031135-200221144449610", overwrite=TRUE)
-unzip("0031135-200221144449610.zip")
+occ_download_get(key="0038281-200221144449610", overwrite=TRUE)
+  #OLD: 0036899-200221144449610
+unzip("0038281-200221144449610.zip")
   # read in data
-gbif_raw <- fread("occurrence.txt",quote="")
-nrow(gbif_raw) #2399719
-# write file
-setwd("./..")
-write.csv(gbif_raw, "gbif_raw.csv")
+gbif_raw <- fread("occurrence.txt",quote="",na.strings="")
+setwd("./../..")
+nrow(gbif_raw) #2406683
 
-################################################################################
-# C) Integrated Digitized Biocollections (iDigBio) download
-################################################################################
+### standardize column names
+
+# create taxon_name column
+subsp <- gbif_raw %>% filter(taxonRank == "SUBSPECIES")
+  subsp$taxon_name <- paste(subsp$genus,subsp$specificEpithet,"subsp.",
+    subsp$infraspecificEpithet)
+var <- gbif_raw %>% filter(taxonRank == "VARIETY")
+  var$taxon_name <- paste(var$genus,var$specificEpithet,"var.",
+    var$infraspecificEpithet)
+form <- gbif_raw %>% filter(taxonRank == "FORM")
+  form$taxon_name <- paste(form$genus,form$specificEpithet,"f.",
+    form$infraspecificEpithet)
+spp <- gbif_raw %>% filter(taxonRank == "SPECIES")
+  spp$taxon_name <- paste(spp$genus,spp$specificEpithet)
+gbif_raw <- Reduce(rbind.fill,list(subsp,var,form,spp))
+
+# keep only necessary columns
+gbif_raw <- gbif_raw %>% select(
+    # taxon name
+  "taxon_name","scientificName",
+  #"family","genus","specificEpithet","taxonRank",
+  #  "infraspecificEpithet",
+    # taxon IDs
+  #"taxonID","speciesKey","taxonKey",
+    # taxon identification notes (GROUP)
+  "identificationRemarks","identificationVerificationStatus","identifiedBy",
+    "taxonRemarks",
+    # lat-long
+  "decimalLatitude","decimalLongitude","coordinateUncertaintyInMeters",
+    # record details
+  "basisOfRecord","year","gbifID","references",
+    #"identifier","occurrenceID","recordNumber",
+    # locality description (GROUP)
+  "locality","verbatimLocality","county","municipality","stateProvince",
+    "higherGeography","countryCode",
+    # location notes (GROUP)
+  "associatedTaxa","eventRemarks","fieldNotes","habitat","locationRemarks",
+    "occurrenceRemarks","occurrenceStatus",
+    # geolocation details (GROUP)
+  "georeferencedBy","georeferencedDate",
+    "georeferenceProtocol","georeferenceRemarks","georeferenceSources",
+    "georeferenceVerificationStatus",
+    # data source details
+  "datasetName","publisher",#"collectionCode","institutionCode",
+    # other caveats
+  "establishmentMeans","informationWithheld","issue"
+  #"dataGeneralizations","hasGeospatialIssues"
+)
+gbif_raw$database <- "GBIF"
+
+# rename columns
+gbif_raw <- gbif_raw %>% rename(nativeDatabaseID = gbifID)
+
+# combine a few similar columns
+gbif_raw <- gbif_raw %>% unite("taxonIdentificationNotes",
+  identificationRemarks:taxonRemarks,na.rm=T,remove=T,sep=" | ")
+  gbif_raw$taxonIdentificationNotes <-
+    gsub("^$",NA,gbif_raw$taxonIdentificationNotes)
+gbif_raw <- gbif_raw %>% unite("locationNotes",
+  associatedTaxa:occurrenceStatus,na.rm=T,remove=T,sep=" | ")
+  gbif_raw$locationNotes <- gsub("^$",NA,gbif_raw$locationNotes)
+gbif_raw <- gbif_raw %>% unite("geolocationNotes",
+  georeferencedBy:georeferenceVerificationStatus,na.rm=T,remove=T,sep=" | ")
+  gbif_raw$geolocationNotes <- gsub("^$",NA,gbif_raw$geolocationNotes)
+
+# fix taxa names
+gbif_raw$species_name <- mgsub(gbif_raw$species_name,
+  c("Tilia xeuropaea","Tilia xvulgaris"),
+  c("Tilia x europaea","Tilia x vulgaris"))
+gbif_raw$taxon_name <- mgsub(gbif_raw$taxon_name,
+  c("Tilia xeuropaea","Tilia xvulgaris"),
+  c("Tilia x europaea","Tilia x vulgaris"))
+
+# create species_name column
+gbif_raw$species_name <- NA
+gbif_raw$species_name <- sapply(gbif_raw$taxon_name, function(x)
+  unlist(strsplit(x," var. | subsp. | f. "))[1])
+sort(unique(gbif_raw$species_name))
+
+# check data
+percent.filled(gbif_raw)
+head(gbif_raw)
+
+# write file
+write.csv(gbif_raw, "raw_occurrence_point_data/gbif_raw.csv")
+rm(gbif_raw)
+
+###############
+# 2) Integrated Digitized Biocollections (iDigBio)
+###############
 
 # I'm not sure the R interface actually gets all fields available; use manual
 #    way down below (starts line 144) if you want to be sure
@@ -142,14 +263,12 @@ for(i in 1:length(taxon_names)){
   idigbio_raw <- rbind(idigbio_raw,output_new)
   print(paste(round(i/length(taxon_names)*100,digits=1),"% complete",sep=""))
 }
-nrow(idigbio_raw) #153467
+nrow(idigbio_raw) #153477
 # remove rows that are lists
 idigbio_raw <- idigbio_raw %>% select(everything(),-commonnames,-flags,
   -mediarecords,-recordids)
-# write file
-write.csv(idigbio_raw, "idigbio_raw.csv")
 
-### OLD MANUAL WAY:
+# OLD MANUAL WAY:
 # First, download raw data
   # Go to https://www.idigbio.org/portal/search
   # Type your target genus name into the "Genus" box on the left side
@@ -164,8 +283,8 @@ write.csv(idigbio_raw, "idigbio_raw.csv")
 # Unzip each file and pull the "occurrence.csv" file out into the
 #   "idigbio_read_in" folder -- obviously "keep both" when prompted
 # read in raw occurrence points
-#file_list <- list.files(path = "idigbio_read_in", pattern = ".csv",
-#  full.names = T)
+#file_list <- list.files(path = "raw_occurrence_point_data/idigbio_read_in",
+#  pattern = ".csv",full.names = T)
 #file_dfs <- lapply(file_list, read.csv, colClasses = "character",
 #  na.strings=c("","NA"),strip.white=T,fileEncoding="UTF-8")
 #length(file_dfs) #4
@@ -177,9 +296,82 @@ write.csv(idigbio_raw, "idigbio_raw.csv")
 # write file
 #write.csv(idigbio_raw, "idigbio_raw.csv")
 
-################################################################################
-# D) U.S. Herbaria Consortia (SERNEC, SEINet, etc.) download
-################################################################################
+### standardize column names
+
+# split date collected column to just get year
+idigbio_raw <- idigbio_raw %>% separate("eventdate","year",sep="-",remove=T)
+idigbio_raw$year <- gsub("[[:digit:]]+/[[:digit:]]+/","",idigbio_raw$year)
+  sort(unique(idigbio_raw$year))
+
+# keep only necessary columns
+idigbio_raw$taxon_name <- idigbio_raw$scientificname
+idigbio_raw <- idigbio_raw %>% select(
+  "taxon_name","scientificname",
+  #"family","genus","specificepithet","taxonrank","infraspecificepithet",
+  #"taxonid",
+  "geopoint.lon","geopoint.lat","coordinateuncertainty",
+  "basisofrecord","year","uuid","occurrenceid",#"recordnumber",
+  "locality","verbatimlocality","county","municipality","stateprovince",
+    "country","countrycode",
+  "collectioncode"#,"institutioncode"
+)
+
+# rename columns
+setnames(idigbio_raw,
+  old = c("scientificname",
+          #"specificepithet","taxonrank","infraspecificepithet",
+          #"taxonid",
+          "geopoint.lon","geopoint.lat",
+          "basisofrecord","uuid","occurrenceid",#"recordnumber",
+          "coordinateuncertainty",
+          #"institutioncode",
+          "verbatimlocality","stateprovince","countrycode",
+          "collectioncode"),
+  new = c("scientificName",
+          #"specificEpithet","taxonRank","infraspecificEpithet",
+          #"taxonID",
+          "decimalLongitude","decimalLatitude",
+          "basisOfRecord","nativeDatabaseID","references",#"recordNumber",
+          "coordinateUncertaintyInMeters",
+          "verbatimLocality","stateProvince","countryCode",
+          #"institutionCode",
+          "datasetName"),
+  skip_absent=T)
+idigbio_raw$database <- "iDigBio"
+
+# fix taxa names
+idigbio_raw$taxon_name <- str_to_sentence(idigbio_raw$taxon_name)
+#idigbio_raw$family <- str_to_title(idigbio_raw$family)
+#idigbio_raw$genus <- str_to_title(idigbio_raw$genus)
+
+# create species_name column
+idigbio_raw$species_name <- NA
+idigbio_raw$species_name <- sapply(idigbio_raw$taxon_name, function(x)
+  unlist(strsplit(x," var. | subsp. | f. "))[1])
+sort(unique(idigbio_raw$species_name))
+
+# recode standard columns
+idigbio_raw <- idigbio_raw %>%
+  mutate(basisOfRecord = recode(basisOfRecord,
+    "preservedspecimen" = "PRESERVED_SPECIMEN",
+    "machineobservation" = "MACHINE_OBSERVATION",
+    "humanobservation" = "HUMAN_OBSERVATION",
+    "fossilspecimen" = "FOSSIL_SPECIMEN",
+    .missing = "UNKNOWN"))
+idigbio_raw$year <- as.integer(idigbio_raw$year)
+idigbio_raw$year[which(idigbio_raw$year < 1000)] <- NA
+
+# check data
+percent.filled(idigbio_raw)
+head(idigbio_raw)
+
+# write file
+write.csv(idigbio_raw, "raw_occurrence_point_data/idigbio_raw.csv")
+rm(idigbio_raw)
+
+###############
+# 3) U.S. Herbaria Consortia (SERNEC, SEINet, etc.)
+###############
 
 # First, download raw data
   # Go to http://sernecportal.org/portal/collections/harvestparams.php
@@ -202,8 +394,8 @@ write.csv(idigbio_raw, "idigbio_raw.csv")
 #   "sernec_read_in" folder -- obviously "keep both" if prompted
 
 # read in raw occurrence points
-file_list <- list.files(path = "sernec_read_in", pattern = ".csv",
-  full.names = T)
+file_list <- list.files(path = "raw_occurrence_point_data/sernec_read_in",
+  pattern = ".csv", full.names = T)
 file_dfs <- lapply(file_list, read.csv, colClasses = "character",
   na.strings=c("","NA"),strip.white=T,fileEncoding="latin1")
 length(file_dfs) #4
@@ -211,13 +403,127 @@ length(file_dfs) #4
 sernec_raw <- data.frame()
 for(file in seq_along(file_dfs)){
   sernec_raw <- rbind(sernec_raw, file_dfs[[file]])
-}; nrow(sernec_raw) #211506
-# write file
-write.csv(sernec_raw, "sernec_raw.csv")
+}
+nrow(sernec_raw) #211506
 
-################################################################################
-# E) Botanical Information and Ecology Network (BIEN) download
-################################################################################
+### standardize column names
+
+# create taxon_name column
+subsp <- sernec_raw %>% filter(taxonRank == "subsp.")
+  subsp$taxon_name <- paste(subsp$genus,subsp$specificEpithet,"subsp.",
+    subsp$infraspecificEpithet)
+var <- sernec_raw %>% filter(taxonRank == "var.")
+  var$taxon_name <- paste(var$genus,var$specificEpithet,"var.",
+    var$infraspecificEpithet)
+form <- sernec_raw %>% filter(taxonRank == "f.")
+  form$taxon_name <- paste(form$genus,form$specificEpithet,"f.",
+    form$infraspecificEpithet)
+hybrid <- sernec_raw %>% filter(taxonRank == "x" | taxonRank == "X")
+  hybrid$taxon_name <- paste(hybrid$genus,hybrid$specificEpithet,"x",
+    hybrid$infraspecificEpithet)
+spp <- sernec_raw %>% filter(is.na(taxonRank))
+  spp$taxon_name <- paste(spp$genus,spp$specificEpithet)
+sernec_raw <- Reduce(rbind.fill,list(subsp,var,form,hybrid,spp))
+sernec_raw$taxon_name[which(is.na(sernec_raw$taxon_name))] <-
+  sernec_raw$scientificName[which(is.na(sernec_raw$taxon_name))]
+sort(unique(sernec_raw$taxon_name))
+sernec_raw$taxon_name <- gsub("Ã\u0097","",sernec_raw$taxon_name)
+sernec_raw$taxon_name <- gsub("Ã«","e",sernec_raw$taxon_name)
+sernec_raw$taxon_name <- str_squish(sernec_raw$taxon_name)
+
+# keep only necessary columns
+sernec_raw <- sernec_raw %>% select(
+  "taxon_name",
+  #"family","genus","specificEpithet","taxonRank","infraspecificEpithet",
+    "scientificName",
+  #"taxonID",
+  "identificationRemarks","identifiedBy","taxonRemarks",
+  "coordinateUncertaintyInMeters",
+  "decimalLatitude","decimalLongitude",
+  "basisOfRecord","year","id","references",#"occurrenceID","recordNumber",
+  "locality","county","municipality","stateProvince","country",
+  "associatedTaxa","habitat","locationRemarks","occurrenceRemarks",
+  "georeferencedBy","georeferenceProtocol","georeferenceRemarks",
+    "georeferenceSources","georeferenceVerificationStatus",
+  "institutionCode",
+  #"collectionCode",
+  "establishmentMeans","informationWithheld")
+sernec_raw$database <- "US_Herbaria"
+
+# rename columns
+sernec_raw <- sernec_raw %>% rename(nativeDatabaseID = id)
+sernec_raw <- sernec_raw %>% rename(datasetName = institutionCode)
+
+# combine a few similar columns
+sernec_raw <- sernec_raw %>% unite("taxonIdentificationNotes",
+  identificationRemarks:taxonRemarks,na.rm=T,remove=T,sep=" | ")
+  sernec_raw$taxonIdentificationNotes <-
+    gsub("^$",NA,sernec_raw$taxonIdentificationNotes)
+sernec_raw <- sernec_raw %>% unite("locationNotes",
+  associatedTaxa:occurrenceRemarks,na.rm=T,remove=T,sep=" | ")
+  sernec_raw$locationNotes <- gsub("^$",NA,sernec_raw$locationNotes)
+sernec_raw <- sernec_raw %>% unite("geolocationNotes",
+  georeferencedBy:georeferenceVerificationStatus,na.rm=T,remove=T,sep=" | ")
+  sernec_raw$geolocationNotes <- gsub("^$",NA,sernec_raw$geolocationNotes)
+
+# create species_name column
+sernec_raw$species_name <- NA
+sernec_raw$species_name <- sapply(sernec_raw$taxon_name, function(x)
+  unlist(strsplit(x," var. | subsp. | f. "))[1])
+sort(unique(sernec_raw$species_name))
+
+# recode standard columns
+  # basis of record
+sernec_raw <- sernec_raw %>%
+  mutate(basisOfRecord = recode(basisOfRecord,
+    "PreservedSpecimen" = "PRESERVED_SPECIMEN",
+    "Preserved specimen" = "PRESERVED_SPECIMEN",
+    "Preserved Specimen" = "PRESERVED_SPECIMEN",
+    "Physicalspecimen" = "PRESERVED_SPECIMEN",
+    "preservedspecimen" = "PRESERVED_SPECIMEN",
+    "preservedSpecimen" = "PRESERVED_SPECIMEN",
+    "Observation" = "OBSERVATION",
+    "LivingSpecimen" = "LIVING_SPECIMEN",
+    "Physical specimen" = "PRESERVED_SPECIMEN",
+    "Ejemplar herborizado" = "PRESERVED_SPECIMEN",
+    "Physical Specimen" = "PRESERVED_SPECIMEN",
+    "HumanObservation" = "HUMAN_OBSERVATION",
+    .default = "UNKNOWN"))
+  # year
+sort(unique(sernec_raw$year))
+sernec_raw <- sernec_raw %>%
+  mutate(year = recode(year,
+    "9999" = "0",
+    "18914" = "1891",
+    "19418" = "1941"))
+sernec_raw$year <- as.integer(sernec_raw$year)
+sernec_raw$year[which(sernec_raw$year < 1000)] <- NA
+sort(unique(sernec_raw$year))
+  # establishment means
+sort(unique(sernec_raw$establishmentMeans))
+sernec_raw <- sernec_raw %>%
+  mutate(establishmentMeans = recode(establishmentMeans,
+    "Alien" = "INTRODUCED",
+    "clonal" = "UNKNOWN",
+    "Native" = "NATIVE",
+    "Native." = "NATIVE",
+    "native" = "NATIVE",
+    "Wild." = "NATIVE",
+    "Naturalized." = "INTRODUCED",
+    "Uncertain" = "UNKNOWN",
+    "wild caught" = "UNKNOWN",
+    .default = "MANAGED"))
+
+# check data
+percent.filled(sernec_raw)
+head(sernec_raw)
+
+# write file
+write.csv(sernec_raw, "raw_occurrence_point_data/sernec_raw.csv")
+
+###############
+# 4) Botanical Information and Ecology Network (BIEN)
+###############
 
 # information about functions in package
 #vignette("BIEN")
@@ -227,12 +533,87 @@ bien_raw <- BIEN_occurrence_genus(target_genera,all.taxonomy=T,native.status=T,
   natives.only=F,observation.type=T,collection.info=T,political.boundaries=T,
   cultivated=T)
 nrow(bien_raw) #2508808
-# write file
-write.csv(bien_raw, "bien_raw.csv")
 
-################################################################################
-# F) USDA Forest Service, Forest Inventory and Analysis (FIA) download
-################################################################################
+### standardize column names
+
+# split date collected column to just get year
+bien_raw <- bien_raw[,-35]
+bien_raw <- bien_raw %>% separate("date_collected","year",sep="-",remove=T)
+  sort(unique(bien_raw$year))
+
+# keep only necessary columns
+bien_raw <- bien_raw %>% select(
+  "name_matched",
+  "scrubbed_family","scrubbed_genus","verbatim_scientific_name",
+  "identified_by","identification_remarks","date_identified",
+  "latitude","longitude",
+  "observation_type","year","record_number",
+  "locality","county","state_province","country",
+  #"collection_code",
+  "dataset","datasource",
+  "is_cultivated_observation")
+
+# rename columns
+setnames(bien_raw,
+  old = c("name_matched",
+          "scrubbed_family","scrubbed_genus","verbatim_scientific_name",
+          "latitude","longitude",
+          "observation_type","record_number",
+          #"collection_code",
+          "dataset","datasource"),
+  new = c("taxon_name",
+          "family","genus","scientificName",
+          "decimalLongitude","decimalLatitude",
+          "basisOfRecord","nativeDatabaseID",
+          #"collectionCode",
+          "datasetName","publisher"),
+  skip_absent=T)
+bien_raw$database <- "BIEN"
+
+# combine a few similar columns
+bien_raw <- bien_raw %>% unite("taxonIdentificationNotes",
+  identified_by:date_identified,na.rm=T,remove=T,sep=" | ")
+  bien_raw$taxonIdentificationNotes <-
+    gsub("^$",NA,bien_raw$taxonIdentificationNotes)
+
+# fix taxa names
+bien_raw$taxon_name <- gsub(" fo. "," f. ",bien_raw$taxon_name)
+bien_raw$taxon_name <- str_squish(bien_raw$taxon_name)
+
+# create species_name column
+bien_raw$species_name <- NA
+bien_raw$species_name <- sapply(bien_raw$taxon_name, function(x)
+  unlist(strsplit(x," var. | subsp. | f. "))[1])
+sort(unique(bien_raw$species_name))
+
+# recode standard columns
+  # basis of record
+sort(unique(bien_raw$basisOfRecord))
+bien_raw <- bien_raw %>%
+  mutate(basisOfRecord = recode(basisOfRecord,
+    "literature" = "LITERATURE",
+    "plot" = "OBSERVATION",
+    "specimen" = "PRESERVED_SPECIMEN"))
+  # establishment means
+bien_raw$is_cultivated_observation <- as.character(
+  bien_raw$is_cultivated_observation)
+bien_raw <- bien_raw %>%
+  mutate(establishmentMeans = recode(is_cultivated_observation,
+    "1" = "MANAGED",
+    "0" = "UNKNOWN",
+    .missing = "UNKNOWN"))
+bien_raw <- bien_raw[,-17]
+
+# check data
+percent.filled(bien_raw)
+head(bien_raw)
+
+# write file
+write.csv(bien_raw, "raw_occurrence_point_data/bien_raw.csv")
+
+###############
+# 5) USDA Forest Service, Forest Inventory and Analysis (FIA)
+###############
 
 # First, download raw data
   # Go to https://apps.fs.usda.gov/fia/datamart/CSV/datamart_csv.html
@@ -247,17 +628,19 @@ write.csv(bien_raw, "bien_raw.csv")
   #   and place in your working directory
 
 # read in FIA species codes
-setwd("./..")
 fia_codes <- read.csv("FIA_AppendixF_TreeSpeciesCodes_2016.csv",
   colClasses="character")
 # join taxa list to FIA species codes
-names(fia_codes) <- c("fia_code","fia_common_name","taxon_name","species_name")
+fia_codes <- fia_codes[,1:3]
+names(fia_codes) <- c("fia_code","fia_common_name","taxon_name")
   glimpse(fia_codes)
-taxon_list <- left_join(taxon_list,fia_codes,by="species_name")
+taxon_list_fia <- left_join(taxon_list,fia_codes)
 # make a list of unique FIA species codes to select from the data
-species_codes <- sort(unique(taxon_list$fia_code))
-sort(unique(taxon_list$taxon_name_acc[which(!is.na(taxon_list$fia_code))]))
-length(species_codes) #56
+species_codes <- sort(unique(taxon_list_fia$fia_code))
+# check results
+sort(unique(taxon_list_fia$taxon_name_acc[which(
+  !is.na(taxon_list_fia$fia_code))]))
+length(species_codes) #55
 
 # I have to read in each state file separately and pull info for our target
 #   taxa then remove the file before loading the next state because memory
@@ -265,6 +648,7 @@ length(species_codes) #56
 
 # function to extract target species data from each state CSV
 extract_tree_data <- function(file_name){
+  data <- data.frame()
   # read in tree data, which lists all species and the plots in which they were
   #   found; larger ones will take time to read in
   state_df <- read.csv(file_name)
@@ -272,17 +656,15 @@ extract_tree_data <- function(file_name){
   #   the state CSV
   for (sp in 1:length(species_codes)){
     target_sp <- state_df[which(state_df$SPCD==species_codes[[sp]]),]
-    fia_raw <- rbind(fia_raw,target_sp)
+    data <- rbind(data,target_sp)
     }
   # remove state file to make space for reading in next one
   rm(state_df)
   # take a look at how much data were pulled
-  print(dim(fia_raw))
-  return(fia_raw)
+  print(paste(nrow(data),file_name))
+  return(data)
 }
 
-# make a new data frame to gather data for target taxa
-fia_raw <- data.frame()
 # create list of state files
 file_list <- list.files(path = "raw_occurrence_point_data/fia_read_in",
   pattern = ".csv",full.names = T)
@@ -292,7 +674,72 @@ fia_outputs <- lapply(file_list, extract_tree_data)
 # stack state-by-state data extracted to create one dataframe
 fia_raw <- data.frame()
 for(file in seq_along(fia_outputs)){
-  fia_raw  <- rbind(fia_raw , fia_outputs[[file]])
-}; nrow(fia_raw) #3086137
+  fia_raw  <- rbind(fia_raw, fia_outputs[[file]])
+}
+nrow(fia_raw) #3085603
+
+### standardize column names
+
+# read in supplemental FIA tables:
+#  - list of species tracked and their codes
+#  - state and county codes and names
+#  - plot level data (has lat-long)
+fia_codes <- read.csv("FIA_AppendixF_TreeSpeciesCodes_2016.csv", header = T,
+  na.strings=c("","NA"), colClasses="character")
+  # remove unnecessary columns and rename species name column
+  fia_codes <- fia_codes %>% select(SPCD,taxon_name)
+county_codes <- read.csv("US_state_county_FIPS_codes.csv", header = T,
+  na.strings=c("","NA"), colClasses="character")
+fia_plots <- read.csv("PLOT.csv")
+  # remove unnecessary columns from plot data
+  fia_plots <- fia_plots[,c("INVYR","STATECD","UNITCD","COUNTYCD","PLOT",
+                            "LAT","LON")]
+# join FIA data to supplemental tables
+fia_raw <- join(fia_raw,fia_codes)
+fia_raw <- join(fia_raw,county_codes)
+fia_raw <- join(fia_raw,fia_plots)
+# create ID column
+fia_raw <- fia_raw %>% unite("fiaPlotID",
+  c("INVYR","UNITCD","COUNTYCD","PLOT","STATECD"),remove=F,sep="-")
+
+# keep only necessary columns
+fia_raw <- fia_raw %>% select(
+  "taxon_name",
+  "LAT","LON",
+  "INVYR","fiaPlotID",
+  "STATUSCD")
+
+# rename columns
+setnames(fia_raw,
+  old = c("LAT","LON",
+          "INVYR",
+          "STATUSCD","fiaPlotID"),
+  new = c("decimalLongitude","decimalLatitude",
+          "year",
+          "isAlive","nativeDatabaseID"),
+  skip_absent=T)
+fia_raw$database <- "FIA"
+
+# create species_name column
+fia_raw$species_name <- NA
+fia_raw$species_name <- sapply(fia_raw$taxon_name, function(x)
+  unlist(strsplit(x," var. | subsp. | f. "))[1])
+sort(unique(fia_raw$species_name))
+
+# recode standard columns
+fia_raw$isAlive <- as.character(fia_raw$isAlive)
+fia_raw <- fia_raw %>%
+  mutate(establishmentMeans = recode(isAlive,
+    "1" = "UNKNOWN",
+    "2" = "CUT",
+    "3" = "DEAD",
+    "0" = "UNKNOWN"))
+fia_raw <- fia_raw[,-6]
+fia_raw$basisOfRecord <- "OBSERVATION"
+
+# check data
+percent.filled(fia_raw)
+head(fia_raw)
+
 # write file
 write.csv(fia_raw,"raw_occurrence_point_data/fia_raw.csv")
