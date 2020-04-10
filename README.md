@@ -1,20 +1,20 @@
 # Code for analyzing spatial data associated with the IMLS project
 
 ################################################################################
-# 1_get_taxonomic_info.R
+ 1_get_taxonomic_info.R
 ################################################################################
 
-# OVERVIEW: Takes a list of taxa and uses the taxize package to pull taxonomic
-#           information from multiple databases. The output can then be used to
-#           create a final list of target taxa and synonyms by hand. Data
-#           pulled includes:
-#             - Acceptance and authors from Tropicos, Integrated Taxonomic
-#                Information Service (ITIS), and The Plant List (TPL)
-#             - Authors from International Plant Names Index (IPNI) and
-#                Taxonomic Name Resolution Service (TNRS)
-#             - Synonyms from Tropicos and ITIS
-# INPUTS: List of target taxa
-# OUTPUTS: List of target taxa with acceptance, authors, and synonyms
+ OVERVIEW: Takes a list of taxa and uses the taxize package to pull taxonomic
+           information from multiple databases. The output can then be used to
+           create a final list of target taxa and synonyms by hand. Data
+           pulled includes:
+             - Acceptance and authors from Tropicos, Integrated Taxonomic
+                Information Service (ITIS), and The Plant List (TPL)
+             - Authors from International Plant Names Index (IPNI) and
+                Taxonomic Name Resolution Service (TNRS)
+             - Synonyms from Tropicos and ITIS
+ INPUTS: List of target taxa
+ OUTPUTS: List of target taxa with acceptance, authors, and synonyms
 
 ################################################################################
 # 2_get_raw_occurrence_points.R
