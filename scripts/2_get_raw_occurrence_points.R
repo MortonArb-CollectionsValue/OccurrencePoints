@@ -110,9 +110,9 @@ target_genera <- c("Malus","Quercus","Tilia","Ulmus")
   # if you don't have account yet, go to https://www.gbif.org then click
   #   "Login" in top right corner, then click "Register"
   # !!! FILL THIS IN WITH YOUR INFO:
-user <- "user"
-pwd <- "password"
-email <- "email"
+user <- "ebeckman"
+pwd <- "Quercus51"
+email <- "ebeckman@mortonarb.org"
 
 # get GBIF taxon keys for all taxa in target list
 keys <- sapply(taxon_names,function(x) name_backbone(name=x)$speciesKey,
@@ -151,13 +151,13 @@ setwd(file.path(getwd(),"raw_occurrence_point_data/gbif_read_in"))
 
   # download and unzip before reading in
 gbif_download # !!! PASTE "Download key" as first argument in next two lines !!!
-occ_download_get(key="0038281-200221144449610", overwrite=TRUE)
+occ_download_get(key="0041635-200221144449610", overwrite=TRUE)
   #OLD: 0036899-200221144449610
-unzip("0038281-200221144449610.zip")
+unzip("0041635-200221144449610.zip")
   # read in data
 gbif_raw <- fread("occurrence.txt",quote="",na.strings="")
 setwd("./../..")
-nrow(gbif_raw) #2406683
+nrow(gbif_raw) #2201869
 
 ### standardize column names
 
@@ -225,9 +225,6 @@ gbif_raw <- gbif_raw %>% unite("geolocationNotes",
   gbif_raw$geolocationNotes <- gsub("^$",NA,gbif_raw$geolocationNotes)
 
 # fix taxa names
-gbif_raw$species_name <- mgsub(gbif_raw$species_name,
-  c("Tilia xeuropaea","Tilia xvulgaris"),
-  c("Tilia x europaea","Tilia x vulgaris"))
 gbif_raw$taxon_name <- mgsub(gbif_raw$taxon_name,
   c("Tilia xeuropaea","Tilia xvulgaris"),
   c("Tilia x europaea","Tilia x vulgaris"))
@@ -263,7 +260,7 @@ for(i in 1:length(taxon_names)){
   idigbio_raw <- rbind(idigbio_raw,output_new)
   print(paste(round(i/length(taxon_names)*100,digits=1),"% complete",sep=""))
 }
-nrow(idigbio_raw) #153477
+nrow(idigbio_raw) #155359
 # remove rows that are lists
 idigbio_raw <- idigbio_raw %>% select(everything(),-commonnames,-flags,
   -mediarecords,-recordids)
@@ -351,6 +348,7 @@ idigbio_raw$species_name <- sapply(idigbio_raw$taxon_name, function(x)
 sort(unique(idigbio_raw$species_name))
 
 # recode standard columns
+  # basis of record
 idigbio_raw <- idigbio_raw %>%
   mutate(basisOfRecord = recode(basisOfRecord,
     "preservedspecimen" = "PRESERVED_SPECIMEN",
@@ -358,8 +356,9 @@ idigbio_raw <- idigbio_raw %>%
     "humanobservation" = "HUMAN_OBSERVATION",
     "fossilspecimen" = "FOSSIL_SPECIMEN",
     .missing = "UNKNOWN"))
+  # year
 idigbio_raw$year <- as.integer(idigbio_raw$year)
-idigbio_raw$year[which(idigbio_raw$year < 1000)] <- NA
+idigbio_raw$year[which(idigbio_raw$year < 1500)] <- NA
 
 # check data
 percent.filled(idigbio_raw)
@@ -497,7 +496,7 @@ sernec_raw <- sernec_raw %>%
     "18914" = "1891",
     "19418" = "1941"))
 sernec_raw$year <- as.integer(sernec_raw$year)
-sernec_raw$year[which(sernec_raw$year < 1000)] <- NA
+sernec_raw$year[which(sernec_raw$year < 1500)] <- NA
 sort(unique(sernec_raw$year))
   # establishment means
 sort(unique(sernec_raw$establishmentMeans))
@@ -559,12 +558,14 @@ setnames(bien_raw,
           "scrubbed_family","scrubbed_genus","verbatim_scientific_name",
           "latitude","longitude",
           "observation_type","record_number",
+          "state_province",
           #"collection_code",
           "dataset","datasource"),
   new = c("taxon_name",
           "family","genus","scientificName",
           "decimalLongitude","decimalLatitude",
           "basisOfRecord","nativeDatabaseID",
+          "stateProvince",
           #"collectionCode",
           "datasetName","publisher"),
   skip_absent=T)
@@ -617,10 +618,11 @@ write.csv(bien_raw, "raw_occurrence_point_data/bien_raw.csv")
 
 # First, download raw data
   # Go to https://apps.fs.usda.gov/fia/datamart/CSV/datamart_csv.html
-  # Either download the "TREE" file (e.g., "AL_TREE.csv") for each state
-  #   (works well if you only need a few) or scroll to the bottom of the
-  #   page and download "TREE.csv", which gives data for all states combined
-  #   (9.73 GB); you need lots of memory to do it with just the one "TREE" file
+  # Either download the "TREE" CSV file (e.g., "AL_TREE.csv") for each state
+  #   or scroll to the bottom of the page and download "TREE.csv", which gives
+  #   data for all states combined (9.73 GB);
+  #   you need lots of memory to do it with just the one "TREE" file,
+  #   so the script below uses the state files and cycles through each
   # Place all the tree files in an "fia_read_in" folder in your working
   #   directory
   # While you're on the FIA data download webpage, scroll to the bottom of
@@ -631,16 +633,16 @@ write.csv(bien_raw, "raw_occurrence_point_data/bien_raw.csv")
 fia_codes <- read.csv("FIA_AppendixF_TreeSpeciesCodes_2016.csv",
   colClasses="character")
 # join taxa list to FIA species codes
-fia_codes <- fia_codes[,1:3]
-names(fia_codes) <- c("fia_code","fia_common_name","taxon_name")
+fia_codes <- fia_codes[,c(1,3)]
+names(fia_codes) <- c("SPCD","taxon_name")
   glimpse(fia_codes)
 taxon_list_fia <- left_join(taxon_list,fia_codes)
 # make a list of unique FIA species codes to select from the data
-species_codes <- sort(unique(taxon_list_fia$fia_code))
+species_codes <- sort(unique(taxon_list_fia$SPCD))
 # check results
 sort(unique(taxon_list_fia$taxon_name_acc[which(
-  !is.na(taxon_list_fia$fia_code))]))
-length(species_codes) #55
+  !is.na(taxon_list_fia$SPCD))]))
+length(species_codes) #56
 
 # I have to read in each state file separately and pull info for our target
 #   taxa then remove the file before loading the next state because memory
@@ -676,18 +678,14 @@ fia_raw <- data.frame()
 for(file in seq_along(fia_outputs)){
   fia_raw  <- rbind(fia_raw, fia_outputs[[file]])
 }
-nrow(fia_raw) #3085603
+nrow(fia_raw) #3312303
 
 ### standardize column names
 
 # read in supplemental FIA tables:
-#  - list of species tracked and their codes
+#  - list of species tracked and their codes (read in above)
 #  - state and county codes and names
 #  - plot level data (has lat-long)
-fia_codes <- read.csv("FIA_AppendixF_TreeSpeciesCodes_2016.csv", header = T,
-  na.strings=c("","NA"), colClasses="character")
-  # remove unnecessary columns and rename species name column
-  fia_codes <- fia_codes %>% select(SPCD,taxon_name)
 county_codes <- read.csv("US_state_county_FIPS_codes.csv", header = T,
   na.strings=c("","NA"), colClasses="character")
 fia_plots <- read.csv("PLOT.csv")
@@ -727,6 +725,7 @@ fia_raw$species_name <- sapply(fia_raw$taxon_name, function(x)
 sort(unique(fia_raw$species_name))
 
 # recode standard columns
+  # establishment means
 fia_raw$isAlive <- as.character(fia_raw$isAlive)
 fia_raw <- fia_raw %>%
   mutate(establishmentMeans = recode(isAlive,
@@ -734,8 +733,11 @@ fia_raw <- fia_raw %>%
     "2" = "CUT",
     "3" = "DEAD",
     "0" = "UNKNOWN"))
-fia_raw <- fia_raw[,-6]
+fia_raw <- fia_raw %>% select(-isAlive)
+  # basis of record
 fia_raw$basisOfRecord <- "OBSERVATION"
+  # year
+fia_raw$year[which(fia_raw$year == 9999)] <- NA
 
 # check data
 percent.filled(fia_raw)
