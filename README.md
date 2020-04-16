@@ -71,7 +71,6 @@
 
  OUTPUTS: "occurrence_point_count_per_species.csv", CSV of pts for each species
 
-
 # standard columns
 
   - species_name_acc : accepted species name (from target_taxa_with_syn.csv)
@@ -105,3 +104,34 @@
   - lat_round : latitude rounded to 3 decimal places
   - long_round : longitude rounded to 3 decimal places
   - FIPS : code for US county with centroid matching to 2 places after decimal
+
+# file structure
+
+*Star in front identifies files/folders you must create/download manually
+All other files are created automatically through the script
+
+  - FOLDER: *insitu_occurrence_points
+    - *target_taxa_with_syn.csv
+    - occurrence_point_count_per_species.csv
+    - FOLDER: *raw_occurrence_point_data
+      - FOLDER: gbif_read_in
+        - occurrence.txt
+        - ...
+      - FOLDER: *fia_read_in
+        - *AK_TREE.csv
+        - ...
+      - FOLDER: *sernec_read_in
+        - *occurrences.csv
+        - ...
+      - bien_raw.csv
+      - fia_raw.csv
+      - gbif_raw.csv
+      - idigbio_raw.csv
+      - sernec_raw.csv
+    - FOLDER: *FIA_tables
+      - *FIA_AppendixF_TreeSpeciesCodes_2016.csv
+      - *PLOT.csv
+      - *US_state_county_FIPS_codes.csv
+    - FOLDER: raw_split_by_sp
+      - Malus_angustifolia.csv
+      - ...
