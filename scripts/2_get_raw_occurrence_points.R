@@ -12,7 +12,7 @@
       # Forest Inventory and Analysis (FIA) Program of the USDA Forest Service
 
 ### INPUTS:
-  # target_taxa_with_syn.csv (list of target taxa)
+  # (optional) target_taxa_with_syn.csv
     # columns:
       # 1. "taxon_name" (genus, species, infra rank, and infra name, all
       #    separated by one space each; hybrid symbol should be " x ", rather
@@ -73,27 +73,26 @@ percent.filled <- function(df){
 
 
 ################################################################################
-# A) Read in target taxa list
+# A) Create list of target taxa
 ################################################################################
 
 setwd("./../..")
 setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
 
+## IF YOU HAVE CSV OF TARGET TAXA AND SYNONYMS:
 # read in taxa list
 taxon_list <- read.csv("target_taxa_with_syn.csv", header = T,
   na.strings=c("","NA"), colClasses="character")
 head(taxon_list)
-
 # filter out cultivars and blank rows
 taxon_list <- taxon_list %>%
               filter(taxon_type != "cultivar" & !is.na(taxon_name))
-nrow(taxon_list) #804
-
+nrow(taxon_list) #805
 # list of target taxon names
 taxon_names <- taxon_list$taxon_name
 
-# create vector of target genera
-target_genera <- c("Malus","Quercus","Tilia","Ulmus")
+## IF JUST ONE OR A FEW TAXA, CREATE A LIST BY HAND:
+#taxon_names <- "Quercus havardii"
 
 ################################################################################
 # B) Download/compile data from each target database
@@ -110,9 +109,9 @@ target_genera <- c("Malus","Quercus","Tilia","Ulmus")
   # if you don't have account yet, go to https://www.gbif.org then click
   #   "Login" in top right corner, then click "Register"
   # !!! FILL THIS IN WITH YOUR INFO:
-user <- "user"
-pwd <- "password"
-email <- "email"
+user <- "ebeckman"
+pwd <- "Quercus51"
+email <- "ebeckman@mortonarb.org"
 
 # get GBIF taxon keys for all taxa in target list
 keys <- sapply(taxon_names,function(x) name_backbone(name=x)$speciesKey,
@@ -124,7 +123,7 @@ gbif_codes <- map_df(keys_nodup,~as.data.frame(.x),.id="taxon_name")
 names(gbif_codes)[2] <- "speciesKey"
 # create vector of keys as input into gbif download
 gbif_taxon_keys <- vector(mode="numeric")
-for(i in 2:length(keys_nodup)){
+for(i in 1:length(keys_nodup)){
   gbif_taxon_keys <- c(gbif_taxon_keys,keys_nodup[[i]][1])
 }; sort(gbif_taxon_keys)
 
@@ -371,7 +370,8 @@ write.csv(idigbio_raw, "raw_occurrence_point_data/idigbio_raw.csv")
 # First, download raw data
   # Go to http://sernecportal.org/portal/collections/harvestparams.php
   # Type your target genus name into the "scientific name" box and click
-  #   "List Display"
+  #   "List Display"; or, alternatively, if you are just looking for a few
+  #   taxa you can search for and download them individually
   # Click the Download Specimen Data button (arrow pointing down into a box),
   #   in the top right corner
   # In the pop-up window, select the "Darwin Core" radio button,
@@ -524,15 +524,15 @@ write.csv(sernec_raw, "raw_occurrence_point_data/sernec_raw.csv")
 #vignette("BIEN")
 
 # download BIEN occurrence data for target genera
-bien_raw <- BIEN_occurrence_genus(target_genera,all.taxonomy=T,native.status=T,
+bien_raw <- BIEN_occurrence_species(taxon_names,all.taxonomy=T,native.status=T,
   natives.only=F,observation.type=T,collection.info=T,political.boundaries=T,
   cultivated=T)
-nrow(bien_raw) #2508808
+nrow(bien_raw) #2199972
 
 ### standardize column names
 
 # split date collected column to just get year
-bien_raw <- bien_raw[,-35]
+bien_raw <- bien_raw[,-24]
 bien_raw <- bien_raw %>% separate("date_collected","year",sep="-",remove=T)
   sort(unique(bien_raw$year))
 
@@ -598,8 +598,8 @@ bien_raw <- bien_raw %>%
   mutate(establishmentMeans = recode(is_cultivated_observation,
     "1" = "MANAGED",
     "0" = "UNKNOWN",
-    .missing = "UNKNOWN"))
-bien_raw <- bien_raw[,-17]
+    .missing = "UNKNOWN")) %>%
+  select(-is_cultivated_observation)
 
 # check data
 percent.filled(bien_raw)
@@ -632,12 +632,12 @@ fia_codes <- read.csv("FIA_tables/FIA_AppendixF_TreeSpeciesCodes_2016.csv",
 fia_codes <- fia_codes[,c(1,3)]
 names(fia_codes) <- c("SPCD","taxon_name")
   glimpse(fia_codes)
-taxon_list_fia <- left_join(taxon_list,fia_codes)
+taxon_fia <- fia_codes[which(fia_codes$taxon_name %in% taxon_names),]
 # make a list of unique FIA species codes to select from the data
-species_codes <- sort(unique(taxon_list_fia$SPCD))
+species_codes <- sort(unique(taxon_fia$SPCD))
 # check results
-sort(unique(taxon_list_fia$taxon_name[which(
-  !is.na(taxon_list_fia$SPCD))]))
+sort(unique(taxon_fia$taxon_name[which(
+  !is.na(taxon_fia$SPCD))]))
 length(species_codes) #56
 
 # I have to read in each state file separately and pull info for our target
