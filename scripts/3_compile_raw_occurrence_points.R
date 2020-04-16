@@ -2,7 +2,8 @@
 
 ### DESCRIPTION:
   # This script compiles data downloaded in 2_get_raw_occurrence_points.R,
-  #   removes any rows for species not in target list, and writes
+  #   removes any rows for species not in target list, standardizes some
+  #   key columns, and writes a CSV of lat-long points for each species
 
 ### INPUT:
   # target_taxa_with_syn.csv (list of target taxa)
@@ -119,6 +120,14 @@ coord_test <- cc_val(all_data,lon = "decimalLongitude",lat = "decimalLatitude",
   value = "flagged",verbose = TRUE)
   # make coords NA if they are still flagged
 all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <- c(NA,NA)
+
+# set column order and remove a few unnecessary columns
+all_data <- all_data %>% select(species_name_acc,taxon_name,scientificName,
+  taxonIdentificationNotes,database,year,basisOfRecord,establishmentMeans,
+  decimalLatitude,decimalLongitude,coordinateUncertaintyInMeters,
+  geolocationNotes,localityDescription,locationNotes,datasetName,publisher,
+  nativeDatabaseID,references,source_databases,informationWithheld,issue,
+  taxon_name_full,list)
 
 # create subsets for locality-only points and lat-long points, then
 #   continue forward with just lat-long points

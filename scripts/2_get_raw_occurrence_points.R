@@ -241,7 +241,6 @@ head(gbif_raw)
 
 # write file
 write.csv(gbif_raw, "raw_occurrence_point_data/gbif_raw.csv")
-rm(gbif_raw)
 
 ###############
 # 2) Integrated Digitized Biocollections (iDigBio)
@@ -310,7 +309,7 @@ idigbio_raw <- idigbio_raw %>% select(
   "basisofrecord","year","uuid","occurrenceid",#"recordnumber",
   "locality","verbatimlocality","county","municipality","stateprovince",
     "country","countrycode",
-  "collectioncode"#,"institutioncode"
+  "institutioncode"#"collectioncode"
 )
 
 # rename columns
@@ -319,19 +318,17 @@ setnames(idigbio_raw,
           #"specificepithet","taxonrank","infraspecificepithet",
           #"taxonid",
           "geopoint.lon","geopoint.lat",
-          "basisofrecord","uuid","occurrenceid",#"recordnumber",
           "coordinateuncertainty",
-          #"institutioncode",
+          "basisofrecord","uuid","occurrenceid",#"recordnumber",
           "verbatimlocality","stateprovince","countrycode",
-          "collectioncode"),
+          "institutioncode"),
   new = c("scientificName",
           #"specificEpithet","taxonRank","infraspecificEpithet",
           #"taxonID",
           "decimalLongitude","decimalLatitude",
-          "basisOfRecord","nativeDatabaseID","references",#"recordNumber",
           "coordinateUncertaintyInMeters",
+          "basisOfRecord","nativeDatabaseID","references",#"recordNumber",
           "verbatimLocality","stateProvince","countryCode",
-          #"institutionCode",
           "datasetName"),
   skip_absent=T)
 idigbio_raw$database <- "iDigBio"
@@ -366,7 +363,6 @@ head(idigbio_raw)
 
 # write file
 write.csv(idigbio_raw, "raw_occurrence_point_data/idigbio_raw.csv")
-rm(idigbio_raw)
 
 ###############
 # 3) U.S. Herbaria Consortia (SERNEC, SEINet, etc.)
@@ -437,8 +433,8 @@ sernec_raw <- sernec_raw %>% select(
     "scientificName",
   #"taxonID",
   "identificationRemarks","identifiedBy","taxonRemarks",
-  "coordinateUncertaintyInMeters",
   "decimalLatitude","decimalLongitude",
+  "coordinateUncertaintyInMeters",
   "basisOfRecord","year","id","references",#"occurrenceID","recordNumber",
   "locality","county","municipality","stateProvince","country",
   "associatedTaxa","habitat","locationRemarks","occurrenceRemarks",
@@ -542,8 +538,8 @@ bien_raw <- bien_raw %>% separate("date_collected","year",sep="-",remove=T)
 
 # keep only necessary columns
 bien_raw <- bien_raw %>% select(
-  "name_matched",
-  "scrubbed_family","scrubbed_genus","verbatim_scientific_name",
+  "name_matched","verbatim_scientific_name",
+  #"scrubbed_family","scrubbed_genus",
   "identified_by","identification_remarks","date_identified",
   "latitude","longitude",
   "observation_type","year","record_number",
@@ -554,15 +550,15 @@ bien_raw <- bien_raw %>% select(
 
 # rename columns
 setnames(bien_raw,
-  old = c("name_matched",
-          "scrubbed_family","scrubbed_genus","verbatim_scientific_name",
+  old = c("name_matched","verbatim_scientific_name",
+          #"scrubbed_family","scrubbed_genus",
           "latitude","longitude",
           "observation_type","record_number",
           "state_province",
           #"collection_code",
           "dataset","datasource"),
-  new = c("taxon_name",
-          "family","genus","scientificName",
+  new = c("taxon_name","scientificName",
+          #"family","genus",
           "decimalLongitude","decimalLatitude",
           "basisOfRecord","nativeDatabaseID",
           "stateProvince",
@@ -630,7 +626,7 @@ write.csv(bien_raw, "raw_occurrence_point_data/bien_raw.csv")
   #   and place in your working directory
 
 # read in FIA species codes
-fia_codes <- read.csv("FIA_AppendixF_TreeSpeciesCodes_2016.csv",
+fia_codes <- read.csv("FIA_tables/FIA_AppendixF_TreeSpeciesCodes_2016.csv",
   colClasses="character")
 # join taxa list to FIA species codes
 fia_codes <- fia_codes[,c(1,3)]
@@ -686,9 +682,9 @@ nrow(fia_raw) #3312303
 #  - list of species tracked and their codes (read in above)
 #  - state and county codes and names
 #  - plot level data (has lat-long)
-county_codes <- read.csv("US_state_county_FIPS_codes.csv", header = T,
+county_codes <- read.csv("FIA_tables/US_state_county_FIPS_codes.csv",header = T,
   na.strings=c("","NA"), colClasses="character")
-fia_plots <- read.csv("PLOT.csv")
+fia_plots <- read.csv("FIA_tables/PLOT.csv")
   # remove unnecessary columns from plot data
   fia_plots <- fia_plots[,c("INVYR","STATECD","UNITCD","COUNTYCD","PLOT",
                             "LAT","LON")]
