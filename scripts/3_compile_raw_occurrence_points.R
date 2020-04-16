@@ -1,7 +1,8 @@
-### Author: Emily Beckman  ###  Date: 02/05/2020                                |
+### Author: Emily Beckman  ###  Date: 04/15/2020                                |
 
 ### DESCRIPTION:
-  # This script
+  # This script compiles data downloaded in 2_get_raw_occurrence_points.R,
+  #   removes any rows for species not in target list, and writes
 
 ### INPUT:
   # target_taxa_with_syn.csv (list of target taxa)
@@ -9,15 +10,13 @@
       # 1. "taxon_name" (genus, species, infra rank, and infra name, all
       #    separated by one space each; hybrid symbol should be " x ", rather
       #    than "_" or "✕", and go between genus and species)
-      # 2. (optional) "taxon_name_acc" (accepted taxon name you have chosen)
+      # 2. "species_name_acc" (accepted species name you have chosen); this
+      #    will be used to split the data
       # 3+ (optional) other data you want to keep with taxa info
 
 ### OUTPUTS:
-    # gbif_raw.csv
-    # idigbio_raw.csv
-    # herbaria_raw.csv
-    # bien_raw.csv
-    # fia_raw.csv
+    # folder (raw_split_by_sp) with CSV of raw occurrence data for each target
+    #   species (e.g., Malus_angustifolia.csv)
 
 #################
 ### LIBRARIES ###
@@ -25,9 +24,10 @@
 
 library(plyr)
 library(tidyverse) #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
-#library(data.table)
-#library(batchtools)
-#library(textclean)
+library(housingData)
+library(data.table)
+library(textclean)
+library(CoordinateCleaner)
 
 
 ################################################################################
@@ -36,10 +36,6 @@ library(tidyverse) #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
 
 setwd("./../..")
 setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
-
-# read in target taxa list
-taxon_list <- read.csv("target_taxa_with_syn.csv", header = T,
-  na.strings=c("","NA"), colClasses="character")
 
 # read in raw datasets
 file_list <- list.files(path = "raw_occurrence_point_data",
@@ -52,118 +48,144 @@ length(file_dfs) #5
 #   and fills with NA; 'Reduce' iterates through list and merges with previous
 # this may take a few minutes if you have lots of data
 all_data_raw <- Reduce(rbind.fill, file_dfs)
-  nrow(all_data_raw) #100089
-  ncol(all_data_raw) #1007
+  nrow(all_data_raw) #8389845
+  ncol(all_data_raw) #30
 
 ################################################################################
 # B) Filter by target taxa
 ################################################################################
 
+# read in target taxa list
+taxon_list <- read.csv("target_taxa_with_syn.csv", header = T,
+  na.strings=c("","NA"), colClasses="character")
+
 # full join to taxon list
 all_data_raw <- left_join(all_data_raw,taxon_list)
 # join again just by species name if no taxon match
 need_match <- all_data_raw[which(is.na(all_data_raw$list)),]
+  nrow(need_match) #690031
+need_match <- need_match[,1:(ncol(all_data_raw)-ncol(taxon_list)+1)]
+need_match <- need_match %>% rename(taxon_name_full = taxon_name)
+need_match$taxon_name <- need_match$species_name
+need_match <- left_join(need_match,taxon_list)
 matched <- all_data_raw[which(!is.na(all_data_raw$list)),]
-need_match <- need_match[,1:(ncol(all_data_raw)-ncol(taxon_list)+2)]
-taxon_list_sp <- taxon_list[,-1]
-need_match <- left_join(need_match,taxon_list_sp)
-all_data_raw <- rbind(matched,need_match)
+matched$taxon_name_full <- matched$taxon_name
+all_data <- rbind(matched,need_match)
+  table(all_data$list)
 
 # check names that got excluded.....
-still_no_match <- all_data_raw[which(is.na(all_data_raw$list)),]
-table(still_no_match$dataset)
-sort(table(still_no_match$taxon_name))
+#still_no_match <- all_data[which(is.na(all_data$list)),]
+#  nrow(still_no_match) #624119
+#table(still_no_match$database)
+#sort(table(still_no_match$taxon_name))
 
 # keep only rows for target taxa
-all_data_raw <- all_data_raw[which(!is.na(all_data_raw$list) &
-  !is.na(all_data_raw$species_name_acc) &
-  !(is.na(all_data_raw$decimalLatitude) & is.na(all_data_raw$decimalLongitude)
-      & is.na(all_data_raw$localityDescription))),]
-nrow(all_data_raw) #7635719
+all_data <- all_data[which(!is.na(all_data$list)),]
+  nrow(all_data) #8022416
 
 ################################################################################
 # C) Standardize some key columns
 ################################################################################
 
-# year recorded
-all_data_raw$year <- as.numeric(all_data_raw$year)
-all_data_raw$year[which(all_data_raw$year < 1000)] <- NA
-unique(all_data_raw$year) #check
-all_data_raw$year[which(all_data_raw$year == 18914)] <- 1891
-all_data_raw$year[which(all_data_raw$year == 19418)] <- 1941
-all_data_raw$year[which(all_data_raw$year == 9999)] <- NA
+# create localityDescription column
+all_data <- all_data %>% unite("localityDescription",
+  c(locality,verbatimLocality,municipality,higherGeography,county,stateProvince,
+    country,countryCode),remove=T,sep=" | ") #na.rm=T,
+all_data$localityDescription <-
+  mgsub(all_data$localityDescription,c("NA "," NA"),"")
+all_data$localityDescription <-
+  gsub("| | | | | | |",NA,all_data$localityDescription,fixed=T)
 
+# check year column
+unique(all_data$year)
 
-gbif_raw <- gbif_raw %>% unite("localityDescription",
-  locality:countryCode,na.rm=T,remove=T,sep=" | ")
-  gbif_raw$localityDescription <- gsub("^$",NA,gbif_raw$localityDescription)
+# check basis of record column
+unique(all_data$basisOfRecord)
 
+# check establishment means
+unique(all_data$establishmentMeans)
+all_data$establishmentMeans[which(is.na(all_data$establishmentMeans))] <-
+  "UNKNOWN"
 
-# Precision type (GPS, county centroid, georeferenced…)
+# check validity of lat and long
+  # flag non-numeric and not available coordinates and lat > 90, lat < -90,
+  # lon > 180, and lon < -180
+coord_test <- cc_val(all_data,lon = "decimalLongitude",lat = "decimalLatitude",
+  value = "flagged",verbose = TRUE)
+  # try switching lat and long and check validity again
+all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <-
+  all_data[!coord_test,c("decimalLongitude","decimalLatitude")]
+coord_test <- cc_val(all_data,lon = "decimalLongitude",lat = "decimalLatitude",
+  value = "flagged",verbose = TRUE)
+  # make coords NA if they are still flagged
+all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <- c(NA,NA)
 
-# Basis of record
-
-# establishment means / is cultivated
-
-
+# create subsets for locality-only points and lat-long points, then
+#   continue forward with just lat-long points
+locality_pts <- all_data %>% filter(!is.na(localityDescription) &
+  (is.na(decimalLatitude) | is.na(decimalLongitude))) %>%
+  arrange(desc(year)) %>%
+  distinct(species_name_acc,localityDescription,.keep_all=T)
+  nrow(locality_pts) #212168
+  write.csv(locality_pts,"need_geolocation.csv")
+geo_pts <- all_data %>% filter(!is.na(decimalLatitude) &
+  !is.na(decimalLongitude))
+  nrow(geo_pts) #7564899
 
 ################################################################################
-# D) Separate by species
+# D) Remove duplicates
 ################################################################################
 
+# sort before removing duplicates
+geo_pts <- geo_pts %>% arrange(desc(year))
 
+# create rounded latitude and longitude columns for removing dups
+geo_pts$lat_round <- round(as.numeric(geo_pts$decimalLatitude),digits=3)
+geo_pts$long_round <- round(as.numeric(geo_pts$decimalLongitude),digits=3)
 
-
-
-
-
-
-# see how many points there may be with locality descriptions
-all_data_local <- all_data_raw %>%
-  filter(is.na(decimalLatitude) & is.na(decimalLongitude)) %>%
-  #group_by(species_name_acc,localityDescription) %>%
-  #mutate(source_databases = paste(dataset,collapse = ',')) %>%
-  distinct(species_name_acc,localityDescription,dataset,.keep_all=T) %>%
+# remove duplicates
+geo_pts2 <- geo_pts %>%
+  group_by(species_name_acc,lat_round,long_round,establishmentMeans) %>%
+  mutate(source_databases = paste(database,collapse = ',')) %>%
+  distinct(species_name_acc,lat_round,long_round,establishmentMeans,
+    .keep_all=T) %>%
   ungroup()
-#s <- lapply(all_data_local$source_databases, function(x) unlist(strsplit(x,split=",")))
-#source_standard <- as.data.frame(unlist(lapply(s,function(x) paste(unique(x),collapse=','))))
-#names(source_standard)[1] <- "source_databases_all"
-#all_data_local <- cbind(all_data_local,source_standard)
-#all_data_local <- all_data_local %>% select(-source_databases)
+  # remove duplicates in source_databases column
+  s <- lapply(geo_pts2$source_databases, function(x)
+    unlist(strsplit(x,split=",")))
+  source_standard <- as.data.frame(unlist(lapply(s,function(x)
+    paste(sort(unique(x)),collapse=','))))
+  names(source_standard)[1] <- "source_databases"
+  geo_pts2 <- geo_pts2 %>% select(-source_databases) %>% cbind(source_standard)
+head(geo_pts2)
+table(geo_pts2$source_databases)
 
-# plot number of points per species
-all_data$has_coord <- "Coordinate"
-all_data_local$has_coord <- "Locality description"
-to_plot <- rbind(all_data,all_data_local)
-to_plot <- to_plot %>% count(species_name_acc,has_coord,dataset,sort=T)
-write.csv(to_plot,"counts_per_species.csv")
+# mark rows that may be geolocated to U.S. county centroids
+geoCounty$lat_round <- round(geoCounty$cty_centroid_lat,digits=2)
+geoCounty$long_round <- round(geoCounty$cty_centroid_lon,digits=2)
+geoCounty <- geoCounty[,c(1,8:9)]
+geo_pts2 <- left_join(geo_pts2,geoCounty)
+nrow(geo_pts2)
+nrow(geo_pts2[which(!is.na(geo_pts2$FIPS)),])
 
-ggplot(to_plot, aes(x = species_name_acc,
-                    y = n,
-                    fill = has_coord)) +
-                geom_col() +
-                scale_y_continuous(limits = c(0,200))
+# take a look at results
+count_geo <- geo_pts2 %>% count(species_name_acc)
+count_geo <- setorder(count_geo,n)
+names(count_geo)[2] <- "num_latlong_records"
+count_locality <- locality_pts %>% count(species_name_acc)
+count_locality <- setorder(count_locality,n)
+names(count_locality)[2] <- "num_locality_records"
+summary <- full_join(count_geo,count_locality)
+write.csv(summary,"occurrence_point_count_per_species.csv")
 
-ggplot(to_plot, aes(x = species_name_acc,
-                y = n,
-                fill = has_coord)) +
-    geom_col() +
-    facet_wrap(~dataset) +
-    scale_y_continuous(limits = c(0,200))
+################################################################################
+# E) Split by species
+################################################################################
 
-ggplot(data=datos,aes(x = dia, y = PRECIP)) +
-    geom_bar(colour = "blue",stat = "identity") +
-    ylab("Precipitación (l)") +
-    xlab("Hora solar") +
-    opts(title = "Precipitacion acumulada horaria \n 2008-05-27 Burriana") +
-    scale_y_continuous(limits = c(0,50))
-
-all_data_noDup <- all_data_raw %>%
-  filter(!is.na(decimalLatitude) & !is.na(decimalLongitude)) %>%
-  #group_by(species_name_acc,lat_round,long_round) %>%
-  #mutate(source_databases = paste(dataset,collapse = ',')) %>%
-  distinct(species_name_acc,lat_round,long_round,.keep_all=T) %>%
-  ungroup()
-all_data_simple <- all_data_noDup %>% count(species_name_acc,sort=T)
-
-write.csv(all_data_simple,"counts_per_species_simple.csv")
+# split
+sp_split <- split(geo_pts2, as.factor(geo_pts2$species_name_acc))
+names(sp_split) <- gsub(" ","_",names(sp_split))
+# write files
+dir.create(file.path(getwd(),"raw_split_by_sp"))
+lapply(seq_along(sp_split), function(i) write.csv(sp_split[[i]],
+  paste("raw_split_by_sp/",names(sp_split)[[i]],".csv",sep="")))

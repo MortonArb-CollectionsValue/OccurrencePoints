@@ -110,9 +110,9 @@ target_genera <- c("Malus","Quercus","Tilia","Ulmus")
   # if you don't have account yet, go to https://www.gbif.org then click
   #   "Login" in top right corner, then click "Register"
   # !!! FILL THIS IN WITH YOUR INFO:
-user <- "ebeckman"
-pwd <- "Quercus51"
-email <- "ebeckman@mortonarb.org"
+user <- "user"
+pwd <- "password"
+email <- "email"
 
 # get GBIF taxon keys for all taxa in target list
 keys <- sapply(taxon_names,function(x) name_backbone(name=x)$speciesKey,
@@ -640,7 +640,7 @@ taxon_list_fia <- left_join(taxon_list,fia_codes)
 # make a list of unique FIA species codes to select from the data
 species_codes <- sort(unique(taxon_list_fia$SPCD))
 # check results
-sort(unique(taxon_list_fia$taxon_name_acc[which(
+sort(unique(taxon_list_fia$taxon_name[which(
   !is.na(taxon_list_fia$SPCD))]))
 length(species_codes) #56
 
