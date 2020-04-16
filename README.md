@@ -77,80 +77,31 @@
   - species_name_acc : accepted species name (from target_taxa_with_syn.csv)
   - taxon_name      
   - scientificName
-  - taxonIdentificationNotes : concatenated columns regarding taxon ID,
-      separated by "|", including whichever are available:
-      "identificationRemarks","identificationVerificationStatus",
-      "identifiedBy","taxonRemarks"
+  - taxonIdentificationNotes : concatenated columns regarding taxon ID, separated by "|", including whichever are available: "identificationRemarks", "identificationVerificationStatus", "identifiedBy", "taxonRemarks"
 
-  - database : "GBIF","iDigBio","US_Herbaria","BIEN","FIA"  
+  - database : "GBIF", "iDigBio", "US_Herbaria", "BIEN", "FIA"  
   - year : 1500 to 2020; none = NA
-  - basisOfRecord : "FOSSIL_SPECIMEN","HUMAN_OBSERVATION","LITERATURE"     
-      "LIVING_SPECIMEN","MACHINE_OBSERVATION","MATERIAL_SAMPLE"
-      "OBSERVATION","PRESERVED_SPECIMEN","UNKNOWN"
-  - establishmentMeans : "DEAD","INTRODUCED","INVASIVE","MANAGED",
-      "NATIVE","UNKNOWN"
+  - basisOfRecord : "FOSSIL_SPECIMEN", "HUMAN_OBSERVATION", "LITERATURE",   "LIVING_SPECIMEN", "MACHINE_OBSERVATION", "MATERIAL_SAMPLE", "OBSERVATION", "PRESERVED_SPECIMEN", "UNKNOWN"
+  - establishmentMeans : "DEAD", "INTRODUCED", "INVASIVE", "MANAGED", "NATIVE", "UNKNOWN"
 
   - decimalLatitude             
   - decimalLongitude
   - coordinateUncertaintyInMeters
-  - geolocationNotes : information about how the record was geolocated,
-      including whichever are available: "georeferencedBy", "georeferenceProtocol","georeferenceRemarks","georeferenceSources",
-      "georeferenceVerificationStatus"
-  - localityDescription : concatenated locality columns, separated by "|",
-      including: "locality","verbatiumLocality","county","municipality",
-      "higherGeography","stateProvince","country","countryCode"
-  - locationNotes : other locality information, including whichever
-      are available: "associatedTaxa","eventRemarks","fieldNotes","habitat",
-      "locationRemarks","occurrenceRemarks","occurrenceStatus"
+  - geolocationNotes : information about how the record was geolocated, including whichever are available: "georeferencedBy", "georeferenceProtocol", "georeferenceRemarks", "georeferenceSources", "georeferenceVerificationStatus"
+  - localityDescription : concatenated locality columns, separated by "|", including: "locality", "verbatiumLocality", "county", "municipality", "higherGeography", "stateProvince", "country", "countryCode"
+  - locationNotes : other locality information, including whichever are available: "associatedTaxa", "eventRemarks", "fieldNotes", "habitat", "locationRemarks", "occurrenceRemarks", "occurrenceStatus"
 
-  - datasetName : datasetName(gbif), institutionCode(idigbio,sernec),
-      dataset(bien)
+  - datasetName : datasetName(gbif), institutionCode(idigbio,sernec), dataset(bien)
   - publisher : publisher(gbif), datasource(bien)  
-  - nativeDatabaseID : gbifID(gbif), uuid(idigbio), id(sernec),
-      record_number(bien), plot key(fia; "INVYR","UNITCD","COUNTYCD",
-      "PLOT","STATECD")
-  - references : references(gbif,sernec), occurrenceid(idigbio),
+  - nativeDatabaseID : gbifID(gbif), uuid(idigbio), id(sernec), record_number(bien), plot key(fia; "INVYR", "UNITCD", "COUNTYCD", "PLOT", "STATECD")
+  - references : references(gbif,sernec), occurrenceid(idigbio)
 
-  - source_databases : all databases with duplicate record, based on
-      species_name_acc, lat_round, long_round, and establishmentMeans
+  - source_databases : all databases with duplicate record, based on species_name_acc, lat_round, long_round, and establishmentMeans
   - informationWithheld : gbif and sernec only
   - issue : gbif only
 
-  - taxon_name_full : true taxon name when record was matched to target taxa
-      by species name
-  - list : distinguishes between records matched directly to target taxa versus
-      those matched to synonyms provided; "desiderata" or "synonym"
+  - taxon_name_full : true taxon name when record was matched to target taxa by species name
+  - list : distinguishes between records matched directly to target taxa versus those matched to synonyms provided; "desiderata" or "synonym"
   - lat_round : latitude rounded to 3 decimal places
   - long_round : longitude rounded to 3 decimal places
-  - FIPS : code for U.S. county with centroid matching to 2 places after decimal
-
-# file structure
-
-*Star in front identifies files/folders you must create/download manually
-All other files are created automatically through the script
-
-FOLDER: *insitu_occurrence_points
-  *target_taxa_with_syn.csv
-  occurrence_point_count_per_species.csv
-  FOLDER: *raw_occurrence_point_data
-    FOLDER: gbif_read_in
-      occurrence.txt
-      ...
-    FOLDER: *fia_read_in
-      *AK_TREE.csv
-      ...
-    FOLDER: *sernec_read_in
-      *occurrences.csv
-      ...
-    bien_raw.csv
-    fia_raw.csv
-    gbif_raw.csv
-    idigbio_raw.csv
-    sernec_raw.csv
-  FOLDER: *FIA_tables
-    *FIA_AppendixF_TreeSpeciesCodes_2016.csv
-    *PLOT.csv
-    *US_state_county_FIPS_codes.csv
-  FOLDER: raw_split_by_sp
-    Malus_angustifolia.csv
-    ...
+  - FIPS : code for US county with centroid matching to 2 places after decimal
