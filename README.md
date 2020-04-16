@@ -109,8 +109,10 @@
 
   **Folders are bolded**
 
-  - ***insitu_occurrence_points** (manually created)
-    - *target_taxa_with_syn.csv (manually created)
+  Folders/files that were manually created/downloaded are marked as such
+
+  - **insitu_occurrence_points** (manually created)
+    - target_taxa_with_syn.csv (manually created)
     - occurrence_point_count_per_species.csv
     - **raw_occurrence_point_data** (manually created)
       - **gbif_read_in**
