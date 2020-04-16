@@ -107,10 +107,11 @@
 
 # file structure
 
-*Star in front identifies files/folders you must create/download manually
-All other files are created automatically through the script
+  **Bolded** entries are folders
+  *italicized* entries are files
+  *Star in front identifies files/folders you must create/download manually, versus those created automatically through the script
 
-  - FOLDER: *insitu_occurrence_points
+  - ***insitu_occurrence_points**
     - *target_taxa_with_syn.csv
     - occurrence_point_count_per_species.csv
     - FOLDER: *raw_occurrence_point_data
