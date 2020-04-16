@@ -38,14 +38,14 @@
 
              - Forest Inventory and Analysis (FIA) Program, USDA Forest Service
 
- INPUTS: List of target taxa, including...
-            synonyms & their accepted names (target_taxa_with_syn.csv),
-            FIA codes & sp. names (FIA_AppendixF_TreeSpeciesCodes_2016.csv),
-            county and state codes (US_state_county_FIPS_codes.csv),
-            FIA plot data (PLOT.csv)
+ INPUTS: List of target taxa, including:
+          - synonyms & their accepted names (target_taxa_with_syn.csv),
+          - FIA codes & sp. names (FIA_AppendixF_TreeSpeciesCodes_2016.csv),
+          - county and state codes (US_state_county_FIPS_codes.csv),
+          - FIA plot data (PLOT.csv)
 
  OUTPUTS: Raw occurrence records for target taxa or genera (depending on how
-          the database’s download works), one CSV for each database
+          the database’s download works); one CSV for each database
 
 ################################################################################
  3_compile_raw_occurrence_points.R
@@ -67,9 +67,9 @@
                places after the decimal
              - split into separate CSVs by species_name_acc
 
- INPUTS: raw datasets from 2_get_raw_occurrence_points.R, list of target taxa
+ INPUTS: raw datasets from 2_get_raw_occurrence_points.R; list of target taxa
 
- OUTPUTS: "occurrence_point_count_per_species.csv", CSV of pts for each species
+ OUTPUTS: "occurrence_point_count_per_species.csv"; CSV of points for each species
 
 # standard columns
 
@@ -107,32 +107,30 @@
 
 # file structure
 
-  **Bolded** entries are folders
-  *italicized* entries are files
-  *Star in front identifies files/folders you must create/download manually, versus those created automatically through the script
+  **Folders are bolded**
 
-  - ***insitu_occurrence_points**
-    - *target_taxa_with_syn.csv
+  - ***insitu_occurrence_points** (manually created)
+    - *target_taxa_with_syn.csv (manually created)
     - occurrence_point_count_per_species.csv
-    - FOLDER: *raw_occurrence_point_data
-      - FOLDER: gbif_read_in
+    - **raw_occurrence_point_data** (manually created)
+      - **gbif_read_in**
         - occurrence.txt
         - ...
-      - FOLDER: *fia_read_in
-        - *AK_TREE.csv
+      - **fia_read_in** (manually created)
+        - AK_TREE.csv (manually downloaded)
         - ...
-      - FOLDER: *sernec_read_in
-        - *occurrences.csv
+      - **sernec_read_in** (manually created)
+        - occurrences.csv (manually downloaded)
         - ...
       - bien_raw.csv
       - fia_raw.csv
       - gbif_raw.csv
       - idigbio_raw.csv
       - sernec_raw.csv
-    - FOLDER: *FIA_tables
-      - *FIA_AppendixF_TreeSpeciesCodes_2016.csv
-      - *PLOT.csv
-      - *US_state_county_FIPS_codes.csv
-    - FOLDER: raw_split_by_sp
+    - **FIA_tables** (manually created)
+      - FIA_AppendixF_TreeSpeciesCodes_2016.csv (manually downloaded)
+      - PLOT.csv (manually downloaded)
+      - US_state_county_FIPS_codes.csv (manually downloaded)
+    - **raw_split_by_sp**
       - Malus_angustifolia.csv
       - ...
