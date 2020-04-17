@@ -33,39 +33,55 @@
 ### LIBRARIES ###
 #################
 
-library(plyr)
-library(tidyverse) #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
-library(rgbif)
-library(data.table)
-library(taxize)
-library(anchors)
-library(batchtools)
-library(textclean)
-library(stringi)
+####################################################################################
+#######################################
+## load libraries
+####################################################################################
+rm(list=ls())
+my.packages <- c('plyr', 'tidyverse', 'rgbif', 'data.table', 'taxize', 'anchors', 'batchtools', 'textclean', 'stringi')
+            #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
+# install.packages (my.packages) #Turn on to install current versions
+lapply(my.packages, require, character.only=TRUE)
+rm(my.packages)
 
-#################
-### FUNCTIONS ###
-#################
+####################################################################################
+#######################################
+ # run code to set your working directory and project folders based upon computer using
+ #      skip this if preferred, but then need to set your working directory and input/output folders manually
+####################################################################################
+source('scripts/set_workingdirectory.R')
+    #setwd()
+    #
+####################################################################################
+#######################################
+## load functions
+####################################################################################
+source('scripts/load_IMLS_functions.R')
+####################################################################################
 
-# remove speices/taxa that did not have any synonyms (they create errors
-  # in next step), create data frame of synonyms, and add column stating
-  # which database it came from
-synonyms.compiled <- function(syn_output,db_name){
-  found <- NA
-    for(i in 1:length(syn_output)){
-      if(length(syn_output[[i]])>1){
-        if(syn_output[[i]][1,3]!="no syns found"){
-          found <- c(found,i)
-          syn_output[[i]]$taxon_name <- rep(names(syn_output[i]),
-            nrow(syn_output[[i]]))
-        }
-      }
-    }
-  found <- found[-1]
-  syn_output_df <- Reduce(rbind.fill, syn_output[found])
-  syn_output_df$database <- db_name
-  return(syn_output_df)
-}
+# #################
+# ### FUNCTIONS ###
+# #################
+# 
+# # remove speices/taxa that did not have any synonyms (they create errors
+#   # in next step), create data frame of synonyms, and add column stating
+#   # which database it came from
+# synonyms.compiled <- function(syn_output,db_name){
+#   found <- NA
+#     for(i in 1:length(syn_output)){
+#       if(length(syn_output[[i]])>1){
+#         if(syn_output[[i]][1,3]!="no syns found"){
+#           found <- c(found,i)
+#           syn_output[[i]]$taxon_name <- rep(names(syn_output[i]),
+#             nrow(syn_output[[i]]))
+#         }
+#       }
+#     }
+#   found <- found[-1]
+#   syn_output_df <- Reduce(rbind.fill, syn_output[found])
+#   syn_output_df$database <- db_name
+#   return(syn_output_df)
+# }
 
 
 ##############
