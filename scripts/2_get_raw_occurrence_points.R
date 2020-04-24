@@ -523,7 +523,7 @@ write.csv(sernec_raw, "raw_occurrence_point_data/sernec_raw.csv")
 # information about functions in package
 #vignette("BIEN")
 
-# download BIEN occurrence data for target genera
+# download BIEN occurrence data for target taxa
 bien_raw <- BIEN_occurrence_species(taxon_names,all.taxonomy=T,native.status=T,
   natives.only=F,observation.type=T,collection.info=T,political.boundaries=T,
   cultivated=T)
@@ -741,3 +741,69 @@ head(fia_raw)
 
 # write file
 write.csv(fia_raw,"raw_occurrence_point_data/fia_raw.csv")
+
+###############
+# 6) USGS, Biodiversity Information Serving Our Nation (BISON)
+###############
+
+# download BISON occurrence data for target taxa
+#   there is also county distribution data
+bison_raw <- data.frame()
+us_cty_dist <- data.frame()
+for(i in 1:length(taxon_names)){
+  occ <- bison(species = taxon_names[i])
+  bison_raw <- rbind.fill(bison_raw,occ$points)
+  if(length(occ$counties>0)){
+    occ$counties$taxon_name <- taxon_names[i]
+    us_cty_dist <- rbind.fill(us_cty_dist,occ$counties)
+  }
+  print(taxon_names[i])
+}
+nrow(bison_raw) #4008
+
+### standardize column names
+
+# keep only necessary columns
+bison_raw <- bison_raw %>% select(
+  "name",
+  "decimalLatitude","decimalLongitude",
+  "basis","occurrenceID",
+  "provider")
+
+# rename columns
+setnames(bison_raw,
+  old = c("name",
+          "basis","occurrenceID",
+          "provider"),
+  new = c("taxon_name",
+          "basisOfRecord","nativeDatabaseID",
+          "datasetName"),
+  skip_absent=T)
+bison_raw$database <- "BISON"
+
+# create species_name column
+bison_raw$species_name <- NA
+bison_raw$species_name <- sapply(bison_raw$taxon_name, function(x)
+  unlist(strsplit(x," var. | subsp. | f. "))[1])
+sort(unique(bison_raw$species_name))
+
+# recode standard columns
+  # basis of record
+sort(unique(bison_raw$basisOfRecord))
+bison_raw <- bison_raw %>%
+  mutate(basisOfRecord = recode(basisOfRecord,
+    "Living" = "LIVING_SPECIMEN",
+    "Observation" = "HUMAN_OBSERVATION",
+    "Specimen" = "PRESERVED_SPECIMEN",
+    "Fossil" = "FOSSIL_SPECIMEN",
+    "Unknown" = "UNKNOWN"))
+
+# check data
+percent.filled(bison_raw)
+head(bison_raw)
+
+# write file
+write.csv(bison_raw, "raw_occurrence_point_data/bison_raw.csv")
+
+# write file of county distribution
+write.csv(us_cty_dist, "BISON_US_county_distribution.csv")
