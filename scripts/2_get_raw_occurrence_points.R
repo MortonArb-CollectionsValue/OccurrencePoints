@@ -10,6 +10,9 @@
       # Botanical Information and Ecology Network (BIEN)
     # NATIONAL DATABASES
       # Forest Inventory and Analysis (FIA) Program of the USDA Forest Service
+  ## NOTE: Not all data from these sources are reliable. The aim of this
+  #         script is to get all easily-downloadable occurrence data, which
+  #         can then be sorted and vetted for the user's specific purposes.
 
 ### INPUTS:
   # (optional) target_taxa_with_syn.csv
@@ -43,6 +46,7 @@ library(ridigbio)
 library(batchtools)
 library(googledrive)
 library(textclean)
+library(rbison)
 
 #################
 ### FUNCTIONS ###
@@ -559,7 +563,7 @@ setnames(bien_raw,
           "dataset","datasource"),
   new = c("taxon_name","scientificName",
           #"family","genus",
-          "decimalLongitude","decimalLatitude",
+          "decimalLatitude","decimalLongitude",
           "basisOfRecord","nativeDatabaseID",
           "stateProvince",
           #"collectionCode",
@@ -708,7 +712,7 @@ setnames(fia_raw,
   old = c("LAT","LON",
           "INVYR",
           "STATUSCD","fiaPlotID"),
-  new = c("decimalLongitude","decimalLatitude",
+  new = c("decimalLatitude","decimalLongitude",
           "year",
           "isAlive","nativeDatabaseID"),
   skip_absent=T)
@@ -748,6 +752,7 @@ write.csv(fia_raw,"raw_occurrence_point_data/fia_raw.csv")
 
 # download BISON occurrence data for target taxa
 #   there is also county distribution data
+# if loop gets hung up, generally best to just try again instead of waiting
 bison_raw <- data.frame()
 us_cty_dist <- data.frame()
 for(i in 1:length(taxon_names)){
