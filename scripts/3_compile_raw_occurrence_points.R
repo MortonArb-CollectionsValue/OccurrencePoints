@@ -126,8 +126,7 @@ all_data <- all_data %>% select(species_name_acc,taxon_name,scientificName,
   taxonIdentificationNotes,database,year,basisOfRecord,establishmentMeans,
   decimalLatitude,decimalLongitude,coordinateUncertaintyInMeters,
   geolocationNotes,localityDescription,locationNotes,datasetName,publisher,
-  nativeDatabaseID,references,source_databases,informationWithheld,issue,
-  taxon_name_full,list)
+  nativeDatabaseID,references,informationWithheld,issue,taxon_name_full,list)
 
 # create subsets for locality-only points and lat-long points, then
 #   continue forward with just lat-long points
@@ -167,15 +166,15 @@ geo_pts2 <- geo_pts %>%
   names(source_standard)[1] <- "source_databases"
   geo_pts2 <- geo_pts2 %>% select(-source_databases) %>% cbind(source_standard)
 head(geo_pts2)
+nrow(geo_pts2) #1513892
 table(geo_pts2$source_databases)
 
 # mark rows that may be geolocated to U.S. county centroids
-geoCounty$lat_round <- round(geoCounty$cty_centroid_lat,digits=2)
-geoCounty$long_round <- round(geoCounty$cty_centroid_lon,digits=2)
+geoCounty$lat_round <- round(geoCounty$lat,digits=2)
+geoCounty$long_round <- round(geoCounty$lon,digits=2)
 geoCounty <- geoCounty[,c(1,8:9)]
 geo_pts2 <- left_join(geo_pts2,geoCounty)
-nrow(geo_pts2)
-nrow(geo_pts2[which(!is.na(geo_pts2$FIPS)),])
+nrow(geo_pts2[which(!is.na(geo_pts2$fips)),]) #69
 
 # take a look at results
 count_geo <- geo_pts2 %>% count(species_name_acc)
