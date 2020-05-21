@@ -747,7 +747,7 @@ head(fia_raw)
 write.csv(fia_raw,"raw_occurrence_point_data/fia_raw.csv")
 
 ###############
-# 6) USGS, Biodiversity Information Serving Our Nation (BISON)
+# 6) Biodiversity Information Serving Our Nation (BISON), USGS
 ###############
 
 # download BISON occurrence data for target taxa
