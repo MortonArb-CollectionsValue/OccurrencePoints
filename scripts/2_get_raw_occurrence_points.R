@@ -1,4 +1,4 @@
-### Author: Emily Beckman  ###  Date: 02/05/2020                                |
+### Author: Emily Beckman & Shannon Still ###  Date: 02/05/2020
 
 ### DESCRIPTION:
   # This script provides instructions and code chunks for downloading and
@@ -36,62 +36,61 @@
 ### LIBRARIES ###
 #################
 
-library(plyr)
-library(tidyverse) #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
-library(spocc)
-library(rgbif)
-library(data.table)
-library(BIEN)
-library(ridigbio)
-library(batchtools)
-library(googledrive)
-library(textclean)
-library(rbison)
+# rm(list=ls())
+my.packages <- c('plyr', 'tidyverse', 'spocc', 'rgbif', 'data.table', 'BIEN', 
+                 'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison')
+# install.packages(my.packages) #Turn on to install current versions
+          #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
+lapply(my.packages, require, character.only=TRUE)
+rm(my.packages)
 
-#################
-### FUNCTIONS ###
-#################
+####################################################################################
+####################################################################################
+## set working directory
+####################################################################################
+# run code to set your working directory and project folders based upon computer using
+      # skip this if preferred, but then need to set your working directory and input/output folders manually
+# source('scripts/set_workingdirectory.R')
 
-# searches for data frame columns with only NAs and removes them
-remove.empty.col <- function(df){
-  remove <- vector(mode = "character")
-  for(i in 1:ncol(df)){
-    if(sum(is.na(df[,i])) == nrow(df)){
-      remove <- c(remove,names(df)[i])
-      print(names(df)[i])
-    }
-  }
-  if(length(remove)>0){
-    df <-  df[,-which(names(df) %in% remove)]
-  }
-  return(df)
-}
+# If setting manually, set your working directory and data_in file paths in the next few lines
+setwd("./../..")
+setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
+data_in <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points"
 
-# calculates percent of each data frame column that is not NA
-percent.filled <- function(df){
-  for(i in 1:ncol(df)){
-    print(paste(names(df)[i],": ",
-      round((nrow(df)-sum(is.na(df[,i])))/nrow(df),3)*100,"%",sep=""))
-  }
-}
+## location for your login information for GBIF (or maybe other stuff) if using Otherwise comment out.
+log_loc <- file.path("/Users/aesculus/Desktop/gbif.txt")
+
+## create folders if they are npt already there
+if(dir.exists(file.path(data_in, "raw_occurrence_point_data/gbif_read_in"))) print('directory already created') else
+  dir.create(file.path(data_in, "raw_occurrence_point_data/gbif_read_in"), recursive=TRUE)
+
+####################################################################################
+####################################################################################
+## load functions
+####################################################################################
+source('scripts/load_IMLS_functions.R')
+####################################################################################
 
 
 ################################################################################
 # A) Create list of target taxa
 ################################################################################
 
-setwd("./../..")
-setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
-
 ## IF YOU HAVE CSV OF TARGET TAXA AND SYNONYMS:
 # read in taxa list
-taxon_list <- read.csv("target_taxa_with_syn.csv", header = T,
-  na.strings=c("","NA"), colClasses="character")
+taxon_list <- read.csv(file.path(data_in, "target_taxa_with_syn.csv"), header = T,
+                       na.strings=c("","NA"), colClasses="character")
+
+# taxon_list <- read.csv("target_taxa_with_syn.csv", header = T,
+#   na.strings=c("","NA"), colClasses="character")
+
 head(taxon_list)
+
 # filter out cultivars and blank rows
 taxon_list <- taxon_list %>%
               filter(taxon_type != "cultivar" & !is.na(taxon_name))
 nrow(taxon_list) #805
+
 # list of target taxon names
 taxon_names <- taxon_list$taxon_name
 
@@ -113,9 +112,24 @@ taxon_names <- taxon_list$taxon_name
   # if you don't have account yet, go to https://www.gbif.org then click
   #   "Login" in top right corner, then click "Register"
   # !!! FILL THIS IN WITH YOUR INFO:
-user <- "ebeckman"
-pwd <- "Quercus51"
-email <- "ebeckman@mortonarb.org"
+
+# user <- "ebeckman"
+# pwd <- "Quercus51"
+# email <- "ebeckman@mortonarb.org"
+
+## I created a text file that contains 3 things on 3 successive lines: my username, password, and email address. 
+    ## By putting this in a specific location on my own computer, and not part of our gut, I can keep my login info separate.
+    ## My login info is sourced in the set_workingdirectory.R script
+login <- read_lines(log_loc)
+
+user  <- login[1] #"user"
+pwd   <- login[2] #"password"
+email <- login[3] #"email"
+
+# user <- "user"
+# pwd <- "password"
+# email <- "email"
+
 
 # get GBIF taxon keys for all taxa in target list
 keys <- sapply(taxon_names,function(x) name_backbone(name=x)$speciesKey,
@@ -132,34 +146,50 @@ for(i in 1:length(keys_nodup)){
 }; sort(gbif_taxon_keys)
 
 # download GBIF data (Darwin Core Archive format)
+# download GBIF data (Darwin Core Archive format)
 gbif_download <- occ_download(
-                     pred_in("taxonKey", gbif_taxon_keys),
-                     #pred_in("basisOfRecord", c("PRESERVED_SPECIMEN",
-                     #    "HUMAN_OBSERVATION","FOSSIL_SPECIMEN","OBSERVATION",
-                     #    "UNKNOWN","MACHINE_OBSERVATION","MATERIAL_SAMPLE",
-                     #    "LITERATURE")),
-                     #pred("hasCoordinate", TRUE),
-                     #pred("hasGeospatialIssue", FALSE),
-                     format = "DWCA", #"SIMPLE_CSV"
-                     user=user,pwd=pwd,
-                     email=email)
+                pred_in("taxonKey", gbif_taxon_keys),
+                #pred_in("basisOfRecord", c("PRESERVED_SPECIMEN",
+                #    "HUMAN_OBSERVATION","FOSSIL_SPECIMEN","OBSERVATION",
+                #    "UNKNOWN","MACHINE_OBSERVATION","MATERIAL_SAMPLE",
+                #    "LITERATURE")),
+                #pred("hasCoordinate", TRUE),
+                #pred("hasGeospatialIssue", FALSE),
+                format = "DWCA", #"SIMPLE_CSV"
+                user=user,pwd=pwd,
+                email=email)
+rm(user, pwd, email, login)
+
 # load gbif data just downloaded
   # create new folder for data and set as working directory
-dir.create(file.path(getwd(),"raw_occurrence_point_data/gbif_read_in"))
-setwd(file.path(getwd(),"raw_occurrence_point_data/gbif_read_in"))
+## first, save regular wd
+oldwd <- getwd()
+
+setwd(file.path(data_in, "raw_occurrence_point_data/gbif_read_in"))
+    # dir.create(file.path(getwd(),"raw_occurrence_point_data/gbif_read_in"))
+    # setwd(file.path(getwd(),"raw_occurrence_point_data/gbif_read_in"))
+
+# download and unzip before reading in
+gbd <- gbif_download # !!! "Download key" can be acquired through this line and then pasted in the next two lines
 
 # must wait for download to complete before continuing;
-# it may take a while (up to 3 hours) if you have a large taxa list;
-# you can check download status here: https://www.gbif.org/user/download
+    # it may take a while (up to 3 hours) if you have a large taxa list;
+    # you can check download status here: https://www.gbif.org/user/download
+      ## -or-
+  ## Since you sometimes need to wait to download
+      ## There is a funtion that helps you to wait until the download is ready. 
+          ##this fxn occ_download_wait()
 
-  # download and unzip before reading in
-gbif_download # !!! PASTE "Download key" as first argument in next two lines !!!
-occ_download_get(key="0041635-200221144449610", overwrite=TRUE)
-  #OLD: 0036899-200221144449610
-unzip("0041635-200221144449610.zip")
-  # read in data
-gbif_raw <- fread("occurrence.txt",quote="",na.strings="")
-setwd("./../..")
+occ_download_wait(gbd, status_ping=10, quiet=TRUE)
+occ_download_get(key=gbd[1], overwrite=TRUE)
+
+unzip(paste0(gbd[1], '.zip'))
+
+# read in data
+
+gbif_raw <- fread("occurrence.txt", quote="", na.strings="")
+# setwd("./../..")
+setwd(oldwd); rm(oldwd)
 nrow(gbif_raw) #2201869
 
 ### standardize column names
@@ -243,7 +273,34 @@ percent.filled(gbif_raw)
 head(gbif_raw)
 
 # write file
-write.csv(gbif_raw, "raw_occurrence_point_data/gbif_raw.csv")
+# write.csv(gbif_raw, "raw_occurrence_point_data/gbif_raw.csv")
+write.csv(gbif_raw, file.path(data_in, "raw_occurrence_point_data/gbif_raw.csv"), row.names=FALSE)
+
+################################################################################################################
+##Shannon working here 4/21/2020
+################################################################################################################
+## We would like to do this if time permitting ##
+  ## this section is to get the header column names from a file, then subset the table by the column names wanted, then set the colnames appropriate for that data.frame
+  ## this can be repeated for each new data source
+  ## we may have to move some of these steps around
+
+# b.h <- read_excel('/Users/sstill/Box/Seed Menus Project/HerbariumRecords/HerbariumRecords_wHeaders/Burke_AllSpp_wHeaders.xlsx', col_types = 'text')
+##this line sets the correct data.frame
+  # n.h <- 'burke' 
+
+##this line selects the correct columns
+  # nms  <- nm.set %>% filter(!is.na(!!as.name(n.h))) %>% select(!!as.name(n.h)) %>% as.character()
+  # # nms1 <- nm.set %>% filter(!is.na(!!as.name(n.h))) %>% select(final_nm, !!as.name(n.h))
+
+# b.h <- b.h %>% select_(nms)
+
+##this line sets the correct column names
+  # names(b.h) <- nms1$final_nm
+
+##these lines add some data to fill in where missing
+  # b.h <- b.h %>% mutate(dataSource=paste0('burke', sprintf("%05d", 1:nrow(b.h))), id=as.character(id), coordinateSystem=NA_character_, zone = NA_character_, x_coord = as.numeric(x_coord), y_coord = as.numeric(y_coord), coordinateUncertaintyMeters = as.numeric(coordinateUncertaintyMeters)); rm(n.h, nms, nms1)
+  # b.h <- b.h %>% mutate(EPSG='undefined', data_type='herbarium voucher')
+################################################################################################################
 
 ###############
 # 2) Integrated Digitized Biocollections (iDigBio)
@@ -365,7 +422,8 @@ percent.filled(idigbio_raw)
 head(idigbio_raw)
 
 # write file
-write.csv(idigbio_raw, "raw_occurrence_point_data/idigbio_raw.csv")
+write.csv(idigbio_raw, file.path(data_in, "raw_occurrence_point_data/idigbio_raw.csv"), row.names=FALSE)
+# write.csv(idigbio_raw, "raw_occurrence_point_data/idigbio_raw.csv")
 
 ###############
 # 3) U.S. Herbaria Consortia (SERNEC, SEINet, etc.)
@@ -393,10 +451,12 @@ write.csv(idigbio_raw, "raw_occurrence_point_data/idigbio_raw.csv")
 #   "sernec_read_in" folder -- obviously "keep both" if prompted
 
 # read in raw occurrence points
-file_list <- list.files(path = "raw_occurrence_point_data/sernec_read_in",
-  pattern = ".csv", full.names = T)
+file_list <- list.files(path = file.path(data_in, "raw_occurrence_point_data/sernec_read_in"),
+                        pattern = ".csv", full.names = T)
+# file_list <- list.files(path = "raw_occurrence_point_data/sernec_read_in",
+# pattern = ".csv", full.names = T)
 file_dfs <- lapply(file_list, read.csv, colClasses = "character",
-  na.strings=c("","NA"),strip.white=T,fileEncoding="latin1")
+                   na.strings=c("", "NA"), strip.white=T, fileEncoding="latin1")
 length(file_dfs) #4
 # stack datasets to create one dataframe
 sernec_raw <- data.frame()
@@ -518,7 +578,8 @@ percent.filled(sernec_raw)
 head(sernec_raw)
 
 # write file
-write.csv(sernec_raw, "raw_occurrence_point_data/sernec_raw.csv")
+write.csv(sernec_raw, file.path(data_in, "raw_occurrence_point_data/sernec_raw.csv"), row.names=FALSE)
+# write.csv(sernec_raw, "raw_occurrence_point_data/sernec_raw.csv")
 
 ###############
 # 4) Botanical Information and Ecology Network (BIEN)
@@ -573,9 +634,9 @@ bien_raw$database <- "BIEN"
 
 # combine a few similar columns
 bien_raw <- bien_raw %>% unite("taxonIdentificationNotes",
-  identified_by:date_identified,na.rm=T,remove=T,sep=" | ")
+  identified_by:date_identified,na.rm=T, remove=T, sep=" | ")
   bien_raw$taxonIdentificationNotes <-
-    gsub("^$",NA,bien_raw$taxonIdentificationNotes)
+    gsub("^$", NA, bien_raw$taxonIdentificationNotes)
 
 # fix taxa names
 bien_raw$taxon_name <- gsub(" fo. "," f. ",bien_raw$taxon_name)
@@ -610,7 +671,8 @@ percent.filled(bien_raw)
 head(bien_raw)
 
 # write file
-write.csv(bien_raw, "raw_occurrence_point_data/bien_raw.csv")
+write.csv(bien_raw, file.path(data_in, "raw_occurrence_point_data/bien_raw.csv"), row.names=FALSE)
+# write.csv(bien_raw, "raw_occurrence_point_data/bien_raw.csv")
 
 ###############
 # 5) USDA Forest Service, Forest Inventory and Analysis (FIA)
@@ -630,7 +692,7 @@ write.csv(bien_raw, "raw_occurrence_point_data/bien_raw.csv")
   #   and place in your working directory
 
 # read in FIA species codes
-fia_codes <- read.csv("FIA_tables/FIA_AppendixF_TreeSpeciesCodes_2016.csv",
+fia_codes <- read.csv(file.path(data_in, "FIA_tables/FIA_AppendixF_TreeSpeciesCodes_2016.csv"),
   colClasses="character")
 # join taxa list to FIA species codes
 fia_codes <- fia_codes[,c(1,3)]
@@ -744,7 +806,8 @@ percent.filled(fia_raw)
 head(fia_raw)
 
 # write file
-write.csv(fia_raw,"raw_occurrence_point_data/fia_raw.csv")
+write.csv(fia_raw, file.path(data_in, "raw_occurrence_point_data/fia_raw.csv"), row.names=FALSE)
+# write.csv(fia_raw,"raw_occurrence_point_data/fia_raw.csv")
 
 ###############
 # 6) USGS, Biodiversity Information Serving Our Nation (BISON)
@@ -808,7 +871,9 @@ percent.filled(bison_raw)
 head(bison_raw)
 
 # write file
-write.csv(bison_raw, "raw_occurrence_point_data/bison_raw.csv")
+write.csv(bison_raw, file.path(data_in, "raw_occurrence_point_data/bison_raw.csv"), row.names=FALSE)
+# write.csv(bison_raw, "raw_occurrence_point_data/bison_raw.csv")
 
 # write file of county distribution
-write.csv(us_cty_dist, "BISON_US_county_distribution.csv")
+write.csv(us_cty_dist, file.path(data_in, "BISON_US_county_distribution.csv"), row.names=FALSE)
+# write.csv(us_cty_dist, "BISON_US_county_distribution.csv")

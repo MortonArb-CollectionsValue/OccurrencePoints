@@ -9,7 +9,7 @@
 
 
 ####################################################################################
-#######################################
+####################################################################################
 ## fxn: synonyms.compiled
     # remove speices/taxa that did not have any synonyms (they create errors
     #   in next step), create data frame of synonyms, and add column stating
@@ -32,4 +32,40 @@ synonyms.compiled <- function(syn_output,db_name){
   return(syn_output_df)
 }
 
+####################################################################################
+####################################################################################
+## fxn: remove.empty.col
+# searches for data frame columns with only NAs and removes them
+####################################################################################
+remove.empty.col <- function(df){
+  remove <- vector(mode = "character")
+  for(i in 1:ncol(df)){
+    if(sum(is.na(df[,i])) == nrow(df)){
+      remove <- c(remove,names(df)[i])
+      print(names(df)[i])
+    }
+  }
+  if(length(remove)>0){
+    df <-  df[,-which(names(df) %in% remove)]
+  }
+  return(df)
+}
+
+####################################################################################
+####################################################################################
+## fxn: percent.filled
+# calculates percent of each data frame column that is not NA
+####################################################################################
+percent.filled <- function(df){
+  for(i in 1:ncol(df)){
+    print(paste(names(df)[i],": ",
+                round((nrow(df)-sum(is.na(df[,i])))/nrow(df),3)*100,"%",sep=""))
+  }
+}
+
+####################################################################################
+####################################################################################
+## fxn: XXXXX
+# XXXXX
+####################################################################################
 

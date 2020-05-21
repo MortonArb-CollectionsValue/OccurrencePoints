@@ -33,7 +33,7 @@
     # path.pts <- file.path(path.imls, "insitu_occurrence_points/raw_split_by_sp")
     # path.figs <- file.path(path.imls, "Environmental Niche Value", "figures")
     # data_in <- file.path(path.imls, "Environmental Niche Value", "data")
-    
+
     ## location for your login information for GBIF (or maybe other stuff)
     log_loc <- file.path("/Users/aesculus/Desktop/gbif.txt")
     
