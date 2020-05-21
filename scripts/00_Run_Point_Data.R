@@ -20,14 +20,14 @@ source('scripts/1_get_taxonomic_info.R')
 ## 02_get_raw_occurrence_points.R ##
 ###############
 ## Run the retrieve raw EOs and then sort, clean, and filter
-source('scripts/02_get_raw_occurrence_points.R')
+source('scripts/2_get_raw_occurrence_points.R')
 
 # ##############################
 # ##############################
 # ## 03_compile_raw_occurrence_points.R ##
 # ###############
 # ## Run the retrieve raw EOs and then sort, clean, and filter
-# source('scripts/03_compile_raw_occurrence_points.R')
+# source('scripts/3_compile_raw_occurrence_points.R')
 # 
 # ##############################
 # ##############################
