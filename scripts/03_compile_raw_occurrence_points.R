@@ -37,8 +37,8 @@ rm(my.packages)
 source('scripts/set_workingdirectory.R')
 
 # setwd("./../..")
-# setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
-# data_in <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points"
+ setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
+ data_in <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA"
 
 ################################################################################
 # A) Read in data and stack
@@ -66,7 +66,7 @@ all_data_raw <- Reduce(rbind.fill, file_dfs)
 ################################################################################
 
 # read in target taxa list
-taxon_list <- read.csv(file.path(data_in, 'insitu_occurrence_points', "target_taxa_with_syn.csv"), 
+taxon_list <- read.csv(file.path(data_in, 'insitu_occurrence_points', "target_taxa_with_syn.csv"),
                        header=TRUE, na.strings=c("","NA"), colClasses="character")
   # taxon_list <- read.csv("target_taxa_with_syn.csv", header = T,
   #       na.strings=c("","NA"), colClasses="character")
@@ -101,7 +101,7 @@ all_data <- all_data[which(!is.na(all_data$list)),]
 
 ################################################################################
 # C) Standardize some key columns
-  ## this step could be donw in script 2, if we want to take the time to go through it and add column header files
+  ## this step could be down in script 2, if we want to take the time to go through it and add column header files
 ################################################################################
 
 # create localityDescription column
@@ -153,6 +153,9 @@ all_data <- all_data %>% select(species_name_acc,taxon_name,scientificName,
   locationNotes,datasetName,publisher,nativeDatabaseID,references,
   informationWithheld,issue,taxon_name_full,list)
 
+# add unique ID column
+all_data$unique_id <- seq.int(nrow(all_data))
+
 # create subsets for locality-only points and lat-long points, then
 #   continue forward with just lat-long points
 locality_pts <- all_data %>% filter(!is.na(localityDescription) &
@@ -160,11 +163,11 @@ locality_pts <- all_data %>% filter(!is.na(localityDescription) &
   arrange(desc(year)) %>%
   distinct(species_name_acc,localityDescription,.keep_all=T)
   nrow(locality_pts) #212931
-  write.csv(locality_pts,"need_geolocation.csv")
+  write.csv(locality_pts,"need_geolocation.csv",row.names=F)
 geo_pts <- all_data %>% filter(!is.na(decimalLatitude) &
   !is.na(decimalLongitude)) %>% select(-localityDescription)
   nrow(geo_pts) #7566561
-  
+
 ##write out data to examine
     ##can write to a trial data folder (set in set_workngdirectory.R script if you prefer)
   write.csv(locality_pts, file.path(data_in, "need_geolocation.csv"), row.names=FALSE)
@@ -172,13 +175,11 @@ geo_pts <- all_data %>% filter(!is.na(decimalLatitude) &
   geo_pts <- all_data %>% filter(!is.na(decimalLatitude) &
                                    !is.na(decimalLongitude))
   nrow(geo_pts) #7562242
-  
+
 # ## writing a file out just to look it over
 # write.csv(geo_pts[1:1000,], file.path(trial_data, "are_geolocated.csv"), col.names=TRUE)
   write.csv(all_data, file.path(trial_data, "all_data.csv"), col.names=TRUE, row.names=FALSE)
   write.csv(geo_pts, file.path(trial_data, "are_geolocated.csv"), col.names=TRUE, row.names=FALSE)
-  
-  
 
 ################################################################################
 # D) Remove duplicates
@@ -225,13 +226,13 @@ count_locality <- locality_pts %>% count(species_name_acc)
 count_locality <- setorder(count_locality,n)
 names(count_locality)[2] <- "num_locality_records"
 summary <- full_join(count_geo,count_locality)
-write.csv(summary,"occurrence_point_count_per_species_new.csv")
+write.csv(summary,"occurrence_point_count_per_species_new.csv",row.names=F)
 
 ##save data out to a file so don't have to rerun
 save(all_data, taxon_list, s, geo_pts2, need_match, file=file.path(data_in, "EO_data.RData"))
   rm(all_data_raw, file_dfs, geo_pts, locality_pts, matched, need_match, source_standard)
-# 
-#   
+#
+#
 #   head(all_data)
 
 ################################################################################
@@ -248,83 +249,66 @@ if(dir.exists(file.path(data_in, "raw_split_by_sp"))) print('directory already c
   dir.create(file.path(data_in, "raw_split_by_sp"), recursive=TRUE)
 # dir.create(file.path(getwd(),"raw_split_by_sp"))
 lapply(seq_along(sp_split), function(i) write.csv(sp_split[[i]],
-<<<<<<< HEAD:scripts/3_compile_raw_occurrence_points.R
-  paste("raw_split_by_sp/",names(sp_split)[[i]],".csv",sep="")))
+  paste("raw_split_by_sp/",names(sp_split)[[i]],".csv",sep=""),row.names=F))
 
 
 
+################################################################################
+# VISUALIZE & EXPLORE POINTS
+## move to script #4 eventually?? or could be separate script like the current
+## "99" script. Really just for manual exporation, versus creating an output
+################################################################################
 
+library(leaflet); library(RColorBrewer)
 
-
-
-
-library(sp); library(ggplot2); library(maps)
-
-path.imls <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/"
+path.imls <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA"
 path.pts <- file.path(path.imls, "insitu_occurrence_points/raw_split_by_sp")
-#path.figs <- file.path(path.imls, "Environmental Niche Value", "figures")
-#path.data <- file.path(path.imls, "Environmental Niche Value", "data")
 
-#if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
-#if(!dir.exists(path.figs)) dir.create(path.data, recursive=T)
-#if(!dir.exists(file.path(path.figs, "maps"))) dir.create(file.path(path.figs, "maps"), recursive=T)
+spp.test <- c("Quercus_georgiana", "Quercus_imbricaria", "Quercus_arkansana",
+  "Quercus_falcata", "Quercus_stellata", "Quercus_acutissima")
 
-#arb.lat=41.812739
-#arb.lon=-88.072749
+dat.now <- read.csv(file.path(path.pts, paste0(spp.test[6],".csv")),
+  colClasses="character")
 
-map.world <- map_data("world")
-map.world2 <- map_data("world2")
-map.us <- map_data("state")
+dat.now$decimalLatitude <- as.numeric(dat.now$decimalLatitude)
+dat.now$decimalLongitude <- as.numeric(dat.now$decimalLongitude)
+dat.now$database <- factor(dat.now$database,
+  levels = c("FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN"))
+dat.now <- dat.now %>% arrange(desc(database))
 
-spp.test <- c("Quercus georgiana", "Quercus imbricaria", "Quercus arkansana", "Quercus falcata", "Quercus stellata", "Quercus acutissima")
+colors <- c("#db218e","#8a2fad","#2fb3b5","#4c9c24","#c29f21","#c2661f")
+palette <- colorFactor(palette=colors, levels=unique(dat.now$database))
 
-spp.all <- dir(path.pts, ".csv")
-
-for(i in 1:length(spp.test)){
-  fnow <- grep(sub(" ", "_", spp.test[i]), spp.all)
-
-  dat.now <- read.csv(file.path(path.pts, spp.all[fnow]))
-  summary(dat.now)
-
-  # we have some VERY odd locations... FIA and BIEN seem to be the biggest offenders
-  #  FIA should only be in the northern hemisphere (US), so assume everything negative is backwards
-  #  BIEN is a bit different... BIEN looks like it has a LOT of redundancy, so lets just get rid of it
-  #  Not feeling like "preserved specimens" are actually located to places
-  #  Also highly questioning the reliability of iNaturalist observations -- I think they're REALLY skewing Q. acutissima
-  dat.now <- dat.now[!is.na(dat.now$decimalLatitude),]
-  if(nrow(dat.now)==0) next
-
-  dat.now <- dat.now[dat.now$decimalLatitude!=0 & dat.now$decimalLongitude!=0,] # get rid of things with 0,0 location
-  dat.now <- dat.now[!dat.now$database %in% c("BIEN"),] # Lets just get rid of BIEN -- it looks like lots of overlap
-  dat.now <- dat.now[!dat.now$basisOfRecord %in% c("PRESERVED_SPECIMEN"),] # This seems odd too and probably not an actual occurrence point
-  dat.now <- dat.now[!dat.now$publisher %in% ("iNaturalist.org"),]
-  rows.bad <- which((dat.now$database=="FIA" & dat.now$decimalLatitude < 0) ) #
-  dat.now[rows.bad, c("decimalLongitude", "decimalLatitude")] <- dat.now[rows.bad, c("decimalLatitude", "decimalLongitude")]
-  dat.now[dat.now$decimalLatitude<0,c("decimalLongitude", "decimalLatitude", "database")]
-
-  png(file.path(path.figs, "maps", paste0(sub(" ", "_", spp.test[i]), "_adj.png")), height=6, width=10, units="in", res=180)
-  print(
-
-
-  dat.now <- read.csv(file.path(path.pts, spp.all[1]))
-
-  ggmap() +
-    coord_equal() +
-    ggtitle(spp.test[1]) +
-    geom_path(data=map.world, aes(x=long, y=lat, group=group)) +
-    geom_point(data=dat.now, aes(x=decimalLongitude, y=decimalLatitude, color=database), size=2) +
-    #scale_x_continuous(expand=c(0,0)) +
-    #scale_y_continuous(expand=c(0,0)) +
-    theme_minimal()
-
-
-  )
-  dev.off()
-
-
-
-
+map.pts <- function(pts){
+	map <- leaflet() %>%
+		addProviderTiles("CartoDB.PositronNoLabels") %>%
+		addCircleMarkers(
+      data = pts,
+      lng = ~decimalLongitude,
+      lat = ~decimalLatitude,
+			popup = ~paste(
+        "Species name:",taxon_name_full,"(",list,")","<br/>",
+				"Database:",database,"<br/>",
+        "Dataset name:",datasetName,"<br/>",
+        "All source databases:",source_databases,"<br/>",
+        "Year:",year,"<br/>",
+				"Basis of record:",basisOfRecord,"<br/>",
+        "Establishment means:",establishmentMeans,"<br/>",
+        "Coordinate uncertainty:",coordinateUncertaintyInMeters,"<br/>",
+        "ID:",unique_id),
+			radius = 5,
+      fillOpacity = 0.6,
+      stroke = F,
+      color = ~palette(database)) %>%
+		addControl(
+      pts$species_name_acc[1],
+      position = "topright") %>%
+		addLegend(
+      pal = palette,
+      values = unique(dat.now$database),
+			title = "Key",
+      position = "bottomright",
+      opacity = 0.6)
+	return(map)
 }
-=======
-  paste0(file.path(data_in, "raw_split_by_sp", names(sp_split)[[i]]), ".csv")))
->>>>>>> eda6aacf847ae0bfac1449fde7c375cb1b507165:scripts/03_compile_raw_occurrence_points.R
+map.pts(dat.now)
