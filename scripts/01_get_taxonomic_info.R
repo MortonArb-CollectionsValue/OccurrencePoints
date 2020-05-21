@@ -159,7 +159,7 @@ tp_names$database <- "tropicos"
 tp_names[] <- lapply(tp_names, function(x) gsub(" × "," x ", x))
 tp_names[] <- lapply(tp_names, function(x) gsub(" fo. "," f. ", x))
 # write file
-#write.csv(tp_names,"taxize_tropicos_names.csv")
+#write.csv(tp_names, "taxize_tropicos_names.csv", row.names=FALSE)
 
 # remove duplicates except those matching legitimate names
 tp_names_noDup <- tp_names
@@ -217,7 +217,7 @@ tp_all <- rbind.fill(tp_names_noDup,tp_syn_df)
 #tp_all[which(duplicated(tp_all$taxon_name) & tp_all$acceptance != "synonym"),]
 #tp_all[which(duplicated(tp_all$taxon_name_match)),]
 # write file
-write.csv(tp_all,"taxize_tropicos.csv")
+write.csv(tp_all, "taxize_tropicos.csv", row.names=FALSE)
 
 ##
 ### B) Integrated Taxonomic Information Service (ITIS)
@@ -269,7 +269,7 @@ itis_names_noDup <- itis_names_noDup[,(-7)]
 itis_names_noDup$match_name_with_authors <- paste(
   itis_names_noDup$taxon_name_match,itis_names_noDup$author)
 # write file
-#write.csv(itis_names_noDup,"taxize_itis_names_noDup.csv")
+#write.csv(itis_names_noDup, "taxize_itis_names_noDup.csv", row.names=FALSE)
 
 ## GET SYNONYMS
 
@@ -301,7 +301,7 @@ itis_syn_df$match_name_with_authors <- paste(
 itis_syn_df <- itis_syn_df[which(itis_syn_df$taxon_name !=
   itis_syn_df$taxon_name_match),]
 # write file
-#write.csv(itis_syn_df,"taxize_itis_syn.csv")
+#write.csv(itis_syn_df, "taxize_itis_syn.csv", row.names=FALSE)
 
 ## STACK ALL DATA
 
@@ -312,7 +312,7 @@ itis_all <- rbind.fill(itis_names_noDup,itis_syn_df)
 #  itis_all$acceptance != "synonym"),]
 #itis_all[which(duplicated(itis_all$taxon_name_match)),]
 # write file
-write.csv(itis_all,"taxize_itis.csv")
+write.csv(itis_all, "taxize_itis.csv", row.names=FALSE)
 
 ##
 ### C) The Plant List (TPL)
@@ -381,7 +381,7 @@ tpl_names_noDup <- tpl_names_noDup[,(-10)]
 tpl_all <- tpl_names_noDup %>% filter(tpl_names_noDup$taxon_name %in%
   taxa_names)
 # write file
-write.csv(tpl_all,"taxize_tpl.csv")
+write.csv(tpl_all,"taxize_tpl.csv", row.names=FALSE)
 
 ##
 ### D) International Plant Names Index (IPNI)
@@ -416,7 +416,7 @@ colnames(ipni_names)
 ipni_names <- ipni_names[,c("taxon_name","taxon_name_match","author",
   "match_id","database","match_name_with_authors","family")]
 # write file
-#write.csv(ipni_names,"taxize_ipni_names.csv")
+#write.csv(ipni_names,"taxize_ipni_names.csv", row.names=FALSE)
 
 # remove duplicates ?? BUT VERSION NUMBER IS ARBITRARY ??
   # sort by version and remove duplicates
@@ -429,7 +429,7 @@ ipni_names <- ipni_names[,c("taxon_name","taxon_name_match","author",
 # join with taxa list and remove non-matches
 ipni_all <- ipni_names %>% filter(ipni_names$taxon_name %in% taxa_names)
 # write file
-write.csv(ipni_all,"taxize_ipni.csv")
+write.csv(ipni_all, "taxize_ipni.csv", row.names=FALSE)
 
 ##
 ### E) Taxonomic Name Resolution Service (TNRS)
@@ -482,7 +482,7 @@ for(i in 1:length(genera)){
   tnrs_all <- tnrs_all[which(tnrs_all$taxon_name_match != genera[[i]]),]
 }
 # write file
-write.csv(tnrs_all,"taxize_tnrs.csv")
+write.csv(tnrs_all, "taxize_tnrs.csv", row.names=FALSE)
 
 ########################
 # 3. Create master list
@@ -592,7 +592,7 @@ nrow(all_data)
 all_data <- setorderv(all_data,c("taxon_name_match","ref_count","ref",
   "status_standard"),c(1,-1,-1,1))
 # write file
-write.csv(all_data,"taxize_all_names_raw.csv")
+write.csv(all_data,"taxize_all_names_raw.csv", row.names=FALSE)
 
 # IF DESIRED:
   # remove forms
@@ -633,7 +633,7 @@ all_data3 <- dplyr::select(all_data3,taxon_name,taxon_name_match,
 # final ordering of names
 all_data3 <- as.data.frame(setorder(all_data3,taxon_name_match))
 # write file
-write.csv(all_data3,"taxize_all_names_new.csv")
+write.csv(all_data3,"taxize_all_names_new.csv", row.names=FALSE)
 
 
 
@@ -694,11 +694,11 @@ children_itis <- children(species_names, db="itis")
 # remove speices/taxa that did not have any children,
 #   create data frame of children,
 #   and add column stating which database it came from
-children_itis_df <- children.compiled(children_itis,"itis",4)
+children_itis_df <- children.compiled(children_itis, "itis" ,4)
 colnames(children_itis_df)
 
 # write file
-write.csv(children_itis_df,"taxize_itis_children.csv")
+write.csv(children_itis_df, "taxize_itis_children.csv", row.names=FALSE)
 
 
 ##
@@ -720,7 +720,7 @@ write.csv(children_itis_df,"taxize_itis_children.csv")
 #colnames(children_col_df)
 
 # write file
-#write.csv(children_col_df,"taxize_col_children.csv")
+#write.csv(children_col_df,"taxize_col_children.csv", row.names=FALSE)
 
 ##############################
 # Create master children list
@@ -741,7 +741,7 @@ unique_children <- all_children %>% group_by(taxon_full_name,taxonname) %>%
 nrow(all_children); nrow(unique_children)
 
 # write CSV file of all names
-write.csv(unique_children,"taxize_children.csv")
+write.csv(unique_children, "taxize_children.csv", row.names=FALSE)
 
 
 ################################################
@@ -781,7 +781,7 @@ setnames(gnr_output2,
   new = c("taxon_full_name","taxon_full_name_match","source"),
   skip_absent=T)
   gnr_output2 <- gnr_output2[(-2)]
-write.csv(gnr_output2,"gnr_output.csv")
+write.csv(gnr_output2, "gnr_output.csv", row.names=FALSE)
 
 ### Other (combinations of databases)
 #resolve(taxa_names) # iPlant, TNRS, GNR
@@ -869,4 +869,4 @@ unique_gnr <- cbind(unique_gnr,num_ref)
 unique_gnr$matched_name <- mgsub(unique_gnr$matched_name,
   c(" × "," X "," _ ")," x ")
 
-write.csv(unique_gnr,"gnr_output_unique.csv")
+write.csv(unique_gnr,"gnr_output_unique.csv", row.names=FALSE)

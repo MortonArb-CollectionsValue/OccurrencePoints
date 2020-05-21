@@ -1,4 +1,4 @@
-### Author: Emily Beckman  ###  Date: 04/15/2020                                |
+### Author: Emily Beckman & Shannon Still ###  Date: 05/05/2020                                |
 
 ### DESCRIPTION:
   # This script compiles data downloaded in 2_get_raw_occurrence_points.R,
@@ -23,26 +23,34 @@
 ### LIBRARIES ###
 #################
 
-library(plyr)
-library(tidyverse) #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
-library(housingData)
-library(data.table)
-library(textclean)
-library(CoordinateCleaner)
+rm(list=ls())
+my.packages <- c('plyr', 'tidyverse', 'housingData', 'data.table', 'textclean', 'CoordinateCleaner')
+# install.packages (my.packages) #Turn on to install current versions
+lapply(my.packages, require, character.only=TRUE)
+rm(my.packages)
 
+#######################################
+# run code to set your working directory and project folders based upon computer using
+#      skip this if preferred, but then need to set your working directory and input/output folders manually
+      # If not using working directory script, be sure to create data_in path
+####################################################################################
+source('scripts/set_workingdirectory.R')
+
+# setwd("./../..")
+# setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
+# data_in <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points"
 
 ################################################################################
 # A) Read in data and stack
 ################################################################################
 
-setwd("./../..")
-setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
-
 # read in raw datasets
-file_list <- list.files(path = "raw_occurrence_point_data",
-  pattern = ".csv", full.names = T)
+  ## using file.path, I have listed the files in the directory "raw_occurrence_point_data"
+  ## data_in is an object defined in the script 'set_workingdirectory.R'
+file_list <- list.files(file.path(data_in, 'insitu_occurrence_points', "raw_occurrence_point_data"),
+                        pattern = ".csv", full.names = T)
 file_dfs <- lapply(file_list, read.csv, header = T, na.strings=c("","NA"),
-  colClasses="character")
+                   colClasses="character")
 length(file_dfs) #6
 
 # stack all datasets using rbind.fill, which keeps non-matching columns
@@ -58,8 +66,10 @@ all_data_raw <- Reduce(rbind.fill, file_dfs)
 ################################################################################
 
 # read in target taxa list
-taxon_list <- read.csv("target_taxa_with_syn.csv", header = T,
-  na.strings=c("","NA"), colClasses="character")
+taxon_list <- read.csv(file.path(data_in, 'insitu_occurrence_points', "target_taxa_with_syn.csv"), 
+                       header=TRUE, na.strings=c("","NA"), colClasses="character")
+  # taxon_list <- read.csv("target_taxa_with_syn.csv", header = T,
+  #       na.strings=c("","NA"), colClasses="character")
 
 # full join to taxon list
 all_data_raw <- left_join(all_data_raw,taxon_list)
@@ -91,6 +101,7 @@ all_data <- all_data[which(!is.na(all_data$list)),]
 
 ################################################################################
 # C) Standardize some key columns
+  ## this step could be donw in script 2, if we want to take the time to go through it and add column header files
 ################################################################################
 
 # create localityDescription column
@@ -125,7 +136,7 @@ all_data$decimalLongitude[which(all_data$decimalLongitude==0)] <- NA
   # flag non-numeric and not available coordinates and lat > 90, lat < -90,
   # lon > 180, and lon < -180
 coord_test <- cc_val(all_data,lon = "decimalLongitude",lat = "decimalLatitude",
-  value = "flagged",verbose = TRUE)
+  value = "flagged", verbose = TRUE)
   # try switching lat and long and check validity again
 all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <-
   all_data[!coord_test,c("decimalLongitude","decimalLatitude")]
@@ -153,6 +164,21 @@ locality_pts <- all_data %>% filter(!is.na(localityDescription) &
 geo_pts <- all_data %>% filter(!is.na(decimalLatitude) &
   !is.na(decimalLongitude)) %>% select(-localityDescription)
   nrow(geo_pts) #7566561
+  
+##write out data to examine
+    ##can write to a trial data folder (set in set_workngdirectory.R script if you prefer)
+  write.csv(locality_pts, file.path(data_in, "need_geolocation.csv"), row.names=FALSE)
+  # write.csv(locality_pts,"need_geolocation.csv")
+  geo_pts <- all_data %>% filter(!is.na(decimalLatitude) &
+                                   !is.na(decimalLongitude))
+  nrow(geo_pts) #7562242
+  
+# ## writing a file out just to look it over
+# write.csv(geo_pts[1:1000,], file.path(trial_data, "are_geolocated.csv"), col.names=TRUE)
+  write.csv(all_data, file.path(trial_data, "all_data.csv"), col.names=TRUE, row.names=FALSE)
+  write.csv(geo_pts, file.path(trial_data, "are_geolocated.csv"), col.names=TRUE, row.names=FALSE)
+  
+  
 
 ################################################################################
 # D) Remove duplicates
@@ -168,6 +194,7 @@ geo_pts <- geo_pts %>% arrange(database)
 geo_pts$database <- as.character(geo_pts$database)
 
 # create rounded latitude and longitude columns for removing dups
+    ## this step may not be necessary due to other comparisons we are attempting
 geo_pts$lat_round <- round(geo_pts$decimalLatitude,digits=3)
 geo_pts$long_round <- round(geo_pts$decimalLongitude,digits=3)
 
@@ -200,16 +227,28 @@ names(count_locality)[2] <- "num_locality_records"
 summary <- full_join(count_geo,count_locality)
 write.csv(summary,"occurrence_point_count_per_species_new.csv")
 
+##save data out to a file so don't have to rerun
+save(all_data, taxon_list, s, geo_pts2, need_match, file=file.path(data_in, "EO_data.RData"))
+  rm(all_data_raw, file_dfs, geo_pts, locality_pts, matched, need_match, source_standard)
+# 
+#   
+#   head(all_data)
+
 ################################################################################
 # E) Split by species
 ################################################################################
+load(file.path(data_in, "EO_data.RData"))
 
 # split
 sp_split <- split(geo_pts2, as.factor(geo_pts2$species_name_acc))
 names(sp_split) <- gsub(" ","_",names(sp_split))
+
 # write files
-dir.create(file.path(getwd(),"raw_split_by_sp"))
+if(dir.exists(file.path(data_in, "raw_split_by_sp"))) print('directory already created') else
+  dir.create(file.path(data_in, "raw_split_by_sp"), recursive=TRUE)
+# dir.create(file.path(getwd(),"raw_split_by_sp"))
 lapply(seq_along(sp_split), function(i) write.csv(sp_split[[i]],
+<<<<<<< HEAD:scripts/3_compile_raw_occurrence_points.R
   paste("raw_split_by_sp/",names(sp_split)[[i]],".csv",sep="")))
 
 
@@ -286,3 +325,6 @@ for(i in 1:length(spp.test)){
 
 
 }
+=======
+  paste0(file.path(data_in, "raw_split_by_sp", names(sp_split)[[i]]), ".csv")))
+>>>>>>> eda6aacf847ae0bfac1449fde7c375cb1b507165:scripts/03_compile_raw_occurrence_points.R

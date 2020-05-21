@@ -13,27 +13,25 @@
 ### LIBRARIES ###
 #################
 
-library(plyr)
-library(tidyverse) #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
-#library(housingData)
-#library(data.table)
-#library(textclean)
-#library(CoordinateCleaner)
+my.packages <- c('plyr', 'tidyverse')
+lapply(my.packages, require, character.only=TRUE)
+  rm(my.packages)
+#library(housingData); library(data.table); library(textclean); library(CoordinateCleaner)
 
-
+################################################################################
+source('scripts/set_workingdirectory.R')
+# setwd("./../..")
+# setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
+# data_in <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points"
 ################################################################################
 # A)
 ################################################################################
-
-setwd("./../..")
-setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
 
 # TO DO:
 #   - Crop lat/lat by "accepted" distribution for each species
 #   - Coordinate uncertainty in meters (remove point if larger than specific
 #     value?)
 #   -
-
 
 # some functions from the CoordinateCleaner package we could try...
 
@@ -55,3 +53,18 @@ coord_test <- cc_outl(x, lon = "decimalLongitude", lat = "decimalLatitude",
   # flags records from inside urban areas, based on a geographic gazetteer
 coord_test <- cc_urb(x, lon = "decimalLongitude", lat = "decimalLatitude",
       ref = NULL, value = "flagged", verbose = TRUE)
+
+
+################################################################################
+# X) final step to write files out
+################################################################################
+
+## write out final clean files into new folder
+    ## following code is meant to be used in iterative process
+    ## data_in = main data folder
+    ## out.fld.nm = output folder for cleaned point data
+    ## eo.spdf@data = data.frame/data containing points. 
+      ## we also could store data in spatialpoint/polygon data files
+
+write.csv(eo.spdf@data, file.path(data_in, out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
+# writeOGR(eo.spdf, file.path(data_in, out.fld.nm, paste0(f.nm, ".csv")))
