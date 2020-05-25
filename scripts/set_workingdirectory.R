@@ -1,6 +1,6 @@
 ################################################################################
 
-### Authors: Emily Beckman & Shannon Still ### Date: 05/21/2020
+### Authors: Shannon Still & Emily Beckman ### Date: 05/21/2020
 
 ### DESCRIPTION:
   # This script sets the working environment for the computer on which you are
@@ -39,6 +39,7 @@
     imls.raw <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/raw_data"
     imls.output <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/outputs"
     imls.local <- "/Desktop"
+    imls.exsitu <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/Ex situ survey/standard_column_names"
     # set location for login information (e.g., for GBIF)
     log_loc <- file.path("/Users/aesculus/Desktop/gbif.txt")
     # prints computer name, to let you know you're in the right spot
