@@ -1,4 +1,4 @@
-# THIS NEEDS SOME SMALL UPDATES!!
+# THIS NEEDS TO BE UPDATED!!
 
 ################################################################################
  1_get_taxonomic_info.R
