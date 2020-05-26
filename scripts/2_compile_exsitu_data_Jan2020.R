@@ -10,7 +10,7 @@
   #     already be standardized by hand using the
   #     "standardizing_accessions_data_fields" template
   # 2. Target taxa list (target_taxa_with_syn.csv), created through
-  #     1_compile_taxa_list.R script
+  #     1_compile_taxon_list.R script
 
 ### OUTPUTS:
   # 1. exsitu_compiled_Raw.csv
@@ -19,29 +19,29 @@
   # 4. exsitu_compiled_Standardized.csv
   # 5. exsitu_compiled_ReadyToGeolocate.csv
 
+################################################################################
+# Load packages
+################################################################################
 
-#################
-### LIBRARIES ###
-#################
+rm(list=ls())
+my.packages <- c('plyr', 'tidyverse', 'data.table', 'anchors', 'textclean',
+  'measurements', 'naniar')
+# install.packages (my.packages) #Turn on to install current versions
+lapply(my.packages, require, character.only=TRUE)
+rm(my.packages)
 
-library(tidyverse) #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
-library(data.table)
-library(anchors)
-library(measurements)
-library(textclean)
-library(plyr); library(dplyr)
-library(naniar)
+################################################################################
+# Set working directory
+################################################################################
 
-#################
-### FUNCTIONS ###
-#################
+# either set manually:
+#imls.meta <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/metadata"
+#imls.raw <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/raw_data"
+#imls.output <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/outputs"
+#imls.exsitu <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/Ex situ survey/standard_column_names"
 
-##############
-### SCRIPT ###
-##############
-
-setwd("./../..")
-setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA")
+# or use set_workingdirectory.R script:
+source("./Documents/GitHub/IMLS_CollectionsValue/scripts/set_workingdirectory.R")
 
 ################################################################################
 # 1. Stack all accessions data
@@ -70,22 +70,20 @@ read.exsitu.csv <- function(path,submission_year){
   # stack all datasets using rbind.fill, which keeps non-matching columns
   #   and fills with NA; 'Reduce' iterates through and merges with previous
   # this may take a few minutes if you have lots of data
-  all_data_raw <- Reduce(rbind.fill, file_dfs)
-    print(nrow(all_data_raw))
-    print(ncol(all_data_raw))
-  return(all_data_raw)
+  all_data6 <- Reduce(rbind.fill, file_dfs)
+    print(nrow(all_data6))
+    print(ncol(all_data6))
+  return(all_data6)
 }
 
 # read in data from 2017 and 2019 and stack
-raw_2019 <- read.exsitu.csv("./Ex situ survey/standard_column_names/data_2019",
-  "2019")
-raw_2017 <- read.exsitu.csv("./Ex situ survey/standard_column_names/data_2017",
-  "2017")
-all_data_raw <- rbind.fill(raw_2019,raw_2017)
+raw_2019 <- read.exsitu.csv(file.path(imls.exsitu, "data_2019"), "2019")
+raw_2017 <- read.exsitu.csv(file.path(imls.exsitu, "data_2017"), "2017")
+all_data6 <- rbind.fill(raw_2019,raw_2017)
 
 # check out column names
-sort(colnames(all_data_raw))
-all_data <- all_data_raw
+sort(colnames(all_data6))
+all_data <- all_data6
 # IF NEEDED: remove extra columns (can be created through Excel to CSV issues)
   all_data <- all_data[, -grep("^X", names(all_data))]
   # check schema to see if problems still exist (there should be 36 columns)
@@ -123,7 +121,7 @@ all_data <- all_data_raw
   all_data <- tidyr::unite(all_data,"notes", c("notes","orig_notes"),
     sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"taxon_full_name", c("taxon_full_name",
-    "sp_full_name"),
+    "sp_full_name","ï..sp_full_name","ï..taxon_full_name"),
     sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"infra_name", c("infra_name","specific"),
     sep=";",remove=T,na.rm=T)
@@ -151,8 +149,6 @@ all_data <- all_data_raw
     sort(colnames(all_data)); ncol(all_data) # There should be max of 36
 
 # if there is an inst_short provided, use it to replace inst_short_added
-  sort(unique(all_data$inst_short_added))
-  sort(unique(all_data$inst_short))
 all_data$inst_short_added[all_data$inst_short!=""] <-
   all_data$inst_short[all_data$inst_short!=""]
 all_data <- subset(all_data, select = -inst_short)
@@ -170,84 +166,86 @@ all_data <- as.data.frame(lapply(all_data, function(x) str_squish(x)),
 all_data[all_data == ""] <- NA
 
 # write raw CSV file
-write.csv(all_data,"exsitu_compiled_Raw.csv")
+#write.csv(all_data,"exsitu_compiled_raw.csv")
 
 ################################################################################
 # 2. Standardize species name columns
 ################################################################################
 
-# read in target taxa list
-taxa_list <- read.csv("./insitu_occurrence_points/target_taxa_with_syn.csv",
-  fileEncoding="latin1",strip.white=T,colClasses="character",as.is=T,
-  na.strings=c("","NA"))
-
-### STANDARDIZE HYBRIDS ###
+##
+## A) Fill in taxon_full_name column for rows that only have parts
+##       (e.g., genus, species, rank, etc.)
 
 all_data2 <- all_data
 
-unique(all_data2$hybrid)
 # replace anything in hybrid column that does not notate it is a hybrid
-all_data2 <- replace.value(all_data2,"hybrid",c("species"),NA)
+unique(all_data2$hybrid)
+all_data2 <- replace.value(all_data2, "hybrid", c("species"), NA)
 # replace other hybrid signifiers with "x"
-all_data2$hybrid <- mgsub(all_data2$hybrid,c("_","H","X","Hybrid","×","1",
-  "XH","prob hybrid","unsusual hybrid","poss hybrid","unknown"),"x",fixed=T)
-  sort(unique(all_data2$hybrid))
+all_data2$hybrid <- mgsub(all_data2$hybrid, c("_","H","X","Hybrid","×","1",
+  "XH","prob hybrid","unsusual hybrid","poss hybrid","unknown"), "x", fixed=T)
+# add space between x and species name
+all_data2$hybrid <- gsub("(x)([[:alpha:]])", "\\1 \\2", all_data2$hybrid)
+sort(unique(all_data2$hybrid))
 
-# look for hybrid symbols in taxon_full_name and species columns; when found,
-#   mark in hybrid column
-all_data2$hybrid[grep("_",paste(all_data2$taxon_full_name,
-  all_data2$species))] <- "x"
-all_data2$hybrid[grep(" hybrid ",paste(all_data2$taxon_full_name,
-  all_data2$species))] <- "x"
-all_data2$hybrid[grep("×",paste(all_data2$taxon_full_name,
-  all_data2$species))] <- "x"
-all_data2$hybrid[grep(" X",paste(all_data2$taxon_full_name,
-  all_data2$species))] <- "x"
-nrow(all_data2[which(all_data2$hybrid=="x"),]) #4907
-  sort(unique(all_data2$hybrid))
+# preserve original taxon name
+all_data2$taxon_full_name_orig <- all_data2$taxon_full_name
+# create concatenated taxon_full_name column
+all_data2 <- tidyr::unite(all_data2, "taxon_full_name_concat",
+  c(genus,species,infra_rank,infra_name,hybrid,cultivar), sep=" ", remove=F,
+  na.rm=T)
+# trim whitespace
+all_data2$taxon_full_name_concat <- str_squish(all_data2$taxon_full_name_concat)
+# when blank, fill taxon_full_name column with concatenated full name
+all_data2$taxon_full_name[is.na(all_data2$taxon_full_name)] <-
+  all_data2$taxon_full_name_concat[is.na(all_data2$taxon_full_name)]
 
-# replace hybrid symbols with "x" in taxon_full_name and species columns
-all_data2$taxon_full_name <- mgsub(all_data2$taxon_full_name,
-  c("_"," hybrid ","×"," X")," x ")
-all_data2$species <- mgsub(all_data2$species,
-  c("_"," hybrid ","×"," X")," x ")
-
-### SEPARATE TAXON FULL NAME ###
+##
+## B) Standardize taxon_full_name column then split into parts
+##
 
 all_data3 <- all_data2
 
-## create contents of taxon_full_name column for when it hasn't been provided
-  # preserve original taxon name
-all_data3$taxon_full_name_orig <- all_data3$taxon_full_name
-  # create concatenated taxon_full_name col
-all_data3 <- tidyr::unite(all_data3, "taxon_full_name_concat",
-  c(genus,species,infra_rank,infra_name,hybrid),sep=" ",remove=F,na.rm=T)
-  # trim whitespace
-all_data3$taxon_full_name_concat <- str_squish(all_data3$taxon_full_name_concat)
-  # when blank, fill taxon_full_name column with concatenated full name
-all_data3$taxon_full_name[is.na(all_data3$taxon_full_name)] <-
-  all_data3$taxon_full_name_concat[is.na(all_data3$taxon_full_name)]
-
-## fix some string errors\inconsistencies
-  # fix capitalization
-all_data3$taxon_full_name <- str_to_sentence(all_data3$taxon_full_name)
-  # replace unwanted taxon name characters
+# replace hybrid symbols with "x" in taxon_full_name
 all_data3$taxon_full_name <- mgsub(all_data3$taxon_full_name,
-  c("\'","(","\\","\"",")","."), "")
-  # put space between var. and species name, or add period
+  c("_"," hybrid ","×"," X")," x ")
+# put space between var. and species name, or add period
 all_data3$taxon_full_name <- mgsub(all_data3$taxon_full_name,
   c("var.","v."," var "," v "), " var. ")
-  # put space between subsp. and species name, or add period
+# put space between subsp. and species name, or add period
 all_data3$taxon_full_name <- mgsub(all_data3$taxon_full_name,
   c("subsp.","ssp."," subsp "," ssp "), " subsp. ")
-  # put space between f. and species name, or add period
+# put space between f. and species name, or add period
 all_data3$taxon_full_name <- mgsub(all_data3$taxon_full_name,
   c("f."," f "), "f. ")
-  # replace unwanted characters in all columns
-all_data3 <- data.frame(lapply(all_data3, function(x)
-  {mgsub(x,c("ê","Ê")," ")}))
-  # trim whitespace
+# replace unwanted characters in all columns
+#all_data3 <- data.frame(lapply(all_data3, function(x)
+#  {mgsub(x,c("ê","Ê")," ")}))
+# trim whitespace
 all_data3 <- as.data.frame(lapply(all_data3,str_squish),stringsAsFactors=F)
+
+# fix some string errors\inconsistencies
+  # fix capitalization
+#all_data3$taxon_full_name <- str_to_sentence(all_data3$taxon_full_name)
+  # replace unwanted taxon name characters
+#all_data3$taxon_full_name <- mgsub(all_data3$taxon_full_name,
+#  c("(","\\",")","[","]"), "")
+
+# look for hybrid symbols in taxon_full_name and species columns; when found,
+#   mark in hybrid column
+#all_data2$hybrid[grep("_",paste(all_data2$taxon_full_name,
+#  all_data2$species))] <- "x"
+#all_data2$hybrid[grep(" hybrid ",paste(all_data2$taxon_full_name,
+#  all_data2$species))] <- "x"
+#all_data2$hybrid[grep("×",paste(all_data2$taxon_full_name,
+#  all_data2$species))] <- "x"
+#all_data2$hybrid[grep(" X",paste(all_data2$taxon_full_name,
+#  all_data2$species))] <- "x"
+#nrow(all_data2[which(all_data2$hybrid=="x"),]) #4907
+#  sort(unique(all_data2$hybrid))
+
+#all_data2$species <- mgsub(all_data2$species,
+#  c("_"," hybrid ","×"," X")," x ")
 
 # separate out taxon full name and trim whitespace again
 all_data3 <- all_data3 %>% separate("taxon_full_name",
@@ -256,27 +254,34 @@ all_data3 <- all_data3 %>% separate("taxon_full_name",
     remove=F,fill="right")
 all_data3 <- as.data.frame(lapply(all_data3,str_squish),stringsAsFactors=F)
 
-# fix genus capitalization issues
+# fix genus and species capitalization issues
 all_data3$genus_new <- str_to_title(all_data3$genus_new)
+all_data3$species_new <- str_to_lower(all_data3$species_new)
 
 # check genus names
 sort(unique(all_data3$genus_new))
 # IF NEEDED: fix misspellings
   all_data3$genus_new <- mgsub(all_data3$genus_new,
-    c("Tila","Ulmua","Magnoliax","^M$","Querucs"),
-    c("Tilia","Ulmus","Magnolia","Magnolia","Quercus"),fixed=F)
+    c("Tila","Ulmua","Magnoliax","^M$","^M\\.","^Q.*"),
+    c("Tilia","Ulmus","Magnolia","Magnolia","Magnolia","Quercus"),fixed=F)
 
 # keep only rows from target genera
-all_data3 <- all_data3 %>% filter(all_data3$genus_new %in%
-  unique(taxa_list$genus))
-nrow(all_data3) #90376
+target_genera <- c("Quercus","Cyclobalanopsis","Malus","Tilia","Ulmus","Pyrus",
+  "Crataegus","Docyniopsis","Eriolobus","Eulomalus","Euphorbia","Microptelea",
+  "Planera","Sinomalus","Tithymalus","Acer","Magnolia")
+all_data3 <- all_data3 %>% filter(all_data3$genus_new %in% target_genera)
+#all_data3 <- all_data3 %>% filter(all_data3$genus_new %in%
+#  unique(taxon_list$genus))
+nrow(all_data3) #101649
 
 # check species names
-all_data3$species_new <- mgsub(all_data3$species_new,
-    c("[","]","/canbyi","Ô","Õ","\u008a/","\u0095","\u0097"),"")
-sort(unique(all_data3$species_new))
+#all_data3$species_new <- mgsub(all_data3$species_new,
+#    c("[","]","/canbyi","Ô","Õ","\u008a/","\u0095","\u0097"),"")
+#sort(unique(all_data3$species_new))
 
-### FIND INFRATAXA AND HYBRIDS ###
+##
+## C) Find infrataxa and hybrids
+##
 
 all_data4 <- all_data3
 
@@ -286,7 +291,7 @@ all_data4 <- all_data3
 colnames(all_data4)
 # make data in all "extra" columns lower case
 ### FIX SO NOT HARD CODED ###
-all_data4[,24:30] <- as.data.frame(sapply(all_data4[,24:30], tolower),
+all_data4[,25:31] <- as.data.frame(sapply(all_data4[,25:31], tolower),
   stringsAsFactors=F)
 # create matrix of all "extra" species name columns, to search for
 #   infraspecific key words
@@ -306,7 +311,7 @@ matches_i <- which(search.col=="variety"|search.col=="var"|search.col=="var."|
 # !!! change the number added below based on where the extra columns are in your
   # dataset; e.g., add 19 if extra1 is in the 20th column
 ### FIX SO NOT HARD CODED ###
-matches_i[,2] <- matches_i[,2]+24
+matches_i[,2] <- matches_i[,2]+25
 # create new infra_rank column and fill with "extra" contents that matched
 #   infraspecific key words
 all_data4$infra_rank_new <- NA
@@ -345,38 +350,40 @@ all_data4$infra_rank_new[matches_h2] <- "x"
   sort(unique(all_data4$species_new))
 
 ### REMOVE UNWANTED CULTIVAR SYMBOLS ###
+#all_data5 <- all_data4
+# replace apostrophe
+#all_data5$cultivar_new <- all_data5$cultivar
+#all_data5$cultivar_new <- gsub("\\'s","s",all_data5$cultivar_new)
+# remove characters after the second quote and before first quote
+#all_data5$cultivar_new <-
+#  gsub("([[:alpha:]])\\'.*","\\1",all_data5$cultivar_new)
+#all_data5$cultivar_new <-
+#  gsub("([[:alpha:]])\\\".*","\\1",all_data5$cultivar_new)
+#all_data5$cultivar_new <- gsub("[[:alpha:]]\\'","",all_data5$cultivar_new)
+# replace quotes and parentheses
+#all_data5$cultivar_new <- mgsub(all_data5$cultivar_new,
+#  c("\'","\"","(",")","[","]"), "")
+# replace "_" with "X"
+#all_data5$cultivar_new <- gsub("_","X",all_data5$cultivar_new)
+# replace extra characters with ""
+#all_data5$cultivar_new <- mgsub(all_data5$cultivar_new, c("M. ","√î","√µ"), "")
+# replace non-cultivar names with NA
+#all_data5$cultivar_new <- mgsub(all_data5$cultivar_new,
+#  c("M. "," cultivar",":","cv.","cv","cvs.","yunnanensis X insignis"),"")
+#all_data5$cultivar_new <- mgsub(all_data5$cultivar_new,
+#  c("^var*","^subsp*","^ssp*","^\\."),"",fixed=FALSE)
+#all_data5$cultivar_new <- gsub("^$",NA,all_data5$cultivar_new)
+# capitalize
+#all_data5$cultivar_new <- str_to_title(all_data5$cultivar_new)
+# remove leading/trailing whitespace
+#all_data5$cultivar_new <- str_squish(all_data5$cultivar_new)
+#  sort(unique(all_data5$cultivar_new))
+
+##
+## D) Create final taxon full name
+##
 
 all_data5 <- all_data4
-
-# replace apostrophe
-all_data5$cultivar_new <- all_data5$cultivar
-all_data5$cultivar_new <- gsub("\\'s","s",all_data5$cultivar_new)
-# remove characters after the second quote and before first quote
-all_data5$cultivar_new <-
-  gsub("([[:alpha:]])\\'.*","\\1",all_data5$cultivar_new)
-all_data5$cultivar_new <-
-  gsub("([[:alpha:]])\\\".*","\\1",all_data5$cultivar_new)
-all_data5$cultivar_new <- gsub("[[:alpha:]]\\'","",all_data5$cultivar_new)
-# replace quotes and parentheses
-all_data5$cultivar_new <- mgsub(all_data5$cultivar_new,
-  c("\'","\"","(",")","[","]"), "")
-# replace "_" with "X"
-all_data5$cultivar_new <- gsub("_","X",all_data5$cultivar_new)
-# replace extra characters with ""
-all_data5$cultivar_new <- mgsub(all_data5$cultivar_new, c("M. ","√î","√µ"), "")
-# replace non-cultivar names with NA
-all_data5$cultivar_new <- mgsub(all_data5$cultivar_new,
-  c("M. "," cultivar",":","cv.","cv","cvs.","yunnanensis X insignis"),"")
-all_data5$cultivar_new <- mgsub(all_data5$cultivar_new,
-  c("^var*","^subsp*","^ssp*","^\\."),"",fixed=FALSE)
-all_data5$cultivar_new <- gsub("^$",NA,all_data5$cultivar_new)
-# capitalize
-all_data5$cultivar_new <- str_to_title(all_data5$cultivar_new)
-# remove leading/trailing whitespace
-all_data5$cultivar_new <- str_squish(all_data5$cultivar_new)
-  sort(unique(all_data5$cultivar_new))
-
-### CREATE FINAL TAXON FULL NAME ###
 
 # create new taxon full name column
 all_data5$taxon_full_name <- NA
@@ -392,111 +399,86 @@ all_data5$taxon_full_name[-yes_infra] <- paste(all_data5$genus_new[-yes_infra],
   # replace "NA" in new name, which comes from rows with no species name
 all_data5$taxon_full_name <- gsub(" NA","",all_data5$taxon_full_name)
   # select rows with cultivar name and concatenate in new column
-all_data5$taxon_full_name_cultivar <- NA
-yes_cult <- which(!is.na(all_data5$cultivar_new)); nrow(yes_cult)
-all_data5$taxon_full_name_cultivar[yes_cult] <-
-  paste(all_data5$taxon_full_name[yes_cult],
-  all_data5$cultivar_new[yes_cult],sep=" ")
+#all_data5$taxon_full_name_cultivar <- NA
+#yes_cult <- which(!is.na(all_data5$cultivar_new)); nrow(yes_cult)
+#all_data5$taxon_full_name_cultivar[yes_cult] <-
+#  paste(all_data5$taxon_full_name[yes_cult],
+#  all_data5$cultivar_new[yes_cult],sep=" ")
   # add genus_species column
 all_data5$genus_species <- paste(all_data5$genus_new,all_data5$species_new)
+  # if hybrid, mark genus_species column so it doesn't count as non-hybrid
+all_data5[which(grepl(" x ",all_data5$taxon_full_name)),]$genus_species <-
+  paste(all_data5[which(grepl(" x ",all_data5$taxon_full_name)),]$genus_species,"x")
 
 # check out results
 #   most common issue is a hybrid name with no space between the "x" and the
 #   rest of the taxon name (e.g., "Quercus xbebbiana")
 sort(unique(all_data5$taxon_full_name))
-sort(unique(all_data5$taxon_full_name_cultivar))
+#sort(unique(all_data5$taxon_full_name_cultivar))
 
 # fix some string errors
 #all_data5$taxon_full_name <- mgsub(all_data5$taxon_full_name,
 #  c("-gruppen"), "") # replace unwanted characters
 
 # write file
-write.csv(all_data5, "exsitu_compiled_StandardNames.csv")
+#write.csv(all_data5, "exsitu_compiled_standardNames.csv")
 
 ################################################################################
-# 3. Filter by target species names
+# 3. Join to target taxa list
 ################################################################################
 
 all_data6 <- all_data5
 
-# for comparison as we remove rows:
-nrow(all_data6) #90376
+# read in target taxa list
+taxon_list <- read.csv(file.path(imls.meta, "target_taxa_with_syn.csv"),
+  header = T, na.strings = c("","NA"), colClasses = "character")
 
-# create table with institutions and genera, for analysis
-genera <- all_data6 %>% filter(all_data6$genus_new %in%
-  c("Acer","Magnolia","Malus","Quercus","Tilia","Ulmus"))
-genera_g <- unique(genera %>% summarise(inst_short,genus_new))
-  str(genera_g)
-write.csv(genera_g, "genera_per_institution.csv")
-
-# select rows that should be added back in, even if don't match genus_species
-add_back <- all_data6[which(all_data6$genus_new == "Acer" |
-                            all_data6$genus_new == "Magnolia"),]
-
-# keep only rows with target species name
-all_data6 <- all_data6 %>% filter(all_data6$species_new %in%
-  unique(taxa_list$species))
-nrow(all_data6) #38681
-
-# keep only rows for target genus_species
-taxa_list$genus_species <- paste(taxa_list$genus,taxa_list$species)
-all_data6 <- all_data6 %>% filter(all_data6$genus_species %in%
-  unique(taxa_list$genus_species))
-nrow(all_data6) #35222
-
-# add selected rows back in
-all_data6 <- rbind(all_data6,add_back)
-  nrow(all_data6) #81210
-
-# !!! check to see if institutions got excluded, and manually check those files
-#   as needed, to see if issues
-setdiff(unique(all_data2$inst_short),unique(all_data6$inst_short))
-
-################################################################################
-# 4. Join to target taxa list
-################################################################################
-
-all_data7 <- all_data6
-
-# join dataset to species list
   # rename some taxon name columns to preserve originals
-setnames(all_data7,
+setnames(all_data6,
   old = c("genus","species","infra_rank","infra_name","cultivar"),
   new = c("genus_orig","species_orig","infra_rank_orig","infra_name_orig",
     "cultivar_orig"))
-setnames(all_data7,
+setnames(all_data6,
   old = c("genus_new","species_new","infra_rank_new","infra_name_new",
     "taxon_full_name","cultivar_new"),
   new = c("genus","species","infra_rank","infra_name","taxon_full_name_created",
-    "cultivar"))
+    "cultivar"),
+  skip_absent = T)
   # remove unused columns
-all_data7 <- subset(all_data7, select = -c(taxon_full_name_concat,extra1,extra2,
+all_data6 <- subset(all_data6, select = -c(taxon_full_name_concat,extra1,extra2,
   extra3,extra4,extra5,extra6))
-  # join
-all_data7 <- plyr::join(all_data7, taxa_list, type = "left", match = "first")
-  str(all_data7)
-  # if no match when infra name is included, join just by genus and species
-try_again <- all_data7[which(is.na(all_data7$taxon_full_name_acc)),]
-try_again <- within(try_again,rm(taxon_full_name_acc,taxon_full_name,orig_list))
-### FIX SO NOT HARD CODED ###
-taxa_list <- taxa_list[-c(6)]
-try_again <- plyr::join(try_again, taxa_list,type = "left", match = "first")
-  str(try_again)
-  # remove rows with no taxon name match
-#all_data7 <- all_data7[-which(is.na(all_data7$taxon_full_name_acc)),]
-#  nrow(all_data7)
-  # join matches from first round and 'try_again' round
-all_data8 <- plyr::join(all_data7, try_again, type = "full")
-  nrow(all_data8)
+
+# join dataset to species list
+all_data6$taxon_name <- all_data6$taxon_full_name_created
+  # full join to taxon list
+all_data6 <- left_join(all_data6,taxon_list)
+  # join again just by species name if no taxon match
+need_match <- all_data6[which(is.na(all_data6$list)),]
+  nrow(need_match) #64329
+  # remove columns from first taxon name match
+need_match <- need_match[,1:(ncol(all_data6)-ncol(taxon_list)+1)]
+  # rename column for matching
+need_match <- need_match %>% rename(taxon_name_full = taxon_name)
+need_match$taxon_name <- need_match$genus_species
+  # new join
+need_match <- left_join(need_match,taxon_list)
+  # bind together new matches and previously matched
+matched <- all_data6[which(!is.na(all_data6$list)),]
+matched$taxon_name_full <- matched$taxon_name
+all_data7 <- rbind(matched,need_match)
+  table(all_data7$list) # desiderata: 30130 | synonym: 8425
   # see how many rows have taxon name match
-nrow(all_data8[which(!is.na(all_data8$taxon_full_name_acc)),])
+nrow(all_data7[which(!is.na(all_data7$list)),])
 
 # write file
-write.csv(all_data8, "exsitu_compiled_TaxaMatched.csv")
+write.csv(all_data7, file.path(imls.local, "exsitu_compiled_taxaMatched.csv"),
+  row.names = F)
 
 ################################################################################
 # 5. Standardize important columns
 ################################################################################
+
+all_data8 <- all_data7
 
 ### PROVENANCE TYPE ###
 
@@ -704,7 +686,27 @@ all_data9 <- unite(all_data9, "all_locality",
                     sep = " | ", remove = F)
 
 # write file
-write.csv(all_data9, "exsitu_compiled_Standardized.csv")
+write.csv(all_data9, file.path(imls.local, "exsitu_compiled_standardized.csv"),
+  row.names = F)
+
+# save rows with lat-long data to in situ data folder
+all_data10 <- all_data9 %>%
+  filter(!is.na(lat_dd) & !is.na(long_dd) & !is.na(list)) %>%
+  dplyr::select(taxon_full_name_created,coll_year,lat_dd,long_dd,acc_num,
+    genus_species,name_determ,inst_short)
+setnames(all_data10,
+  old = c("taxon_full_name_created","coll_year","lat_dd","long_dd",
+          "acc_num","genus_species","name_determ",
+          "inst_short"),
+  new = c("taxon_name","year","decimalLatitude","decimalLongitude",
+          "nativeDatabaseID","species_name","taxonIdentificationNotes",
+          "datasetName"),
+  skip_absent=T)
+all_data10$database <- "Ex_situ"
+all_data10$establishmentMeans <- "MANAGED"
+all_data10$basisOfRecord <- "LIVING_SPECIMEN/SEED_BANK"
+write.csv(all_data10, file.path(imls.raw, "raw_datasets",
+  "exsitu_latlong_given.csv"), row.names = F)
 
 ################################################################################
 # 6. Remove duplicate records
@@ -712,23 +714,22 @@ write.csv(all_data9, "exsitu_compiled_Standardized.csv")
 
 # remove duplicates
 all_data10 <- ddply(all_data9,
-                  .(inst_short,taxon_full_name_acc,taxon_full_name_orig,
-                    taxon_full_name,taxon_full_name_created,
-                    taxon_full_name_cultivar,orig_list,
-                    genus,species,infra_rank,infra_name,hybrid,cultivar,
+                  .(inst_short,taxon_name_acc,taxon_full_name_orig,
+                    taxon_name,taxon_full_name_created,list,
+                    genus,species,infra_rank,infra_name,hybrid,
                     prov_type,lat_dd,long_dd,all_locality,gps_det,
                     country,municipality,state,county,locality,assoc_sp,notes,
                     acc_num,lin_num,orig_source,rec_as,germ_type,garden_loc,
-                    acq_year,coll_num,coll_name,
+                    coll_year,coll_num,coll_name,
                     notes,condition,name_determ,habitat,trade_name),
                     summarise, sum_num_indiv = sum(num_indiv))
-  str(all_data10); nrow(all_data10) #78802
+  str(all_data10); nrow(all_data10) #96888
 
 # replace commas with semicolon, just to be sure CSV works properly
 all_data10[] <- lapply(all_data10, function(x) gsub(",", ";", x))
 
 # write file
-write.csv(all_data10, "exsitu_compiled_ReadyToGeolocate.csv")
+write.csv(all_data10, "exsitu_compiled_readyToGeolocate.csv")
 
 # write individual files for genera
 magnolia <- all_data10[which(all_data10$genus=="Magnolia"),]; nrow(magnolia) #15401
@@ -743,3 +744,52 @@ acer <- all_data10[which(all_data10$genus=="Acer"),]; nrow(acer) #29630
 morton <- all_data10[which(all_data10$genus=="Malus" | all_data10$genus=="Quercus" |
   all_data10$genus=="Tilia" | all_data10$genus=="Ulmus"),]; nrow(morton) #33771
   write.csv(morton, "exsitu_compiled_MortonIMLS.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################################
+# 3. OLD : Filter by target species names
+################################################################################
+
+
+# for comparison as we remove rows:
+#nrow(all_data6) #101649
+
+# create table with institutions and genera, for analysis
+#genera <- all_data6 %>% filter(all_data6$genus_new %in%
+#  c("Acer","Magnolia","Malus","Quercus","Tilia","Ulmus"))
+#genera_g <- unique(genera %>% summarise(inst_short,genus_new))
+#  str(genera_g)
+#write.csv(genera_g, "genera_per_institution.csv")
+
+# select rows that should be added back in, even if don't match genus_species
+#add_back <- all_data6[which(all_data6$genus_new == "Acer" |
+#                            all_data6$genus_new == "Magnolia"),]
+
+# keep only rows with target species name
+#all_data6 <- all_data6 %>% filter(all_data6$species_new %in%
+#  unique(taxon_list$species))
+#nrow(all_data6) #38681
+
+# keep only rows for target genus_species
+#taxon_list$genus_species <- paste(taxon_list$genus,taxon_list$species)
+#all_data6 <- all_data6 %>% filter(all_data6$genus_species %in%
+#  unique(taxon_list$genus_species))
+#nrow(all_data6) #35222
+
+# add selected rows back in
+#all_data6 <- rbind(all_data6,add_back)
+#  nrow(all_data6) #81210
+
+# !!! check to see if institutions got excluded, and manually check those files
+#   as needed, to see if issues
+#setdiff(unique(all_data2$inst_short),unique(all_data6$inst_short))
