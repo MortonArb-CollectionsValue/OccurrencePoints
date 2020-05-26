@@ -38,7 +38,7 @@
     imls.meta <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/metadata"
     imls.raw <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/raw_data"
     imls.output <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/outputs"
-    imls.local <- "/Desktop"
+    imls.local <- "./Desktop"
     imls.exsitu <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/Ex situ survey/standard_column_names"
     # set location for login information (e.g., for GBIF)
     log_loc <- file.path("/Users/aesculus/Desktop/gbif.txt")
