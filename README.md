@@ -1,4 +1,4 @@
-# Code for analyzing spatial data associated with the IMLS project
+# THIS NEEDS SOME SMALL UPDATES!!
 
 ################################################################################
  1_get_taxonomic_info.R
