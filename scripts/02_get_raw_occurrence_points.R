@@ -10,7 +10,7 @@
       # Botanical Information and Ecology Network (BIEN)
     # NATIONAL DATABASES
       # Forest Inventory and Analysis (FIA) Program of the USDA Forest Service
-  ## NOTE: Not all data from these sources are reliable. The aim of this
+  ## NOTES: Not all data from these sources are reliable. The aim of this
   #         script is to get all easily-downloadable occurrence data, which
   #         can then be sorted and vetted for the user's specific purposes.
 
@@ -37,7 +37,7 @@
 #################
 
 # rm(list=ls())
-my.packages <- c('plyr', 'tidyverse', 'spocc', 'rgbif', 'data.table', 'BIEN', 
+my.packages <- c('plyr', 'tidyverse', 'spocc', 'rgbif', 'data.table', 'BIEN',
                  'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison')
 # install.packages(my.packages) #Turn on to install current versions
           #ggplot2,dplyr,tidyr,readr,purrr,tibble,stringr,forcats
@@ -117,7 +117,7 @@ taxon_names <- taxon_list$taxon_name
 # pwd <- "Quercus51"
 # email <- "ebeckman@mortonarb.org"
 
-## I created a text file that contains 3 things on 3 successive lines: my username, password, and email address. 
+## I created a text file that contains 3 things on 3 successive lines: my username, password, and email address.
     ## By putting this in a specific location on my own computer, and not part of our gut, I can keep my login info separate.
     ## My login info is sourced in the set_workingdirectory.R script
 login <- read_lines(log_loc)
@@ -177,7 +177,7 @@ gbd <- gbif_download # !!! "Download key" can be acquired through this line and 
     # you can check download status here: https://www.gbif.org/user/download
       ## -or-
   ## Since you sometimes need to wait to download
-      ## There is a funtion that helps you to wait until the download is ready. 
+      ## There is a funtion that helps you to wait until the download is ready.
           ##this fxn occ_download_wait()
 
 occ_download_wait(gbd, status_ping=10, quiet=TRUE)
@@ -286,7 +286,7 @@ write.csv(gbif_raw, file.path(data_in, "raw_occurrence_point_data/gbif_raw.csv")
 
 # b.h <- read_excel('/Users/sstill/Box/Seed Menus Project/HerbariumRecords/HerbariumRecords_wHeaders/Burke_AllSpp_wHeaders.xlsx', col_types = 'text')
 ##this line sets the correct data.frame
-  # n.h <- 'burke' 
+  # n.h <- 'burke'
 
 ##this line selects the correct columns
   # nms  <- nm.set %>% filter(!is.na(!!as.name(n.h))) %>% select(!!as.name(n.h)) %>% as.character()
@@ -448,10 +448,10 @@ write.csv(idigbio_raw, file.path(data_in, "raw_occurrence_point_data/idigbio_raw
 # Move all the zipped files you downloaded into a "sernec_read_in" folder
 #   within your working directory
 # Unzip each file and pull the "occurrences.csv" file out into the
-#   "sernec_read_in" folder -- obviously "keep both" if prompted
+#   "sernec_read_in" folder and rename with appropriate genus name
 
 # read in raw occurrence points
-file_list <- list.files(path = file.path(data_in, "raw_occurrence_point_data/sernec_read_in"),
+file_list <- list.files(path = file.path(data_in, "raw_data/sernec_read_in"),
                         pattern = ".csv", full.names = T)
 # file_list <- list.files(path = "raw_occurrence_point_data/sernec_read_in",
 # pattern = ".csv", full.names = T)
