@@ -135,9 +135,8 @@ sort(colnames(all_data))
     sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"coll_num", c("coll_num","coll_no"),
     sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"coll_year", c("coll_year","acq_year",
-    "aqu_year","planted_year"),
-    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"coll_year", c("coll_year","planted_year",
+    "acq_year","aqu_year"),sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"condition", c("condition","plant_status"),
     sep=";",remove=T,na.rm=T)
     sort(colnames(all_data)); ncol(all_data)
@@ -167,7 +166,7 @@ all_data[all_data == ""] <- NA
 
 # IF NEEDED:remove duplicates in PCN datasets if institution submitted their own
 #     data separately
-nrow(all_data) #112839
+nrow(all_data) #111581
   # Magnolia
 magnolia_remove <- c("GreenBayBG","JCRaulstonArb","QuarryhillBG",
   "UBritishColumbiaBG")
@@ -181,7 +180,7 @@ all_data <- all_data[!(all_data$filename=="PCNAcer" &
 quercus_remove <- c("MissouriBG","RanchoSantaAnaBG","StarhillForestArb")
 all_data <- all_data[!(all_data$filename=="PCNQuercus" &
   all_data$inst_short %in% quercus_remove),]
-nrow(all_data) #109980
+nrow(all_data) #108722
 
 # write raw CSV file
 #write.csv(all_data,"exsitu_compiled_raw.csv",row.names=F)
@@ -601,7 +600,15 @@ all_data9$prov_type[which(all_data9$gps_det == "G" &
 table(all_data9$prov_type)
 
 ##
-## D) Locality
+## D) Collection year
+##
+
+all_data9$coll_year <- gsub("([0-9]+);","",all_data9$coll_year)
+unique(all_data9$coll_year)
+all_data9$coll_year <- as.numeric(all_data9$coll_year)
+
+##
+## E) Locality
 ##
 
 # create all_locality column
@@ -618,7 +625,11 @@ all_data9 <- unite(all_data9, "all_locality",
   c(locality,municipality,county,state,country,orig_source,notes),sep = " | ",
   remove = F)
 
-# write file
+################################################################################
+# 6. Write files
+################################################################################
+
+# write file to use independently
 write.csv(all_data9, file.path(imls.local, "exsitu_compiled_standardized.csv"),
   row.names = F)
 
@@ -653,8 +664,11 @@ write.csv(all_data10, file.path(imls.raw, "raw_datasets",
 
 
 
+
+### not using these parts right now ###
+
 ################################################################################
-# 6. Remove duplicate records
+# Remove duplicate records
 ################################################################################
 
 # remove duplicates
@@ -694,10 +708,6 @@ morton <- all_data10[which(all_data10$genus=="Malus" | all_data10$genus=="Quercu
 
 
 
-
-
-
-
 #################
 ## Working on comparing country each point is in to the country column data
 
@@ -723,6 +733,9 @@ st_geometry(intersect) = NULL
 t <- tidyr::unite(intersect,"country", c("name","country"),
   sep=" | ",remove=F,na.rm=F)
 table(t$country)
+
+
+
 
 
 
