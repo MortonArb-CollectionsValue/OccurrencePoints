@@ -41,7 +41,7 @@
     imls.local <- "./Desktop"
     imls.exsitu <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/Ex situ survey/standard_column_names"
     # set location for login information (e.g., for GBIF)
-    log_loc <- file.path("/Users/aesculus/Desktop/gbif.txt")
+    log_loc <- file.path("./Desktop/IMLS_passwords.txt")
     # prints computer name, to let you know you're in the right spot
     print(paste("Working from the lovely",Sys.info()[4]))
 	} else {
