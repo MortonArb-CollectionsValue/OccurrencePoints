@@ -27,35 +27,34 @@
 ################################################################################
 
 rm(list=ls())
-my.packages <- c('plyr', 'tidyverse', 'housingData', 'data.table', 'textclean',
-  'CoordinateCleaner', 'maps', 'rnaturalearth', 'rnaturalearthdata')
+my.packages <- c('plyr','tidyverse','housingData','data.table','textclean',
+  'CoordinateCleaner','maps','rnaturalearth','rnaturalearthdata','sf','sp')
 # install.packages (my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
 rm(my.packages)
 
 
 ### could remove once we get "00" script up and running
-#source("./Documents/GitHub/IMLS_CollectionsValue/scripts/set_workingdirectory.R")
-source('scripts/set_workingdirectory.R')
+source("./Documents/GitHub/OccurrencePoints/scripts/set_workingdirectory.R")
+#source('scripts/set_workingdirectory.R')
 
 ################################################################################
 # A) Read in raw data and stack
 ################################################################################
 
 # read in raw datasets
-file_list <- list.files(file.path(imls.raw, "raw_datasets"), pattern = ".csv",
+file_list <- list.files(file.path(imls.raw, "datasets_raw"), pattern = ".csv",
   full.names = T)
 file_dfs <- lapply(file_list, read.csv, header = T, na.strings = c("","NA"),
   colClasses = "character")
-length(file_dfs) #6
+length(file_dfs) #7
 
 # stack all datasets using rbind.fill, which keeps non-matching columns
 #   and fills with NA; 'Reduce' iterates through list and merges with previous.
 # this may take a few minutes if you have lots of data
 all_data_raw <- Reduce(rbind.fill, file_dfs)
-  nrow(all_data_raw) #8085017
-  ncol(all_data_raw) #28
-  table(all_data_raw$database)
+  nrow(all_data_raw) #6307801
+  ncol(all_data_raw) #27
 
 ################################################################################
 # B) Filter by target taxa
@@ -69,7 +68,7 @@ taxon_list <- read.csv(file.path(imls.meta, "target_taxa_with_syn.csv"),
 all_data_raw <- left_join(all_data_raw,taxon_list)
 # join again just by species name if no taxon match
 need_match <- all_data_raw[which(is.na(all_data_raw$list)),]
-  nrow(need_match) #124547
+  nrow(need_match) #223762
   # remove columns from first taxon name match
 need_match <- need_match[,1:(ncol(all_data_raw)-ncol(taxon_list)+1)]
   # rename column for matching
@@ -81,17 +80,17 @@ need_match <- left_join(need_match,taxon_list)
 matched <- all_data_raw[which(!is.na(all_data_raw$list)),]
 matched$taxon_name_full <- matched$taxon_name
 all_data <- rbind(matched,need_match)
-  table(all_data$list) # desiderata: 5928806 | synonym: 2102904
+  table(all_data$list) # desiderata: 4240384 | synonym: 1908736
 
 # check names that got excluded.....
 still_no_match <- all_data[which(is.na(all_data$list)),]
-  nrow(still_no_match) #58560
+  nrow(still_no_match) #158681
 table(still_no_match$database)
 #sort(table(still_no_match$taxon_name))
 
 # keep only rows for target taxa
 all_data <- all_data[which(!is.na(all_data$list)),]
-  nrow(all_data) #8031710
+  nrow(all_data) #6149120
 
 ################################################################################
 # C) Standardize some key columns
@@ -101,13 +100,13 @@ all_data <- all_data[which(!is.na(all_data$list)),]
 
 # create localityDescription column
 all_data <- all_data %>% unite("localityDescription",
-  c(locality,verbatimLocality,municipality,higherGeography,county,stateProvince,
-    country,countryCode), remove = F, sep = " | ")
+  c(locality,municipality,higherGeography,county,stateProvince,country,
+    countryCode,locationNotes,verbatimLocality), remove = F, sep = " | ")
   # get rid of NAs but keep pipes, so you can split back into parts if desired
 all_data$localityDescription <- mgsub(all_data$localityDescription,
   c("NA "," NA"), "")
   # if no locality info at all, make it NA
-all_data$localityDescription <- gsub("| | | | | | |", NA,
+all_data$localityDescription <- gsub("| | | | | | | |", NA,
   all_data$localityDescription, fixed = T)
   # check it
 head(unique(all_data$localityDescription))
@@ -133,22 +132,22 @@ all_data$decimalLatitude[zero] <- NA; all_data$decimalLongitude[zero] <- NA
   # flag non-numeric and not available coordinates and lat > 90, lat < -90,
   # lon > 180, and lon < -180
 coord_test <- cc_val(all_data, lon = "decimalLongitude",lat = "decimalLatitude",
-  value = "flagged", verbose = TRUE)
+  value = "flagged", verbose = TRUE) #Flagged 496009 records.
   # try switching lat and long for invalid points and check validity again
 all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <-
   all_data[!coord_test,c("decimalLongitude","decimalLatitude")]
 coord_test <- cc_val(all_data,lon = "decimalLongitude",lat = "decimalLatitude",
-  value = "flagged",verbose = TRUE)
+  value = "flagged",verbose = TRUE) #Flagged 496002 records.
   # make coords NA if they are still flagged
 all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <- c(NA,NA)
 
 # set column order and remove a few unnecessary columns
-all_data <- all_data %>% dplyr::select(species_name_acc,taxon_name,scientificName,
-  taxonIdentificationNotes,database,year,basisOfRecord,establishmentMeans,
-  decimalLatitude,decimalLongitude,coordinateUncertaintyInMeters,
-  geolocationNotes,localityDescription,county,stateProvince,country,countryCode,
-  locationNotes,datasetName,publisher,nativeDatabaseID,references,
-  informationWithheld,issue,taxon_name_full,list)
+all_data <- all_data %>% dplyr::select(species_name_acc,taxon_name,
+  scientificName,taxonIdentificationNotes,database,year,basisOfRecord,
+  establishmentMeans,decimalLatitude,decimalLongitude,
+  coordinateUncertaintyInMeters,geolocationNotes,localityDescription,county,
+  stateProvince,country,countryCode,locationNotes,datasetName,publisher,
+  nativeDatabaseID,references,informationWithheld,issue,taxon_name_full,list)
 
 # add unique ID column
 all_data$unique_id <- seq.int(nrow(all_data))
@@ -158,7 +157,7 @@ locality_pts <- all_data %>% filter(!is.na(localityDescription) &
   (is.na(decimalLatitude) | is.na(decimalLongitude))) %>%
   arrange(desc(year)) %>%
   distinct(species_name_acc,localityDescription,.keep_all=T)
-nrow(locality_pts) #212901
+nrow(locality_pts) #246971
 table(locality_pts$database)
 write.csv(locality_pts, file.path(imls.output, "need_geolocation.csv"),
   row.names = F)
@@ -168,7 +167,7 @@ geo_pts <- all_data %>%
   filter(!is.na(decimalLatitude) &
   !is.na(decimalLongitude)) %>%
   dplyr::select(-localityDescription)
-    nrow(geo_pts) #7571820
+    nrow(geo_pts) #5653118
 
 # check if points are in water, mark, and separate out as other file
 world_polygons <- ne_countries(type = 'countries', scale = 'medium')
@@ -177,7 +176,7 @@ geo_pts$in_water <- is.na(map.where(world_polygons, geo_pts$decimalLongitude,
 water_pts <- geo_pts %>%
   filter(in_water) %>%
   dplyr::select(-in_water)
-nrow(water_pts) #59030
+nrow(water_pts) #66361
 table(water_pts$database)
 write.csv(water_pts, file.path(imls.output, "not_on_land.csv"), row.names = F)
 
@@ -185,7 +184,7 @@ write.csv(water_pts, file.path(imls.output, "not_on_land.csv"), row.names = F)
 geo_pts <- geo_pts %>%
   filter(!in_water) %>%
   dplyr::select(-in_water)
-nrow(geo_pts) #7512790
+nrow(geo_pts) #5586757
 table(geo_pts$database)
 # can write a file just to look it over
 #write.csv(geo_pts, file.path(imls.local, "are_geolocated.csv"), row.names = F)
@@ -196,11 +195,14 @@ table(geo_pts$database)
 
 ## this section could potentially be moved to script 04
 ## OTHER WAYS OF REMOVING DUPLICATES ARE ALSO POSSIBLE AND COULD MAKE MORE
-##    SENSE FOR A SPECIFIC WAY OF USIGN THE POINTS, including
+##    SENSE FOR A SPECIFIC WAY OF USING THE POINTS, including
 ##    by grid cell, distance between points, etc...
 ## The segement below removes spatial duplicates based on rounded lattitude
 ##    and longitude. This is a simple fix that doesn't involved spatial data
 ##    or complex spatial calculations.
+
+# create subset of all ex situ points, to add back in at end, if desired
+ex_situ <- geo_pts[which(geo_pts$database=="Ex_situ"),]
 
 # sort before removing duplicates; can turn any of these on/off, or add others
   # sort by basis of record
@@ -229,7 +231,8 @@ geo_pts <- geo_pts %>% arrange(database)
 geo_pts$lat_round <- round(geo_pts$decimalLatitude,digits=4)
 geo_pts$long_round <- round(geo_pts$decimalLongitude,digits=4)
 
-# remove duplicates and create "all_source_databases" column, to capture
+# remove duplicates and
+# can create "all_source_databases" column, to capture
 #    databases from which duplicates were removed
 # can take a while to remove duplicates if there are lots a rows
 geo_pts2 <- geo_pts %>%
@@ -247,7 +250,7 @@ geo_pts2 <- geo_pts %>%
 #  select(-all_source_databases) %>%
 #  cbind(source_standard)
 head(geo_pts2)
-nrow(geo_pts2) #1367167
+nrow(geo_pts2) #1518206
 #table(geo_pts2$all_source_databases)
 table(geo_pts2$database)
 
