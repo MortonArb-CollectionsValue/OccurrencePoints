@@ -42,7 +42,8 @@ rm(my.packages)
 #imls.exsitu <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/Ex situ survey/standard_column_names"
 
 # or use set_workingdirectory.R script:
-source("./Documents/GitHub/IMLS_CollectionsValue/scripts/set_workingdirectory.R")
+source("./Documents/GitHub/OccurrencePoints/scripts/set_workingdirectory.R")
+#source('scripts/set_workingdirectory.R')
 
 ################################################################################
 # 1. Stack all accessions data

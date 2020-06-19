@@ -38,7 +38,8 @@ my.packages <- c('raster', 'sp', 'tools', 'spatialEco', 'rgdal', 'geosphere', 'r
 #    Either run script or set manually
 ################################################################################
 
-source('scripts/set_workingdirectory.R')
+source("./Documents/GitHub/OccurrencePoints/scripts/set_workingdirectory.R")
+#source('scripts/set_workingdirectory.R')
 
 ################################################################################
 # Load functions

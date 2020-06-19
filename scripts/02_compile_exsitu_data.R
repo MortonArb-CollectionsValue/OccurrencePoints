@@ -41,7 +41,8 @@ rm(my.packages)
 #imls.exsitu <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/Ex situ survey/standard_column_names"
 
 # or use set_workingdirectory.R script:
-source("./Documents/GitHub/IMLS_CollectionsValue/scripts/set_workingdirectory.R")
+source("./Documents/GitHub/OccurrencePoints/scripts/set_workingdirectory.R")
+#source('scripts/set_workingdirectory.R')
 
 ################################################################################
 # 1. Stack all accessions data
@@ -406,7 +407,7 @@ all_data6$taxon_name <- all_data6$taxon_full_name_created
 all_data6 <- left_join(all_data6,taxon_list)
   # join again just by species name if no taxon match
 need_match <- all_data6[which(is.na(all_data6$list)),]
-  nrow(need_match) #61944
+  nrow(need_match) #61035
   # remove columns from first taxon name match
 need_match <- need_match[,1:(ncol(all_data6)-ncol(taxon_list)+1)]
   # rename column for matching
@@ -418,9 +419,9 @@ need_match <- left_join(need_match,taxon_list)
 matched <- all_data6[which(!is.na(all_data6$list)),]
 matched$taxon_name_full <- matched$taxon_name
 all_data7 <- rbind(matched,need_match)
-  table(all_data7$list) # desiderata: 31220 | synonym: 8318
+  table(all_data7$list) # desiderata: 30989 | synonym: 8228
   # see how many rows have taxon name match
-nrow(all_data7[which(!is.na(all_data7$list)),]) #39538
+nrow(all_data7[which(!is.na(all_data7$list)),]) #39217
 
 # write file
 #write.csv(all_data7, file.path(imls.local, "exsitu_compiled_taxaMatched.csv"),
@@ -592,7 +593,7 @@ all_data9$gps_det[which(!is.na(all_data9$lat_dd) &
   !is.na(all_data9$long_dd))] <- "G"
 table(all_data9$gps_det)
 #     G     H
-# 11502 25190
+# 11504 25191
 
 # where prov_type is "H" but lat-long is given, change to "H?"
 all_data9$prov_type[which(all_data9$gps_det == "G" &
@@ -653,8 +654,9 @@ setnames(all_data10,
 all_data10$database <- "Ex_situ"
 all_data10$establishmentMeans <- "MANAGED"
 all_data10$basisOfRecord <- "LIVING_SPECIMEN/SEED_BANK"
-write.csv(all_data10, file.path(imls.raw, "raw_datasets",
-  "exsitu_latlong_given.csv"), row.names = F)
+  # write file
+write.csv(all_data10, file.path(imls.raw, "datasets_raw",
+  "exsitu_raw.csv"), row.names = F)
 
 
 

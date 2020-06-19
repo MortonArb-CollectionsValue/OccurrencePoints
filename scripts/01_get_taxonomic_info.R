@@ -49,9 +49,9 @@ rm(my.packages)
  # run code to set your working directory and project folders based upon computer using
  #      skip this if preferred, but then need to set your working directory and input/output folders manually
 ####################################################################################
-source('scripts/set_workingdirectory.R')
-    #setwd()
-    #
+source("./Documents/GitHub/OccurrencePoints/scripts/set_workingdirectory.R")
+#source('scripts/set_workingdirectory.R')
+
 ####################################################################################
 #######################################
 ## load functions
@@ -62,26 +62,26 @@ source('scripts/load_IMLS_functions.R')
 # #################
 # ### FUNCTIONS ###
 # #################
-# 
+#
 # # remove speices/taxa that did not have any synonyms (they create errors
 #   # in next step), create data frame of synonyms, and add column stating
 #   # which database it came from
-# synonyms.compiled <- function(syn_output,db_name){
-#   found <- NA
-#     for(i in 1:length(syn_output)){
-#       if(length(syn_output[[i]])>1){
-#         if(syn_output[[i]][1,3]!="no syns found"){
-#           found <- c(found,i)
-#           syn_output[[i]]$taxon_name <- rep(names(syn_output[i]),
-#             nrow(syn_output[[i]]))
-#         }
-#       }
-#     }
-#   found <- found[-1]
-#   syn_output_df <- Reduce(rbind.fill, syn_output[found])
-#   syn_output_df$database <- db_name
-#   return(syn_output_df)
-# }
+ synonyms.compiled <- function(syn_output,db_name){
+   found <- NA
+     for(i in 1:length(syn_output)){
+       if(length(syn_output[[i]])>1){
+         if(syn_output[[i]][1,3]!="no syns found"){
+           found <- c(found,i)
+           syn_output[[i]]$taxon_name <- rep(names(syn_output[i]),
+             nrow(syn_output[[i]]))
+         }
+       }
+     }
+   found <- found[-1]
+   syn_output_df <- Reduce(rbind.fill, syn_output[found])
+   syn_output_df$database <- db_name
+   return(syn_output_df)
+ }
 
 
 ##############
@@ -97,6 +97,8 @@ setwd("./Desktop")
 # read in taxa list
 taxa_list_acc <- read.csv("target_taxa2.csv", header = T, na.strings=c("","NA"),
   colClasses="character"); nrow(taxa_list_acc)
+#taxa_list_acc <- read.csv("us_oak_species_list.csv", header = T, na.strings=c("","NA"),
+#  colClasses="character"); nrow(taxa_list_acc)
 
 # create list of target taxa names
 taxa_names <- taxa_list_acc[,1]
@@ -273,7 +275,8 @@ itis_names_noDup$match_name_with_authors <- paste(
 
 ## GET SYNONYMS
 
-itis_syn <- synonyms(taxa_names, db="itis")
+itis_syn <- synonyms(taxa_names, db="itis", accepted = T)
+#itis_syn2 <- synonyms(taxa_names, db="itis", accepted = F)
 
 # !! STOP BEFORE RUNNING NEXT SECTION -- YOU MAY HAVE TO ANSWER SOME PROMPTS
 

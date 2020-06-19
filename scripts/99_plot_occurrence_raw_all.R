@@ -63,7 +63,7 @@ library(leaflet); library(RColorBrewer)
 # list of test species
 spp.test <- c("Quercus_boyntonii","Quercus_dalechampii","Quercus_georgiana",
   "Quercus_imbricaria","Quercus_arkansana","Quercus_falcata","Quercus_stellata",
-  "Quercus_acutissima","Quercus_palmeri")
+  "Quercus_acutissima","Quercus_palmeri","Quercus_chapmanii")
 
 # function for mapping points
 map.pts <- function(pts){
@@ -104,18 +104,18 @@ map.pts <- function(pts){
 for(i in 1:length(spp.test)){
   # read file
   dat.now <- read.csv(file.path(imls.output, "split_by_sp",
-    paste0(spp.test[1], ".csv")), colClasses = "character")
+    paste0(spp.test[i], ".csv")), colClasses = "character")
   # lat and long to numeric
   dat.now$decimalLatitude <- as.numeric(dat.now$decimalLatitude)
   dat.now$decimalLongitude <- as.numeric(dat.now$decimalLongitude)
   # set database as factor and order appropriately
   dat.now$database <- factor(dat.now$database,
-    levels = c("FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN"))
+    levels = c("FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN","Ex_situ"))
     dat.now <- dat.now %>% arrange(desc(database))
   # create color palette
   colors <- c("#f00e99","#d91818","#cc671b","#bf9c1f","#28a822","#238b99",
     "#234691","#622180")
-  palette <- colorFactor(palette=colors, levels=unique(dat.now$database))
+  palette <- colorFactor(palette=colors, levels=unique(dat.now$database), reverse=T)
   # create map
   map_final <- map.pts(dat.now); map_final
   # save map
