@@ -65,7 +65,56 @@ percent.filled <- function(df){
 
 ####################################################################################
 ####################################################################################
+## fxn: children.compiled
+# # remove speices/taxa that did not have any children (they create errors
+# in next step), create data frame of children, and add column stating
+# which database it came from
+####################################################################################
+
+children.compiled <- function(child_output,db_name,greater_than){
+  found <- NA
+  for(i in 1:length(child_output)){
+    if(length(child_output[[i]])>greater_than){
+      found <- c(found,i)
+      child_output[[i]]$taxon_name_acc <- rep(names(child_output[i]),
+                                              nrow(child_output[[i]]))
+    }
+  }
+  found <- found[-1]
+  child_output_df <- Reduce(rbind.fill, child_output[found])
+  child_output_df$database <- db_name
+  return(child_output_df)
+}
+
+
+####################################################################################
+####################################################################################
 ## fxn: XXXXX
 # XXXXX
 ####################################################################################
+# function to extract target species data from each state CSV
+extract_tree_data <- function(file_name){
+  data <- data.frame()
+  # read in tree data, which lists all species and the plots in which they were
+  #   found; larger ones will take time to read in
+  state_df <- read.csv(file_name)
+    # cycle through vector of target species codes and extract those rows from
+    #   the state CSV
+      for (sp in 1:length(species_codes)){
+        target_sp <- state_df[which(state_df$SPCD==species_codes[[sp]]),]
+        data <- rbind(data, target_sp)
+      }
+  
+  # remove state file to make space for reading in next one
+  rm(state_df)
+  # take a look at how much data were pulled
+  print(paste(nrow(data), file_name))
+  return(data)
+  rm(sp)
+}
 
+####################################################################################
+####################################################################################
+## fxn: XXXXX
+# XXXXX
+####################################################################################
