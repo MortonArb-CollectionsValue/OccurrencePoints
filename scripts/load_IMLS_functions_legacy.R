@@ -11,9 +11,9 @@
 ####################################################################################
 ####################################################################################
 ## fxn: synonyms.compiled
-# remove speices/taxa that did not have any synonyms (they create errors
-#   in next step), create data frame of synonyms, and add column stating
-#   which database it came from
+    # remove speices/taxa that did not have any synonyms (they create errors
+    #   in next step), create data frame of synonyms, and add column stating
+    #   which database it came from
 ####################################################################################
 synonyms.compiled <- function(syn_output,db_name){
   found <- NA
@@ -98,12 +98,12 @@ extract_tree_data <- function(file_name){
   # read in tree data, which lists all species and the plots in which they were
   #   found; larger ones will take time to read in
   state_df <- read.csv(file_name)
-  # cycle through vector of target species codes and extract those rows from
-  #   the state CSV
-  for (sp in 1:length(species_codes)){
-    target_sp <- state_df[which(state_df$SPCD==species_codes[[sp]]),]
-    data <- rbind(data, target_sp)
-  }
+    # cycle through vector of target species codes and extract those rows from
+    #   the state CSV
+      for (sp in 1:length(species_codes)){
+        target_sp <- state_df[which(state_df$SPCD==species_codes[[sp]]),]
+        data <- rbind(data, target_sp)
+      }
   
   # remove state file to make space for reading in next one
   rm(state_df)
