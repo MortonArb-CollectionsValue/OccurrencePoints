@@ -20,7 +20,7 @@ zip <- ".zip" #create string for end of web address
 webadd2 <- str_c(webadd, genspec, zip) #combine all strings to make complete web address
 
 wd1 <- getwd() #get working directory
-wd2 <- str_c(wd1, genspec, sep = "/") #format working directory to include filename
+wd2 <- str_c(wd1, genspec, sep = "/") #format working directory to include filename 
 wd3 <- str_c(wd2, zip) #add .zip extension
 download.file(webadd2, wd3) #download zip file from web
 
@@ -33,3 +33,4 @@ crs(shapefile1) <- "+init=epsg:4267" #set reference?
 
 loc <- get_map(location = c(-130, 20, -65, 50), maptype = "toner-background") #get US map
 us_map <- ggmap(loc) + geom_polygon(data = shapefile1, colour = "blue", fill = "blue") #not working yet
+

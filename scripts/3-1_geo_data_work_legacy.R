@@ -22,8 +22,8 @@
 
 rm(list=ls())
 
-my.packages <- c('raster', 'sp', 'tools', 'spatialEco', 'rgdal', 'geosphere', 'readxl', 'writexl', 
-                 'dplyr', 'tidyr', 'tidyverse', 'housingData', 'data.table', 'textclean', 'CoordinateCleaner', 
+my.packages <- c('raster', 'sp', 'tools', 'spatialEco', 'rgdal', 'geosphere', 'readxl', 'writexl',
+                 'dplyr', 'tidyr', 'tidyverse', 'housingData', 'data.table', 'textclean', 'CoordinateCleaner',
                  'countrycode', 'usmap', 'rnaturalearth', 'rnaturalearthdata', 'maps')#, 'sf'
 # install.packages (my.packages) #Turn on to install current versions
   lapply(my.packages, require, character.only=TRUE)
@@ -33,23 +33,23 @@ my.packages <- c('raster', 'sp', 'tools', 'spatialEco', 'rgdal', 'geosphere', 'r
 # lapply(my.packages, require, character.only=TRUE)
 #     rm(my.packages)
     # install.packages("rnaturalearthhires", repos = "http://packages.ropensci.org", type = "source")
-    
+
 #######################################
 # run code to set your working directory and project folders based upon computer being used
 #      skip this if preferred, but then need to set your working directory and input/output folders manually
 ####################################################################################
-source('scripts/set_workingdirectory.R'); rm(log_loc)
+source('scripts/0-1_set_workingdirectory.R'); rm(log_loc)
 ################################################################################
 
 #######################################
 ## load functions
 ####################################################################################
-source('scripts/load_IMLS_functions.R')
+source('scripts/0-2_load_IMLS_functions.R')
 ####################################################################################
 
 # # TO DO:
 #
-    
+
 ## Maybe this early part of this script could go to 01_get_taxonomic_info.R
 # #Create tables for walkover
 # #   - Make taxon name table for cross-referencing synonyms, including country/state/county of origin
@@ -88,7 +88,7 @@ source('scripts/load_IMLS_functions.R')
 ####################################################################################
 ## part that could go to script 1 (line 88-164)
 ####################################################################################
-# 
+#
 # # ## load .Rdata file
 # # # source(file.path(imls.output, "EO_data.RData"))
 # #
@@ -102,13 +102,13 @@ source('scripts/load_IMLS_functions.R')
 # # # # Split Global Tree Search countries by their delimiter (;), and create separated country list for each taxon
 # # ################################################################################
 # gts_all <- gts_list %>% mutate(native_distribution = strsplit(as.character(native_distribution), "; ")) %>% unnest(native_distribution)
-# 
+#
 # ## looking at all countries for all species. The following line was to split the countries for all species in Global Tree Seach data and write out.
 #     spp_countries <- as.data.frame(sort(unique(gts_all$native_distribution)))
-# 
+#
 #     ## write out GTS countries to check
 #     write_xlsx(spp_countries, path=file.path(imls.meta, 'known_distibution', 'globaltreesearch_countries.xlsx'))
-# 
+#
 # ### use countrycode package to translate country codes from the country names
 # # countrycode(sort(unique(gts_list$native_distribution)), origin='country.name', destination='fips')
 # country_set <- as.data.frame(sort(unique(gts_all$native_distribution))) %>%
@@ -117,20 +117,20 @@ source('scripts/load_IMLS_functions.R')
 #       add_column(iso3n = countrycode(sort(unique(gts_all$native_distribution)), origin='country.name', destination='iso3n')) %>%
 #         add_column(fips = countrycode(sort(unique(gts_all$native_distribution)), origin='country.name', destination='fips'))
 # names(country_set)[1] <- 'country_name'
-# 
+#
 # ## Save the country codes for species, ISO2, ISO3, and numeric and character codes, FIPS code
 #   write_xlsx(country_set, path=file.path(imls.meta, 'gis_data', 'global_admin_areas.xlsx'))
 # # ################################################################################
 # # add the country code to the GTS list by matching taxon names
 # # names(gts_list)
-# 
+#
 # # gts_list <- gts_list %>%
-# 
+#
 # ## add the country code to the taxon list by matching taxon names
 # taxon_co <- left_join(taxon_list, gts_list[,c(2,4)], by=c('species_name_acc' = 'taxon'))
-# 
+#
 # write_xlsx(taxon_co, path=file.path(imls.meta, "taxa_work.xlsx"))
-# 
+#
 # ################################################################################
 # ## bring in polygon for world regions and US (down to county level)
 # adm0.poly <- ne_countries(type = 'countries', scale = 'large')
@@ -142,11 +142,11 @@ source('scripts/load_IMLS_functions.R')
 #   names(adm1.poly)
 #   names(adm2.poly)
 #   head(adm2.poly)
-#   
+#
 # write_xlsx(adm0.poly@data, path=file.path(imls.meta, 'gis_data', "geo_work0.xlsx"))
 # write_xlsx(adm1.poly@data, path=file.path(imls.meta, 'gis_data', "geo_work1.xlsx"))
 # write_xlsx(adm2.poly@data, path=file.path(imls.meta, 'gis_data', "geo_work2.xlsx"))
-# 
+#
 # save(adm0.poly, adm1.poly, adm2.poly, gts_list, file=file.path(imls.meta, 'gis_data', 'IMLS_GIS_data.RData'))
 # ################################################################################
 # ## calculate centroid of polygons
@@ -168,36 +168,36 @@ source('scripts/load_IMLS_functions.R')
 # # # #   ## Assign coordinates to records that are missing coordinates
 # # # #     ## based on country/state/county
 # # # #   load(file.path(imls.meta, 'gis_data', 'IMLS_GIS_data.RData'))
-# # # # 
+# # # #
 # # # #   ## bring in records (at least those missing coordinates)
 ################################################################################
-    # # # #   
+    # # # #
 # ################################################################################
 # ###   NEEDS TO BE COMPLETED   ###
 #   ## Flag occurrences outside their native distribution
 #       ## based on country/state/county
 
   # spp.test <- c("Quercus georgiana", "Quercus imbricaria", "Quercus arkansana", "Quercus falcata", "Quercus stellata", "Quercus acutissima")
-    
+
 
   load(file.path(imls.meta, 'gis_data', 'IMLS_GIS_data.RData'))
-  
+
   ## set the distance in meters to check from a point (for comparing centroids to EOs)
   d.rm <- 1000
-  
+
   ## give a unique identifier to adm0 (country), adm1 (state) and adm2 (county level)
       adm0 <- adm0 %>% mutate(UID = as.character(paste0('adm0_', iso_a2))) %>% select(UID, colnames(adm0))
       adm1 <- adm1 %>% mutate(UID = as.character(paste0('adm1_', iso_a2))) %>% select(UID, colnames(adm1))
       adm2 <- adm2 %>% mutate(UID = as.character(paste0('adm2_', ID_2))) %>% select(UID, colnames(adm2))
-      
+
   ## create proj4string to set coords
       proj4string4poly <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
-  
-  ## Antarctica has NaN for centroid...remove it    
+
+  ## Antarctica has NaN for centroid...remove it
       adm0 <- adm0[!is.na(adm0$long_centroid),]
       adm1 <- adm1[!is.na(adm1$long_centroid),]
       adm2 <- adm2[!is.na(adm2$long_centroid),]
-      
+
   ## create spatialPolygonDataframes for adm0, adm1, adm2 levels
       adm0.spdf <- SpatialPointsDataFrame(adm0[,c('long_centroid', 'lat_centroid')], adm0,
                                           proj4string = CRS(proj4string4poly))
@@ -205,7 +205,7 @@ source('scripts/load_IMLS_functions.R')
                                           proj4string = CRS(proj4string4poly))
       adm2.spdf <- SpatialPointsDataFrame(adm2[,c('long_centroid', 'lat_centroid')], adm2,
                                           proj4string = CRS(proj4string4poly))
-  
+
     #######
 ## this is start of iterative loop from the United States and other countries
         ## get list of files to iterate
@@ -214,7 +214,7 @@ source('scripts/load_IMLS_functions.R')
       ## subset the species list to only those on GTS list within US
 
         f.subs <- file_path_sans_ext(all.spp.files)
-    
+
         gts_sub <- gts_all[gts_all$taxon %in% gsub('_', ' ', f.subs),]
         # f.nms <- gsub(' ', '_', gts_sub$taxon[gts_sub$native_distribution == 'United States'])
         # gts_sub <- gts_sub[!is.na(gts_sub),]
@@ -236,7 +236,7 @@ source('scripts/load_IMLS_functions.R')
       out.fld.nm <- 'spp_edited_points'
       if(dir.exists(file.path(imls.output, out.fld.nm))) print('directory already created') else
         dir.create(file.path(imls.output, out.fld.nm), recursive=TRUE)
-  
+
       ## to county/adm2 level
       ## United States goes down to county centroids
       cat("Starting ", "United States ", "taxa (", length(to.adm2), " total)", ".\n\n", sep="")
@@ -247,22 +247,22 @@ source('scripts/load_IMLS_functions.R')
       #   cat("Starting ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
       # }
 
-## let's iterate! 
+## let's iterate!
 
 for (i in 1:length(to.adm2)){
       f.nms <- to.adm2
       f.nm <- f.nms[i]
         cat("Starting ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
-      
+
   ## bring in records (load from *.RData file or bring in from text file)
     eo.df  <- read.csv(file.path(imls.output, 'split_by_sp', paste0(f.nm, '.csv')))
       if(nrow(eo.df) < 2) next
-    
+
     ## extract administrative area (0,1,2) based upon inforamtion provided in record for country/state/county.
     proj4string4poly <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
     eo.spdf <- SpatialPointsDataFrame(eo.df[,c('decimalLongitude', 'decimalLatitude')], eo.df,
                                       proj4string = CRS(proj4string4poly))
-    
+
     ##set a variable to flag occurrences that are not in right place
     eo.spdf$occ_flag <- NA
       eo.spdf$occ_flag <- as.character(eo.spdf$occ_flag)
@@ -272,53 +272,53 @@ for (i in 1:length(to.adm2)){
         eo.spdf$in_water <- as.character(eo.spdf$in_water)
       eo.spdf$in_water <- is.na(map.where(adm0.poly, eo.spdf$decimalLongitude,
                                         eo.spdf$decimalLatitude))
-      
+
       out.uid <- as.character(eo.spdf$UID[eo.spdf$in_water == TRUE])
-      
+
       # plot(adm0.poly[adm0.poly$name == 'United States of America',])
       # points(eo.spdf[eo.spdf$in_water == TRUE,], col='blue')
       # points(eo.spdf[eo.spdf$in_lakes == TRUE,], col='blue')
-      
+
       if(length(out.uid) > 0){
         eo.spdf$occ_flag[eo.spdf$UID %in% out.uid] <- paste0('Given coordinates are in water')
-      } 
+      }
 
     # ## flag records where point is in a lake
     #   eo.spdf$in_lakes <- NA
     #     eo.spdf$in_lakes <- as.character(eo.spdf$in_lakes)
     #     wrld.lakes <- map('lakes')
-    # 
+    #
     #   eo.spdf$in_lakes <- is.na(map.where(wrld.lakes, eo.spdf$decimalLongitude,
     #                                       eo.spdf$decimalLatitude))
-    # 
+    #
     #   out.uid <- as.character(eo.spdf$UID[eo.spdf$in_lakes == FALSE])
-    # 
+    #
     #   if(length(out.uid) > 0){
     #   eo.spdf$occ_flag[eo.spdf$UID %in% out.uid] <- paste0('Given coordinates are in a lake.')
     #   }
       eo.spdf@data <- select(eo.spdf@data, -in_water)#, -in_lakes
         head(eo.spdf@data)
-      
+
     if(length(eo.spdf[!is.na(eo.spdf$occ_flag),]) > 0){
       if(file.exists(file.path(imls.raw, 'records_to_examine', "water_points.csv"))){
         write.csv(eo.spdf[!is.na(eo.spdf$occ_flag),], file.path(imls.raw, 'records_to_examine', paste0('water_points_', Sys.Date(), '.csv')),
                   row.names = F, append = TRUE)
       } else write.csv(eo.spdf[!is.na(eo.spdf$occ_flag),], file.path(imls.raw, 'records_to_examine', paste0('water_points_', Sys.Date(), '.csv')),
                   row.names = F)
-    } 
-      
+    }
+
       # eo.spdf$dist_out <- NA
       #   eo.spdf$dist_out <- as.character(eo.spdf$dist_out)
-      # 
+      #
       # out.water <- eo.spdf[!is.na(eo.spdf$occ_flag),]
       # # out.water <- out.water[1:10,]
       #     plot(out.water)
       # dist.water <- dist2Line(out.water, adm0.poly, distfun=distGeo)
       # eo.spdf$dist.water[!is.na(eo.spdf$occ_flag)] <- dist.water
-      
+
       # ##or make buffer around outside and then take points within
-      # 
-      #   out.water[!is.na(out.water$occ_flag),] <- 
+      #
+      #   out.water[!is.na(out.water$occ_flag),] <-
       #   #<- dist.water[,1]
     ## get points that are in each polygon
     eo.0 <- point.in.poly(eo.spdf, adm0.poly, sp=TRUE)
@@ -345,10 +345,10 @@ for (i in 1:length(to.adm2)){
       # names(eo.post)
       # head(eo.post)
       # unique(eo.post$occ_flag)
-    
+
     # ## Could flag records where state (adm1) or county (adm2) do not match using similar code to above.
     # eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(NAME_1 %in% gts_sub$native_distribution, TRUE, FALSE)))
-    
+
   write.csv(eo.out, file.path(imls.output, out.fld.nm, paste0(f.nm, '.csv')), row.names=FALSE)
 
 
@@ -362,30 +362,30 @@ for (i in 1:length(to.adm2)){
     d.mat <- distm(eo.spdf, adm2.spdf)
       row.names(d.mat) <- eo.spdf$UID
       colnames(d.mat) <- adm2.spdf$UID
-      
+
 ## if some values are within, then find which are within distance and flag them
         ## could set another field to flag occurrences that are outtside their bounds
             # eo.spdf$occ_flag <- ''
 
   ## check for any that fit a specific requirement (distance away)
       if(isTRUE(any(d.mat[d.mat < d.rm]))){
-        
+
             ## set the values greater than the distance to NA
             cat("One or more of the element occurrence points are within", d.rm, "m of a centroid for an administrative area. \n Please check to determine which points are close and whether they should be removed.\n\n")
-                d.mat[upper.tri(d.mat, diag=TRUE)] <- NA        
+                d.mat[upper.tri(d.mat, diag=TRUE)] <- NA
                 d.mat[d.mat > d.rm] <- NA
                   df <- data.frame(d.mat)
-          
+
                     # row.names(df[data.frame(which(df <= d.rm, arr.ind=TRUE))$row,])
                     eo.spdf$occ_flag[eo.spdf$UID %in% row.names(df[data.frame(which(df <= d.rm, arr.ind=TRUE))$row,])] <- paste0('Check record for proximity to county/adm2 centroid (within ', d.rm, ' meters).')
-          
+
       } else {
       cat("No points are within ", d.rm, " meters of a centroid for any administrative area.\n\n", sep="")
       }
 
-            
+
       write.csv(eo.spdf@data, file.path(imls.output, out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
-      
+
       cat("Ending ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
 
     }
@@ -396,14 +396,14 @@ for (i in 1:length(to.adm2)){
 
 unique(eo.spdf$occ_flag)
 # ################################################################################
-# 
+#
 #   cat("Starting ", "rest of world ", "taxa (", length(to.adm0), " total)", ".\n\n", sep="")
 #   # i <- 14
 #       for (i in 1:length(to.adm0)){
 #         f.nms <- to.adm0
 #         f.nm <- f.nms[i]
 #             cat("Starting ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
-#        
+#
 #       ## bring in records (load from *.RData file or bring in from text file)
 #       eo.df  <- read.csv(file.path(imls.output, 'split_by_sp', paste0(f.nm, '.csv')))
 #         if(nrow(eo.df)<2) next
@@ -415,28 +415,28 @@ unique(eo.spdf$occ_flag)
 #       eo.0 <- point.in.poly(eo.spdf, adm0.poly, sp=TRUE)
 #       ## compare the calculated area to the provided area and flag those that do not match
 #       ##assign the native country (ISO0), state (ISO1), and county (ISO2) to the SPDF or dataset
-#       
+#
 #       gts_sub <- gts_all[gts_all$taxon %in% eo.0@data$taxon_name,]
-#       
+#
 #       eo.post <- left_join(eo.0@data, gts_list[,c(2,4)], by=c('species_name_acc' = 'taxon'))
-# 
+#
 #       eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(name %in% gts_sub$native_distribution, TRUE, FALSE)))
 #       # eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(NAME_0 %in% strsplit(native_distribution, split = '; '), TRUE, FALSE)))
-#       
+#
 #       # write_xlsx(eo.post, path=file.path(imls.output, "match_work.xlsx"))
-#       
+#
 #       ## flag records where country doesn't match and then output into folder (as *.csv)
 #       eo.out <- eo.post %>% filter(ISO1_match==TRUE) %>% select(names(eo.df))
-#       
+#
 #       ## remove records where country doesn't match and then output into folder (as *.csv)
 #       # eo.out <- eo.post %>% filter(ISO1_match==TRUE) %>% select(names(eo.df))
-#       
+#
 #       write.csv(eo.out, file.path(imls.output, out.fld.nm, paste0(f.nm, '.csv')), row.names=FALSE)
-#       
-#       
+#
+#
 #       eo.spdf <- SpatialPointsDataFrame(eo.out[,c('decimalLongitude', 'decimalLatitude')], eo.out,
 #                                         proj4string = CRS(proj4string4poly))
-# 
+#
 #       ## make a distance matrix
 #       d.mat <- distm(eo.spdf, adm2.spdf)
 #       row.names(d.mat) <- eo.spdf$UID
@@ -444,27 +444,27 @@ unique(eo.spdf$occ_flag)
 #       ## if some values are within, then find which are within distance and flag them
 #       ## set field for flag
 #       eo.spdf$occ_flag <- ''
-#       
+#
 #       ## check for any that fit a specific requirement (distance away)
 #       if(isTRUE(any(d.mat[d.mat < d.rm]))){
-#         
+#
 #         ## set the values greater than the distance to NA
 #         cat("One or more of the element occurrence points are within", d.rm, "m of a centroid for an administrative area. \n Please check to determine which points are close and whether they should be removed.\n\n")
-#         d.mat[upper.tri(d.mat, diag=TRUE)] <- NA        
+#         d.mat[upper.tri(d.mat, diag=TRUE)] <- NA
 #         d.mat[d.mat > d.rm] <- NA
 #         df <- data.frame(d.mat)
-#         
+#
 #         # row.names(df[data.frame(which(df <= d.rm, arr.ind=TRUE))$row,])
 #         eo.spdf$occ_flag[eo.spdf$UID %in% row.names(df[data.frame(which(df <= d.rm, arr.ind=TRUE))$row,])] <- paste0('Check record for proximity to county/adm2 centroid (within ', d.rm, ' meters).')
-#         
+#
 #       } else {
 #         cat("No points are within ", d.rm, " meters of a centroid for any administrative area.\n\n", sep="")
 #       }
-#       
+#
 #       write.csv(eo.spdf@data, file.path(imls.output, out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
-#       
+#
 #       cat("Ending ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
-#       
+#
 #       }
 
 ################################################################################
@@ -476,7 +476,7 @@ unique(eo.spdf$occ_flag)
 #     plot(eo.spdf2)
 #   ## d.rm is distance (meters) from another point where there are too close together and you want to remove
 #   d.rm <- 10000
-#   
+#
 #   # spdf <- eo.spdf2
 #   d.mat <- distm(eo.spdf2)
 #   # d.mat <- pointDistance(eo.spdf2, eo.spdf2, lonlat=TRUE, allpairs=TRUE)
@@ -486,9 +486,9 @@ unique(eo.spdf$occ_flag)
 #   d.mat[d.mat > d.rm] <- NA
 #   # d.mat[d.mat < d.rm] <- TRUE
 #   d.mat <- as.data.frame(d.mat)
-#   
-#   
-#   
+#
+#
+#
 #   # # names(d.mat) <- eo.spdf2$UID
 #   # dst <- as.dist(d.mat)
 #   # # d.mat[d.mat > d.rm] <- NA
@@ -496,25 +496,25 @@ unique(eo.spdf$occ_flag)
 #   # # d.mat
 #   # dst[dst > d.rm] <- NA
 #   # dst
-#   # 
+#   #
 #   which(isTRUE(d.mat) | isTRUE(d.mat[nrow(d.mat):1, ])[nrow(d.mat):1])
 #   adj1[vec1,vec1]
-#   
+#
 #   vec1 <- colnames(d.mat)
 #   d.mat[vec1,vec1]
-#   
-#   
+#
+#
 #   df <- data.frame(a = c(1,2,3,4,1,5,6,4,2,1))
 #   which(duplicated(df) | duplicated(df, fromLast = TRUE))
-#   
+#
 #   # i <- 2
 #   # ## for each row, create new field for those other points within defined distance (d.rm)
 #   # n <- nrow(d.mat)
-#   # 
+#   #
 #   # for(i in 1:n){
 #   #   if(d.mat[,i])
 #   #     d.mat[,i] <= d.rm
-#   #   
+#   #
 #   # }
 #   # class(dst)
 ################################################################################

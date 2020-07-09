@@ -23,7 +23,9 @@
 
 rm(list=ls())
 
-my.packages <- c('raster', 'sp', 'tools', 'spatialEco', 'rgdal', 'geosphere', 'readxl', 'writexl', 'dplyr', 'tidyr', 'tidyverse', 'housingData', 'data.table', 'textclean', 'CoordinateCleaner', 'countrycode', 'usmap')
+my.packages <- c('raster', 'sp', 'tools', 'spatialEco', 'rgdal', 'geosphere',
+'readxl', 'writexl', 'dplyr', 'tidyr', 'tidyverse', 'housingData', 'data.table',
+'textclean', 'CoordinateCleaner', 'countrycode', 'usmap')
 #'sf',
 # install.packages (my.packages) #Turn on to install current versions
   lapply(my.packages, require, character.only=TRUE)
@@ -45,7 +47,7 @@ source("./Documents/GitHub/OccurrencePoints/scripts/set_workingdirectory.R")
 # Load functions
 ################################################################################
 
-source('scripts/load_IMLS_functions.R')
+#source('scripts/load_IMLS_functions.R')
 
 ################################################################################
 ## Read in data
@@ -59,6 +61,11 @@ taxon_list <- read.csv(file.path(imls.meta, "target_taxa_with_syn.csv"),
 gts_list <- read.csv(file.path(imls.meta, "known_distribution",
   "globaltreesearch_country_distribution.csv"),
   header = T, na.strings = c("","NA"), colClasses = "character")
+
+
+library(rredlist)
+
+
 
 ################################################################################
 # Split Global Tree Search countries by their delimiter (;) and create

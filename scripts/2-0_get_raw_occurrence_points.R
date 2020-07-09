@@ -50,12 +50,12 @@ rm(my.packages)
 ####################################################################################
 # run code to set your working directory and project folders based upon computer using
 # skip this if preferred, but then need to set your working directory and input/output folders manually
-# source('scripts/set_workingdirectory.R')
+# source('scripts/0-1_set_workingdirectory.R')
 
 # If setting manually, set your working directory and data_in file paths in the next few lines
 # setwd("./../..")
 # setwd("/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points")
-source('scripts/set_workingdirectory.R')
+source('scripts/0-1_set_workingdirectory.R')
 # data_in <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/insitu_occurrence_points"
 
 ## location for your login information for GBIF (or maybe other stuff) if using Otherwise comment out.
@@ -64,7 +64,7 @@ source('scripts/set_workingdirectory.R')
 # ## create folders if they are npt already there
 # if(dir.exists(file.path(imls.raw, 'raw_datasets'))) print('directory already created') else
 #   dir.create(file.path(imls.raw, 'raw_datasets'), recursive=TRUE)
-# 
+#
 ## create folders if they are not already there
 if(dir.exists(file.path(imls.raw, 'datasets_raw'))) print('directory already created') else
   dir.create(file.path(imls.raw, 'datasets_raw'), recursive=TRUE)
@@ -81,7 +81,7 @@ if(dir.exists(file.path(imls.raw, 'datasets_edited'))) print('directory already 
 ####################################################################################
 ## load functions
 ####################################################################################
-source('scripts/load_IMLS_functions.R')
+source('scripts/0-2_load_IMLS_functions.R')
 ####################################################################################
 
 
@@ -198,7 +198,7 @@ if(dir.exists(file.path(imls.raw, 'gbif_read_in', paste0('date_', Sys.Date()))))
 occ_download_wait(gbd, status_ping=10, quiet=TRUE)
 occ_download_get(key=gbd[1], path=file.path(imls.raw, 'gbif_read_in', paste0('date_', Sys.Date())), overwrite=TRUE)
 
-unzip(file.path(imls.raw, 'gbif_read_in', paste0('date_', Sys.Date()), paste0(gbd[1], '.zip')), 
+unzip(file.path(imls.raw, 'gbif_read_in', paste0('date_', Sys.Date()), paste0(gbd[1], '.zip')),
       exdir = file.path(imls.raw, 'gbif_read_in', paste0('date_', Sys.Date())))
 
 # read in data
@@ -763,7 +763,7 @@ length(species_codes) #56
 #     data <- rbind(data, target_sp)
 #   }
 #   rm(sp)
-#   
+#
 #   # remove state file to make space for reading in next one
 #   rm(state_df)
 #   # take a look at how much data were pulled
@@ -936,4 +936,3 @@ write.csv(us_cty_dist, file.path(imls.meta, 'known_distibution', "BISON_US_count
 ##################################
 # write.csv(idigbio_raw, file.path(imls.raw, 'datasets_raw', "idigbio_raw.csv"), row.names=FALSE)
 # write.csv(idigbio_edit, file.path(imls.raw, 'datasets_edited', "idigbio_edit.csv"), row.names=FALSE)
-

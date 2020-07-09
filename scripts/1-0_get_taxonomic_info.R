@@ -49,14 +49,14 @@ rm(my.packages)
 # run code to set your working directory and project folders based upon computer using
 #      skip this if preferred, but then need to set your working directory and input/output folders manually
 ####################################################################################
-source('scripts/set_workingdirectory.R')
+source('scripts/0-1_set_workingdirectory.R')
 #setwd()
 #
 ####################################################################################
 #######################################
 ## load functions
 ####################################################################################
-source('scripts/load_IMLS_functions.R')
+source('scripts/0-2_load_IMLS_functions.R')
 ####################################################################################
 
 ##############
