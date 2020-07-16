@@ -7,59 +7,50 @@
 #   working.
 
 ################################################################################
-# Set the working environment depending on the computer on which working
+# Set working environment depending on your computer
 ################################################################################
 
-# Use this to check your "nodename", which you should paste into the if
-#   statement below
+# Use this to check your "nodename"
 # Sys.info()[4]
 
 ## For Shannon Still:
 if (Sys.info()[4] == "Still-MB-Pro-15.local") {
-  # set other directories or relative paths
-  imls.meta <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/metadata"
-  imls.raw <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/raw_data"
-  imls.output <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/outputs"
-  imls.local <- "/Users/aesculus/Box/Research/Active_Projects/IMLS_MortonArb/local_data"
-  imls.exsitu <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/Ex situ survey/standard_column_names"
+  # set main working directory
+  main_dir <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA"
+  # OPTIONAL: set local working directory, for trialing locally before saving
+  #   to main working directory
+  local_dir <- "/Users/aesculus/Box/Research/Active_Projects/IMLS_MortonArb/local_data"
   # set location for login information (e.g., for GBIF)
-  log_loc <- file.path(imls.local, "gbif.txt")
+  log_loc <- file.path(local_dir, "gbif.txt")
   # prints computer name, to let you know you're in the right spot
   print(paste("Working from the lovely", Sys.info()[4]))
-  
-  ## For Emily Beckman:
+
+## For Emily Beckman:
 } else if (Sys.info()[4] == "Africa.local") {
-  # set the absolute path
-  #setwd("/Users/aesculus/Box/Research/Active_Projects/IMLS MFA/IMLS_CollectionsValue")
-  #  print(getwd())
-  # set other directories or relative paths
-  imls.meta <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/metadata"
-  imls.raw <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/raw_data"
-  imls.output <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/outputs"
-  imls.local <- "./Desktop"
-  imls.exsitu <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/Ex situ survey/standard_column_names"
+  # set main working directory
+  main_dir <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA"
   # set location for login information (e.g., for GBIF)
-  log_loc <- file.path("/Users/aesculus/Desktop/gbif.txt")
+  log_loc <- file.path(local_dir, "IMLS_passwords.txt")
   # prints computer name, to let you know you're in the right spot
   print(paste("Working from the lovely", Sys.info()[4]))
-  ## For Shannon workstation: 
-}  
-if (Sys.info()[4] == "CAES-SSTILL") {
-  # set other directories or relative paths
-  data.local <- "C:\Users\aesculus\Box\Research\Active_Projects\IMLS_MortonArb\MortonArb-CollectionsValue"
-  imls.local <- file.path(data.local, "OccurrencePoints\local_data")
-  imls.meta <- "G:\Shared drives\IMLS MFA\occurrence_points\metadata"
-  imls.raw <- "G:\Shared drives\IMLS MFA\occurrence_points\raw_data"
-  imls.output <- "G:\Shared drives\IMLS MFA\occurrence_points\outputs"
-  imls.exsitu <- "G:\Shared drives\IMLS MFA\Ex situ survey/standard_column_names"
+
+## For Shannon workstation:
+} else if (Sys.info()[4] == "CAES-SSTILL") {
+  # set main working directory
+  main_dir <- "G:/Shared drives/IMLS MFA"
+  # OPTIONAL: set local working directory, for trialing locally before saving
+  #   to main working directory
+  local_dir <- "C:/Users/aesculus/Box/Research/Active_Projects/IMLS_MortonArb/MortonArb-CollectionsValue"
   # set location for login information (e.g., for GBIF)
-  log_loc <- file.path(imls.local, "gbif.txt")
+  log_loc <- file.path(local_dir, "gbif.txt")
   # prints computer name, to let you know you're in the right spot
   print(paste("Working from the lovely", Sys.info()[4]))
-  
+
+## can add as many additional "else if" sections as needed to cover other
+#   workstations
+
 } else {
-  
-  # default, which sets the working driectory as the folder from which you opened
-  #   the scripts/project
+  # default, which sets the working driectory as the folder from which you
+  #   opened the scripts/project
   setwd(getwd())
 }
