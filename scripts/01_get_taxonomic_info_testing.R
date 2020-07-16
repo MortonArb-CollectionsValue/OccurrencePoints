@@ -49,7 +49,6 @@ rm(my.packages)
 imls.meta <- "./Desktop"
 imls.raw <- "./Desktop"
 imls.output <- "/Volumes/GoogleDrive/My Drive/Conservation Gap Analysis/Ex situ Survey"
-imls.exsitu <- "/Volumes/GoogleDrive/My Drive/Conservation Gap Analysis/Ex situ Survey/Accessions Data Files"
 
 # or use set_workingdirectory.R script:
 #source("./Documents/GitHub/OccurrencePoints/scripts/set_workingdirectory.R")
@@ -95,7 +94,7 @@ nrow(taxa_list_acc)
 #taxa_list_acc <- c("name1","name2","name3")
 
 # create list of target taxa names
-taxa_names <- taxa_list_acc[,1]
+taxa_names <- str_squish(taxa_list_acc[,1])
   # use this instead if you want to select names based on values in other col:
   #taxa_names <- taxa_list_acc[which(taxa_list_acc$can_match == "match"),]
   #taxa_names <- taxa_names[,1]
@@ -111,12 +110,13 @@ species_only <- species_names[
   !grepl(" x ",species_names)]
 
 ################################################################################
-# 2. Find synonyms for target taxa
+# 2. Find taxonomic status and synonyms for target taxa
 ################################################################################
 
+
 ##
-### A) Tropicos (from Missouri Botanical Garden)
-### https://www.missouribotanicalgarden.org/media/fact-pages/tropicos.aspx
+#### A) Tropicos (from Missouri Botanical Garden)
+##### https://www.missouribotanicalgarden.org/media/fact-pages/tropicos.aspx
 ##
 
 # IF NEEDED: set API key and restart R
@@ -128,7 +128,52 @@ species_only <- species_names[
 # replace characters to match Tropicos system
 species_names <- gsub(" x "," × ",species_names,fixed=T)
 
-# get synonyms
+## GET TAXONOMIC STATUS
+
+tp_names_raw <- data.frame()
+for(i in 1:length(species_names)){
+  output_new <- tp_search(species_names[[i]])
+  output_new$taxon_name_acc <- species_names[[i]]
+  tp_names <- rbind.fill(tp_names,output_new)
+  print(species_names[i])
+}
+head(tp_names_raw); class(tp_names_raw); names(tp_names_raw)
+# standardize column names for joining later
+tp_names <- tp_names_raw
+setnames(tp_names,
+  old = c("scientificname","nameid",
+          "nomenclaturestatusname","scientificnamewithauthors"),
+  new = c("taxon_name_match","match_id",
+          "acceptance","match_name_with_authors"),
+  skip_absent=T)
+tp_names$database <- "tropicos"
+# replace characters in taxa names
+tp_names[] <- lapply(tp_names, function(x) gsub(" × "," x ", x))
+tp_names[] <- lapply(tp_names, function(x) gsub(" fo. "," f. ", x))
+# remove duplicates except those matching legitimate names
+tp_names_noDup <- tp_names
+  # remove rows with no match
+tp_names_noDup <- tp_names_noDup[which(
+  !is.na(tp_names_noDup$taxon_name_match)),]
+  # OPTIONAL, IF NOT LOOKING FOR CHILDREN: remove subsp., var., and f.
+tp_names_noDup <- tp_names_noDup %>%
+  filter(!grepl("subsp.",taxon_name_match,fixed=T) &
+         !grepl("var.",taxon_name_match,fixed=T) &
+         !grepl("f.",taxon_name_match,fixed=T))
+  # remove taxon_name_acc duplicates that aren't Legitimate
+tp_names_noDup$dup <- c(duplicated(tp_names_noDup$taxon_name_acc,fromLast=T)
+  | duplicated(tp_names_noDup$taxon_name_acc))
+tp_names_noDup <- setdiff(tp_names_noDup,tp_names_noDup[which(
+  tp_names_noDup$acceptance != "Legitimate" & tp_names_noDup$dup == T),])
+# add column with authors
+tp_names_noDup$match_name_with_authors <- paste(
+  tp_names_noDup$taxon_name_match,tp_names_noDup$author)
+# keep only necessary columns
+tp_names_noDup <- tp_names_noDup[,c("taxon_name_acc","taxon_name_match",
+  "match_id","acceptance","match_name_with_authors","database")]
+
+## GET SYNONYMS
+
 tp_syn <- synonyms(species_names, db="tropicos")
 
 # !! STOP BEFORE RUNNING NEXT SECTION -- YOU MAY HAVE TO ANSWER SOME PROMPTS
@@ -147,17 +192,68 @@ tp_syn_df$acceptance <- "synonym"
 # replace characters in taxa names
 tp_syn_df[] <- lapply(tp_syn_df, function(x) gsub(" × "," x ", x))
 tp_syn_df[] <- lapply(tp_syn_df, function(x) gsub(" fo. "," f. ", x))
+# keep only necessary columns
+tp_syn_df <- tp_syn_df[,c("taxon_name_acc","taxon_name_match",
+  "match_id","acceptance","match_name_with_authors","database")]
+
+## BIND TOGETHER STATUS AND SYNONYMS
+
+tp_all <- rbind.fill(tp_names_noDup,tp_syn_df)
+head(tp_all)
+# write file
+write.csv(tp_all,file.path(imls.raw, "taxize_tropicos.csv"),row.names=FALSE)
+
 
 ##
-### B) Integrated Taxonomic Information Service (ITIS)
-### https://www.itis.gov
+#### B) Integrated Taxonomic Information Service (ITIS)
+##### https://www.itis.gov
 ##
 
 # replace characters to match ITIS system
 taxa_names <- gsub(" x "," X ",taxa_names,fixed=T)
 taxa_names <- gsub(" subsp. "," ssp. ",taxa_names)
 
-# get synonyms
+## GET TAXONOMIC STATUS
+
+# takes a while if lots of names
+itis_names_raw <- itis_terms(taxa_names,what="scientific")
+  itis_names_raw <- ldply(itis_names_raw, data.frame) # list to data frame
+  itis_names_raw <- itis_names_raw[,c(1:2,4:6)]
+head(itis_names_raw); class(itis_names_raw); names(itis_names_raw)
+# standardize column names for joining later
+itis_names <- itis_names_raw
+setnames(itis_names,
+  old = c(".id","scientificName","nameUsage","tsn"),
+  new = c("taxon_name_acc","taxon_name_match","acceptance","match_id"),
+  skip_absent=T)
+itis_names$database <- "itis"
+# replace characters in taxa names
+itis_names[] <- lapply(itis_names, function(x) gsub(" X "," x ", x))
+itis_names[] <- lapply(itis_names, function(x) gsub(" ssp. "," subsp. ", x))
+# remove duplicates except those matching legitimate names
+itis_names_noDup <- itis_names
+  # remove rows with no match
+itis_names_noDup <- itis_names_noDup[which(
+  !is.na(itis_names_noDup$taxon_name_match)),]
+  # OPTIONAL, IF NOT LOOKING FOR CHILDREN: remove subsp., var., and f.
+itis_names_noDup <- itis_names_noDup %>%
+  filter(!grepl("subsp.",taxon_name_match,fixed=T) &
+         !grepl("var.",taxon_name_match,fixed=T) &
+         !grepl("f.",taxon_name_match,fixed=T))
+  # remove taxon_name_acc duplicates that aren't Legitimate
+itis_names_noDup$dup <- c(duplicated(itis_names_noDup$taxon_name_acc,fromLast=T)
+  | duplicated(itis_names_noDup$taxon_name_acc))
+itis_names_noDup <- setdiff(itis_names_noDup,itis_names_noDup[which(
+  itis_names_noDup$acceptance != "accepted" & itis_names_noDup$dup == T),])
+# add column with authors
+itis_names_noDup$match_name_with_authors <- paste(
+  itis_names_noDup$taxon_name_match,itis_names_noDup$author)
+# keep only necessary columns
+itis_names_noDup <- itis_names_noDup[,c("taxon_name_acc","taxon_name_match",
+  "match_id","acceptance","match_name_with_authors","database")]
+
+## GET SYNONYMS
+
 itis_syn <- synonyms(taxa_names, db="itis", accepted = T)
 #itis_syn_all <- synonyms(taxa_names, db="itis", accepted = F)
 
@@ -186,6 +282,16 @@ itis_syn_df$match_name_with_authors <- paste(
 # remove records where taxa name and syn name are the same
 itis_syn_df <- itis_syn_df[which(itis_syn_df$taxon_name_acc !=
   itis_syn_df$taxon_name_match),]
+# keep only necessary columns
+itis_syn_df <- itis_syn_df[,c("taxon_name_acc","taxon_name_match",
+  "match_id","acceptance","match_name_with_authors","database")]
+
+## BIND TOGETHER STATUS AND SYNONYMS
+
+itis_all <- rbind.fill(itis_names_noDup,itis_syn_df)
+# write file
+write.csv(itis_all,file.path(imls.raw, "taxize_itis.csv"),row.names=FALSE)
+
 
 ##
 ### C) Kew’s Plants of the World (POW)
@@ -196,41 +302,65 @@ itis_syn_df <- itis_syn_df[which(itis_syn_df$taxon_name_acc !=
 taxa_names <- gsub(" X "," x ",taxa_names,fixed=T)
 taxa_names <- gsub(" ssp. "," subsp. ",taxa_names)
 
-# get synonyms
+## GET TAXONOMIC STATUS AND SYNONYMS
+
 pow_names <- data.frame()
+pow_syn <- data.frame()
 for(i in 1:length(taxa_names)){
-  output_new <- pow_lookup(get_pow(taxa_names[[i]])[1])
-  output <- as.data.frame(output_new$meta$synonyms)
-  if(length(output) == 0){
-    output <- as.data.frame(output_new$meta$accepted)
+  id <- get_pow(taxa_names[[i]])[1]
+  if(!is.na(id)){
+    output_new <- pow_lookup(id)
+    #if(output_new$meta$taxonomicStatus=="Accepted"){
+      acc <- data.frame(
+        "taxon_name_match" = output_new$meta$name,
+        "match_id" = output_new$meta$fqId,
+        "acceptance" = output_new$meta$taxonomicStatus,
+        "author" = output_new$meta$authors,
+        "taxon_name_acc" = taxa_names[[i]]
+      )
+      syn <- data.frame(output_new$meta$synonyms)
+      if(length(syn)>0){
+        syn$taxon_name_acc <- taxa_names[[i]]
+      }
+      pow_names <- rbind.fill(pow_names,acc)
+      pow_syn <- rbind.fill(pow_syn,syn)
+    #}
   }
-  if(length(output != 0)){
-    output$taxon_name_acc <- taxa_names[[i]]
-  }
-  pow_names <- rbind.fill(pow_names,output)
 }
 
 # !! STOP BEFORE RUNNING NEXT SECTION -- YOU MAY HAVE TO ANSWER SOME PROMPTS
 
-# add column stating which database it came from
-pow_syn_df <- pow_names
+head(pow_names)
+head(pow_syn)
+# fix up a few things
+  # add column stating which database it came from
+pow_syn_df <- pow_syn
 pow_syn_df$database <- "pow"
+pow_names$database <- "pow"
 pow_syn_df$taxonomicStatus <- str_to_lower(pow_syn_df$taxonomicStatus)
-colnames(pow_syn_df)
+pow_names$acceptance <- str_to_lower(pow_names$acceptance)
 # standardize column names for joining later
 setnames(pow_syn_df,
   old = c("name","fqId","author","taxonomicStatus"),
   new = c("taxon_name_match","match_id","author","acceptance"),
   skip_absent=T)
-# keep only necessary columns
-pow_syn_df <- pow_syn_df[,c("taxon_name_acc","taxon_name_match","author",
-  "match_id","database","acceptance")]
 # add column with authors
 pow_syn_df$match_name_with_authors <- paste(
   pow_syn_df$taxon_name_match,pow_syn_df$author)
 # remove records where taxa name and syn name are the same
 pow_syn_df <- pow_syn_df[which(pow_syn_df$taxon_name_acc !=
   pow_syn_df$taxon_name_match),]
+# keep only necessary columns
+pow_syn_df <- pow_syn_df[,c("taxon_name_acc","taxon_name_match",
+  "match_id","database","acceptance","match_name_with_authors")]
+
+## BIND TOGETHER STATUS AND SYNONYMS
+
+pow_all <- rbind.fill(pow_names_noDup,pow_syn_df)
+# write file
+write.csv(pow_all,file.path(imls.raw, "taxize_pow.csv"),row.names=FALSE)
+
+
 
 ##
 ### BIND EVERYTHING TOGETHER
@@ -284,17 +414,17 @@ all_syn[which(all_syn$ref == "NA"),]$ref_count <- 0
 str(all_syn)
 
 # final standardization of status column
-all_syn$status_standard <- all_syn$status
-  unique(all_syn$status_standard)
-all_syn$status_standard <- mgsub(all_syn$status_standard,
-  c("accepted,accepted","accepted,accepted"),"accepted")
-all_syn$status_standard <- mgsub(all_syn$status_standard,
-  c("synonym,synonym","synonym,synonym"),"synonym")
-unique(all_syn$status_standard)
+#all_syn$status_standard <- all_syn$status
+#  unique(all_syn$status_standard)
+#all_syn$status_standard <- mgsub(all_syn$status_standard,
+#  c("accepted,accepted","accepted,accepted"),"accepted")
+#all_syn$status_standard <- mgsub(all_syn$status_standard,
+#  c("synonym,synonym","synonym,synonym"),"synonym")
+#unique(all_syn$status_standard)
 
 # join with initial taxa list again
 taxa_list_acc$taxon_name_match <- taxa_list_acc$taxon_name_acc
-taxa_list_acc$status_standard <- "accepted"
+taxa_list_acc$status_standard <- "no_match"
 all_syn <- full_join(all_syn,taxa_list_acc)
 # separate out taxon_name_match
 all_syn <- all_syn %>% separate("taxon_name_match",
@@ -344,7 +474,7 @@ nrow(all_syn)
   # remove var. and subsp. synonyms when species matches another species in list
 
 # final ordering of names
-all_syn <- as.data.frame(setorder(all_syn,taxon_name_match))
+all_syn <- all_syn %>% arrange(taxon_name_acc)
 # write file
 #write.csv(all_syn,file.path(imls.output, "taxize_synonyms.csv"),
 #  row.names=FALSE)
@@ -374,81 +504,6 @@ write.csv(all_syn,file.path(imls.output, "target_taxa_with_syn.csv"),
 # 3. Check taxonomic status of names for target taxa
 ################################################################################
 
-##
-### A) Tropicos (from Missouri Botanical Garden)
-### https://www.missouribotanicalgarden.org/media/fact-pages/tropicos.aspx
-##
-
-# IF NEEDED: set API key and restart R
-  #taxize::use_tropicos() # get API
-  #usethis::edit_r_environ() # set API
-    # TROPICOS_KEY='________' # paste this in
-
-# Tropicos does not search for infrataxa, so we will use species list
-# replace characters to match Tropicos system
-species_names <- gsub(" x "," × ",species_names,fixed=T)
-
-## MATCH NAMES
-
-  # takes a while if lots of names
-tp_names <- data.frame()
-for(i in 1:length(species_names)){
-  output_new <- tp_search(species_names[[i]])
-  output_new$taxon_name_acc <- species_names[[i]]
-  tp_names <- rbind.fill(tp_names,output_new)
-  print(species_names[i])
-}
-  #head(tp_names); class(tp_names); names(tp_names)
-  # COLNAMES: error|nameid|scientificname|scientificnamewithauthors|family|
-  #           rankabbreviation|nomenclaturestatusname|author|displayreference|
-  #           displaydate|totalrows|nomenclaturestatusid|symbol|
-
-# standardize column names for joining later
-setnames(tp_names,
-  old = c("scientificname","displayreference","nameid",
-          "nomenclaturestatusname","scientificnamewithauthors"),
-  new = c("taxon_name_match","source","match_id",
-          "acceptance","match_name_with_authors"),
-  skip_absent=T)
-# keep only necessary columns
-tp_names <- tp_names[,c("taxon_name_acc","taxon_name_match","family",
-  "source","match_id","acceptance","author","match_name_with_authors")]
-tp_names$database <- "tropicos"
-# replace characters in taxa names
-tp_names[] <- lapply(tp_names, function(x) gsub(" × "," x ", x))
-tp_names[] <- lapply(tp_names, function(x) gsub(" fo. "," f. ", x))
-
-# remove duplicates except those matching legitimate names
-tp_names_noDup <- tp_names
-  # remove rows with no match
-tp_names_noDup <- tp_names_noDup[which(
-  !is.na(tp_names_noDup$taxon_name_match)),]
-  # remove taxon_name_acc duplicates
-tp_names_noDup$dup <- c(duplicated(tp_names_noDup$taxon_name_acc,fromLast=T)
-  | duplicated(tp_names_noDup$taxon_name_acc))
-tp_names_noDup <- setdiff(tp_names_noDup,tp_names_noDup[which(
-  tp_names_noDup$acceptance != "Legitimate" & tp_names_noDup$dup == T),])
-  # remove taxon_name_match duplicates
-tp_names_noDup$dup <- c(duplicated(tp_names_noDup$taxon_name_match,fromLast=T)
-  | duplicated(tp_names_noDup$taxon_name_match))
-tp_names_noDup <- setdiff(tp_names_noDup,tp_names_noDup[which(
-  tp_names_noDup$taxon_name_acc != tp_names_noDup$taxon_name_match &
-  tp_names_noDup$dup == T),])
-  # remove dup column
-tp_names_noDup <- tp_names_noDup[,(-10)]
-# add column with authors
-tp_names_noDup$match_name_with_authors <- paste(
-  tp_names_noDup$taxon_name_match,tp_names_noDup$author)
-
-## STACK ALL DATA
-
-# bind together
-tp_all <- rbind.fill(tp_names_noDup,tp_syn_df)
-# look at duplicates
-#tp_all[which(duplicated(tp_all$taxon_name_acc) & tp_all$acceptance != "synonym"),]
-#tp_all[which(duplicated(tp_all$taxon_name_match)),]
-# write file
-write.csv(tp_all,file.path(imls.raw, "taxize_tropicos.csv"),row.names=FALSE)
 
 ##
 ### B) Integrated Taxonomic Information Service (ITIS)
@@ -459,46 +514,6 @@ write.csv(tp_all,file.path(imls.raw, "taxize_tropicos.csv"),row.names=FALSE)
 taxa_names <- gsub(" x "," X ",taxa_names,fixed=T)
 taxa_names <- gsub(" subsp. "," ssp. ",taxa_names)
 
-## MATCH NAMES
-
-  # takes a while if lots of names
-itis_names <- itis_terms(taxa_names,what="scientific")
-  itis_names <- ldply(itis_names, data.frame) # list to data frame
-  itis_names <- itis_names[,c(1:2,4:6)]
-  #head(itis_output); class(itis_output); names(itis_output)
-  # COLUMNS: .id|author|nameUsage|scientificName|tsn
-
-# standardize column names for joining later
-setnames(itis_names,
-  old = c(".id","scientificName","nameUsage","tsn"),
-  new = c("taxon_name_acc","taxon_name_match","acceptance","match_id"),
-  skip_absent=T)
-itis_names$database <- "itis"
-# replace characters in taxa names
-itis_names[] <- lapply(itis_names, function(x) gsub(" X "," x ", x))
-itis_names[] <- lapply(itis_names, function(x) gsub(" ssp. "," subsp. ", x))
-
-# remove duplicates except those matching legitimate names
-itis_names_noDup <- itis_names
-  # remove rows with no match
-itis_names_noDup <- itis_names_noDup[which(
-  !is.na(itis_names_noDup$taxon_name_match)),]
-  # remove taxon_name_acc duplicates
-itis_names_noDup$dup <- c(duplicated(itis_names_noDup$taxon_name_acc,fromLast=T)
-  | duplicated(itis_names_noDup$taxon_name_acc))
-itis_names_noDup <- setdiff(itis_names_noDup,itis_names_noDup[which(
-  itis_names_noDup$acceptance != "accepted" & itis_names_noDup$dup == T),])
-  # remove taxon_name_match duplicates
-itis_names_noDup$dup <- c(duplicated(itis_names_noDup$taxon_name_match,
-  fromLast=T) | duplicated(itis_names_noDup$taxon_name_match))
-itis_names_noDup <- setdiff(itis_names_noDup,itis_names_noDup[which(
-  itis_names_noDup$taxon_name_acc != itis_names_noDup$taxon_name_match &
-  itis_names_noDup$dup == T),])
-  # remove dup column
-itis_names_noDup <- itis_names_noDup[,(-7)]
-# add column with authors
-itis_names_noDup$match_name_with_authors <- paste(
-  itis_names_noDup$taxon_name_match,itis_names_noDup$author)
 
 ## STACK ALL DATA
 
