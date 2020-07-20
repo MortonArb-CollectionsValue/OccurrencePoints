@@ -1,7 +1,49 @@
 # THIS NEEDS TO BE UPDATED!!
 
 ################################################################################
- 1_get_taxonomic_info.R
+ 0-1_set_workingdirectory.R
+################################################################################
+
+ OVERVIEW: Takes a list of taxa and uses the taxize package to pull taxonomic
+           information from multiple databases. The output can then be used to
+           create a final list of target taxa and synonyms by hand.
+
+           Data pulled includes:
+
+             - Acceptance and authors from Tropicos, Integrated Taxonomic
+                Information Service (ITIS), and The Plant List (TPL)
+             - Authors from International Plant Names Index (IPNI) and
+                Taxonomic Name Resolution Service (TNRS)
+             - Synonyms from Tropicos and ITIS
+
+ INPUTS: List of target taxa
+
+ OUTPUTS: List of target taxa with acceptance, authors, and synonyms
+
+
+################################################################################
+ 0-2_load_IMLS_functions.R
+################################################################################
+
+ OVERVIEW: Takes a list of taxa and uses the taxize package to pull taxonomic
+           information from multiple databases. The output can then be used to
+           create a final list of target taxa and synonyms by hand.
+
+           Data pulled includes:
+
+             - Acceptance and authors from Tropicos, Integrated Taxonomic
+                Information Service (ITIS), and The Plant List (TPL)
+             - Authors from International Plant Names Index (IPNI) and
+                Taxonomic Name Resolution Service (TNRS)
+             - Synonyms from Tropicos and ITIS
+
+ INPUTS: List of target taxa
+
+ OUTPUTS: List of target taxa with acceptance, authors, and synonyms
+
+
+################################################################################
+ 1-0_get_taxonomic_info.R
 ################################################################################
 
  OVERVIEW: Takes a list of taxa and uses the taxize package to pull taxonomic
@@ -21,7 +63,7 @@
  OUTPUTS: List of target taxa with acceptance, authors, and synonyms
 
 ################################################################################
- 2_get_raw_occurrence_points.R
+ 2-0_get_raw_occurrence_points.R
 ################################################################################
 
  OVERVIEW: Provides manual instructions and code chunks for downloading and
@@ -48,7 +90,7 @@
           the database’s download works); one CSV for each database
 
 ################################################################################
- 3_compile_raw_occurrence_points.R
+ 3-0_compile_raw_occurrence_points.R
 ################################################################################
 
  OVERVIEW: Compiles raw occurrence point data downloaded in
@@ -136,3 +178,81 @@
     - **raw_split_by_sp**
       - Malus_angustifolia.csv
       - ...
+
+################################################################################
+4-0_refine_raw_occurrence_points.R
+################################################################################
+
+ OVERVIEW: Compiles raw occurrence point data downloaded in
+           2_get_raw_occurrence_points.R:
+
+             - stack all data
+             - filter by target taxa
+             - standardize key columns (localityDescription, year,
+               basisOfRecord, establishmentMeans)
+             - check validity of lat and long (can be plotted); if invalid,
+               switch and check again; set to NA if still invalid
+             - create subsets for localityDescription only and lat-long points
+             - remove duplicates by species_name_acc, lat_round, long_round,
+               and establishmentMeans
+             - mark rows with lat-long matching U.S. county centroids to 2
+               places after the decimal
+             - split into separate CSVs by species_name_acc
+
+ INPUTS: raw datasets from 2_get_raw_occurrence_points.R; list of target taxa
+
+ OUTPUTS: "occurrence_point_count_per_species.csv"; CSV of points for each species
+
+# standard columns
+
+  - species_name_acc : accepted species name (from target_taxa_with_syn.csv)
+  
+################################################################################
+ 5-0_plot_occurrence_raw_all.R
+################################################################################
+
+ OVERVIEW: Compiles raw occurrence point data downloaded in
+           2_get_raw_occurrence_points.R:
+
+             - stack all data
+             - filter by target taxa
+             - standardize key columns (localityDescription, year,
+               basisOfRecord, establishmentMeans)
+             - check validity of lat and long (can be plotted); if invalid,
+               switch and check again; set to NA if still invalid
+             - create subsets for localityDescription only and lat-long points
+             - remove duplicates by species_name_acc, lat_round, long_round,
+               and establishmentMeans
+             - mark rows with lat-long matching U.S. county centroids to 2
+               places after the decimal
+             - split into separate CSVs by species_name_acc
+
+ INPUTS: raw datasets from 2_get_raw_occurrence_points.R; list of target taxa
+
+ OUTPUTS: "occurrence_point_count_per_species.csv"; CSV of points for each species
+
+# standard columns
+
+  - species_name_acc : accepted species name (from target_taxa_with_syn.csv)
+
+################################################################################
+X-0_Run_Point_Data.R
+################################################################################
+
+ OVERVIEW: Takes a list of taxa and uses the taxize package to pull taxonomic
+           information from multiple databases. The output can then be used to
+           create a final list of target taxa and synonyms by hand.
+
+           Data pulled includes:
+
+             - Acceptance and authors from Tropicos, Integrated Taxonomic
+                Information Service (ITIS), and The Plant List (TPL)
+             - Authors from International Plant Names Index (IPNI) and
+                Taxonomic Name Resolution Service (TNRS)
+             - Synonyms from Tropicos and ITIS
+
+ INPUTS: List of target taxa
+
+ OUTPUTS: List of target taxa with acceptance, authors, and synonyms
+################################################################################
+
