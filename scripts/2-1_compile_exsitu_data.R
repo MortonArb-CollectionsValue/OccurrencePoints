@@ -135,10 +135,83 @@ all_data <- all_data %>% separate("specific",
   #unique(all_data$filename[all_data$ï..taxon_full_name!=""])
 # IF NEEDED: merge similar columns (you may not need to do this if no schema
 #   mistakes were made when manually editing column names).
-#   Can do this step with lots of unites (see below) or from table
-col_match <- read.csv(file.path(imls.meta,"GA2_exsitu_column_headers.csv"),
-    header = T, na.strings=c("","NA"), colClasses="character")
+#   Can do this step with lots of unites (see below) or from table ?????
 
+#col_align <- read.csv(file.path(imls.meta,"GA2_exsitu_column_headers.csv"),
+#  header=TRUE,strip.white=TRUE,colClasses="character",na.strings=c("","NA"))
+#all_data2 <- all_data
+#for(i in 1:ncol(col_align)){
+#  col_group <- col_align[which(!is.na(col_align[,i])),][i]
+#  for(j in 1:(nrow(col_group)-1)){
+#    col_select <- all_data2[,which(names(all_data2)==col_group[j,1])]
+#    not_na <- col_select[which(!is.na(col_select))]
+#    all_data[,i] <- paste(part[j,1],part[j+1,1],sep=";")
+#  }
+#}
+
+#### GA2
+  all_data <- tidyr::unite(all_data,"inst_short", c("inst_short","ï..inst_short"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"taxon_full_name", c("taxon_full_name",
+    "full_sp_name","ï..taxon_full_name","sp_full_name"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"infra_rank", c("infra_rank","intra_rank",
+    "infra_rank_add","specific_rank"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"infra_name", c("infra_name","intra_name",
+    "infra_name_add","specific_name"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"hybrid", c("hybrid","hybrid.1"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"orig_lat", c("orig_lat","lat"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"orig_long", c("orig_long","long"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"municipality", c("municipality","city"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"state", c("state","maj_region"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"country", c("country","country_code"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"locality", c("locality","loaclity",
+    "locality_notes","locality.1","locallity"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"acc_num", c("acc_num","acc_no",
+    "acc_num2","ï..acc_num"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"lin_num", c("lin_num","lin_no","pedigree"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"orig_source", c("orig_source","donor",
+    "source"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"rec_as", c("rec_as","rec_material"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"num_indiv", c("num_indiv","num_alive",
+    "num_plants"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"garden_loc", c("garden_loc","loc"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"coll_num", c("coll_num","coll_no"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"coll_year", c("coll_year","acq_year",
+    "aqu_year","aqu_yr","coll_yr","year"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"notes", c("notes","note","inst_name",
+    "inst_name2","isnt_name"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"condition", c("condition","status"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"name_determ", c("name_determ","taxa.ID"),
+    sep=";",remove=T,na.rm=T)
+  all_data <- all_data %>% dplyr::select("inst_short","taxon_full_name","genus",
+    "species","infra_rank","infra_name","hybrid","cultivar","prov_type",
+    "orig_lat","orig_long","country","municipality","state","county","locality",
+    "acc_num","lin_num","orig_source","rec_as","num_indiv",
+    "germ_type","garden_loc","coll_num","coll_name","coll_year","notes",
+    "condition","name_determ","habitat","filename")
+  sort(colnames(all_data)); ncol(all_data)
+
+#### IMLS
   all_data <- tidyr::unite(all_data,"acc_num", c("acc_num","acc_no",
     "ï..acc_num"),sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"lin_num", c("lin_num","lin_no"),

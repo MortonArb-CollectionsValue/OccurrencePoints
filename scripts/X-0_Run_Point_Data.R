@@ -2,11 +2,11 @@
 
 ################################################################################
 
-### Authors: Emily Beckman & Shannon Still ### Date: 05/21/2020
+### Authors: Shannon Still & Emily Beckman ### Date: 05/21/2020
 
 ### DESCRIPTION:
 # This is the file to run all of the scripts for the point data aggregation
-#   and cleaning. This also is an outline for what is happening and why.
+#   and cleaning. This is also an outline for what is happening and why.
 
 ##############################
 ##############################

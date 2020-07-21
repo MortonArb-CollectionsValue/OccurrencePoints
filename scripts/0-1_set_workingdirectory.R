@@ -1,8 +1,8 @@
 ################################################################################
 
+## 0-1_set_workingdirectory.R
 ### Authors: Shannon Still & Emily Beckman ### Date: 05/21/2020
 
-### DESCRIPTION:
 # This script sets the working environment for the computer on which you are
 #   working.
 
@@ -16,7 +16,9 @@
 ## For Shannon Still:
 if (Sys.info()[4] == "Still-MB-Pro-15.local") {
   # set main working directory
-  main_dir <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA"
+  main_dir <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points"
+  # set location of scripts
+  script_dir <- "/scripts"
   # OPTIONAL: set local working directory, for trialing locally before saving
   #   to main working directory
   local_dir <- "/Users/aesculus/Box/Research/Active_Projects/IMLS_MortonArb/local_data"
@@ -28,7 +30,12 @@ if (Sys.info()[4] == "Still-MB-Pro-15.local") {
 ## For Emily Beckman:
 } else if (Sys.info()[4] == "Africa.local") {
   # set main working directory
-  main_dir <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA"
+  main_dir <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points"
+  # set location of scripts
+  script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
+  # OPTIONAL: set local working directory, for trialing locally before saving
+  #   to main working directory
+  local_dir <- "./Desktop"
   # set location for login information (e.g., for GBIF)
   log_loc <- file.path(local_dir, "IMLS_passwords.txt")
   # prints computer name, to let you know you're in the right spot
@@ -37,7 +44,9 @@ if (Sys.info()[4] == "Still-MB-Pro-15.local") {
 ## For Shannon workstation:
 } else if (Sys.info()[4] == "CAES-SSTILL") {
   # set main working directory
-  main_dir <- "G:/Shared drives/IMLS MFA"
+  main_dir <- "G:/Shared drives/IMLS MFA/occurrence_points"
+  # set location of scripts
+  script_dir <- "/scripts"
   # OPTIONAL: set local working directory, for trialing locally before saving
   #   to main working directory
   local_dir <- "C:/Users/aesculus/Box/Research/Active_Projects/IMLS_MortonArb/MortonArb-CollectionsValue"
