@@ -1,7 +1,7 @@
 ################################################################################
 
 ## 1-0_get_taxonomic_info.R
-### Author: Emily Beckman & Shannon Still ### Date: 5/30/2020                                 |
+### Author: Emily Beckman & Shannon Still ### Date: 5/30/2020
 
 ### DESCRIPTION:
   # This script takes a list of taxa and uses the taxize package to pull
@@ -59,7 +59,7 @@ source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
 
 ################################################################################
-# 1. Load/create taxa list
+# 1. Load/create target taxa list
 ################################################################################
 
 # CHANGE THIS LIST BASED ON TAXA YOURE LOOKING FOR:
@@ -96,10 +96,10 @@ species_only <- species_names[
 # 2. Find taxonomic status and synonyms for target taxa
 ################################################################################
 
-##
-##### A) Tropicos (from Missouri Botanical Garden)
-##### https://www.missouribotanicalgarden.org/media/fact-pages/tropicos.aspx
-##
+###############
+### A) Tropicos (from Missouri Botanical Garden)
+### https://www.missouribotanicalgarden.org/media/fact-pages/tropicos.aspx
+###############
 
 # IF NEEDED: set API key and restart R
   #taxize::use_tropicos() # get API
@@ -185,10 +185,10 @@ tp_syn_df$acceptance <- str_to_lower(tp_syn_df$acceptance)
 tp_all <- rbind.fill(tp_names_noDup,tp_syn_df)
 head(tp_all)
 
-##
-##### B) Integrated Taxonomic Information Service (ITIS)
-##### https://www.itis.gov
-##
+###############
+### B) Integrated Taxonomic Information Service (ITIS)
+### https://www.itis.gov
+###############
 
 # replace characters to match ITIS system
 taxa_names <- gsub(" x "," X ",taxa_names,fixed=T)
@@ -271,10 +271,10 @@ itis_syn_df$acceptance <- str_to_lower(itis_syn_df$acceptance)
 itis_all <- rbind.fill(itis_names_noDup,itis_syn_df)
 head(itis_all)
 
-##
+###############
 ### C) Kew’s Plants of the World (POW)
 ### http://www.plantsoftheworldonline.org
-##
+###############
 
 # replace characters to match POW system
 taxa_names <- gsub(" X "," x ",taxa_names,fixed=T)
@@ -355,10 +355,10 @@ pow_syn_df$acceptance <- str_to_lower(pow_syn_df$acceptance)
 pow_all <- rbind.fill(pow_names_noDup,pow_syn_df)
 head(pow_all)
 
-##
+###############
 ### D) The Plant List (TPL)
 ### http://www.theplantlist.org
-##
+###############
 
 # GET ALL DATA FOR TARGET FAMILIES
 #   There is not an easy function for pulling synonyms from TPL :`(

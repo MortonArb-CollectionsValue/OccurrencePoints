@@ -3,6 +3,7 @@
 ## 0-2_laod_IMLS_functions.R
 ### Authors: Shannon Still & Emily Beckman ### Date: 05/21/2020
 
+### DESCRIPTION:
 # This script loads all of the functions to use for the project
 
 ################################################################################

@@ -3,6 +3,7 @@
 ## 0-1_set_workingdirectory.R
 ### Authors: Shannon Still & Emily Beckman ### Date: 05/21/2020
 
+### DESCRIPTION:
 # This script sets the working environment for the computer on which you are
 #   working.
 
