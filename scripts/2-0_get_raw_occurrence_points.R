@@ -198,8 +198,8 @@ unzip(zipfile=paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
   download_key[1]),".zip"), files="occurrence.txt",
   exdir=file.path(main_dir,"inputs","raw_occurrence","gbif_raw"))
   # read in data
-gbif_raw <- fread(file.path(imls.raw,"gbif_raw","occurrence.txt"),
-  quote="", na.strings="")
+gbif_raw <- fread(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
+  "occurrence.txt"), quote="", na.strings="")
 nrow(gbif_raw) #2513913
 
 ### standardize column names
