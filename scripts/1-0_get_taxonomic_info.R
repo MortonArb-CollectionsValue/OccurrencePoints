@@ -14,13 +14,13 @@
   # The output can either be used directly in 2-0_get_raw_occurrence_points.R
   #   or can be reviewed and revised by hand (recommended)
 
-### INPUT:
+### DATA IN:
   # target_taxa.csv (list of target taxa)
     # one column: "taxon_name_acc" (genus, species, infra rank, and infra name,
     # all separated by one space each; hybrid symbol should be " x ", rather
     # than "_" or "✕", and go between genus and species)
 
-### OUTPUT:
+### DATA OUT:
   ### target_taxa_with_syn.csv
 
 ################################################################################
@@ -501,8 +501,12 @@ nrow(all_data)
 # final ordering of names and column selection
 all_data <- all_data %>%
   arrange(taxon_name_acc) %>%
-  dplyr::select(taxon_name_acc,taxon_name_match,genus,species,infra_rank,
-    infra_name,list,database,acceptance,database_count,match_name_with_authors)
+  dplyr::select(taxon_name_acc,taxon_name_match,genus_species_acc,genus,species,
+    infra_rank,infra_name,list,database,acceptance,database_count,
+    match_name_with_authors)
+setnames(all_data,
+  old = c("taxon_name_match","genus_species_acc"),
+  new = c("taxon_name","species_name_acc"))
 # write file
 write.csv(all_data,file.path(main_dir,"inputs","taxa",
   "target_taxa_with_syn_Acer.csv"),row.names=F)

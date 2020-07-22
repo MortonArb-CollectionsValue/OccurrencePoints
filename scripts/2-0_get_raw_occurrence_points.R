@@ -13,27 +13,29 @@
       # Botanical Information and Ecology Network (BIEN)
     # NATIONAL DATABASES
       # Forest Inventory and Analysis (FIA) Program of the USDA Forest Service
+      # Biodiversity Information Serving Our Nation (BISON), USGS
   ## NOTES: Not all data from these sources are reliable. The aim of this
   #         script is to get all easily-downloadable occurrence data, which
   #         can then be sorted and vetted for the user's specific purposes.
 
-### INPUTS:
+### DATA IN:
   # (optional) target_taxa_with_syn.csv
     # columns:
       # 1. "taxon_name" (genus, species, infra rank, and infra name, all
       #    separated by one space each; hybrid symbol should be " x ", rather
       #    than "_" or "✕", and go between genus and species)
       # 2. (optional) other data you want to keep with taxa info
-  # extra files needed for FIA data download/standardization:
+  # files needed for FIA data download/standardization:
   #   FIA_AppendixF_TreeSpeciesCodes_2016.csv
   #   US_state_county_FIPS_codes.csv
 
-### OUTPUTS:
-    # gbif_raw.csv
-    # idigbio_raw.csv
-    # herbaria_raw.csv
-    # bien_raw.csv
-    # fia_raw.csv
+### DATA OUT:
+  # gbif.csv
+  # idigbio.csv
+  # herbaria.csv
+  # bien.csv
+  # fia.csv
+  # bison.csv
 
 ################################################################################
 # Load libraries
@@ -219,7 +221,7 @@ spp <- gbif_raw %>% filter(taxonRank == "SPECIES")
 gbif_raw <- Reduce(rbind.fill,list(subsp,var,form,spp))
 
 # keep only necessary columns
-gbif_raw <- gbif_raw %>% select(
+gbif_raw <- gbif_raw %>% dplyr::select(
     # taxon name
   "taxon_name","scientificName",
   #"family","genus","specificEpithet","taxonRank",
@@ -311,7 +313,7 @@ for(i in 1:length(taxon_names)){
 }
 nrow(idigbio_raw) #155359
 # remove rows that are lists
-idigbio_raw <- idigbio_raw %>% select(everything(),-commonnames,-flags,
+idigbio_raw <- idigbio_raw %>% dplyr::select(everything(),-commonnames,-flags,
   -mediarecords,-recordids)
 # write file
 write.csv(idigbio_raw,file.path(main_dir,"inputs","raw_occurrence",
@@ -342,9 +344,6 @@ write.csv(idigbio_raw,file.path(main_dir,"inputs","raw_occurrence",
 #for(file in seq_along(file_dfs)){
 #  idigbio_raw <- rbind(idigbio_raw, file_dfs[[file]])
 #}; nrow(idigbio_raw) #316612
-# write file
-#write.csv(idigbio_raw, file.path(main_dir,"inputs","raw_occurrence",
-#  "idigbio_raw","idigbio_manual_download.csv"),row.names=FALSE)
 
 ### standardize column names
 
@@ -355,7 +354,7 @@ idigbio_raw$year <- gsub("[[:digit:]]+/[[:digit:]]+/","",idigbio_raw$year)
 
 # keep only necessary columns
 idigbio_raw$taxon_name <- idigbio_raw$scientificname
-idigbio_raw <- idigbio_raw %>% select(
+idigbio_raw <- idigbio_raw %>% dplyr::select(
   "taxon_name","scientificname",
   #"family","genus","specificepithet","taxonrank","infraspecificepithet",
   #"taxonid",
@@ -485,7 +484,7 @@ sernec_raw$taxon_name <- gsub("Ã«","e",sernec_raw$taxon_name)
 sernec_raw$taxon_name <- str_squish(sernec_raw$taxon_name)
 
 # keep only necessary columns
-sernec_raw <- sernec_raw %>% select(
+sernec_raw <- sernec_raw %>% dplyr::select(
   "taxon_name",
   #"family","genus","specificEpithet","taxonRank","infraspecificEpithet",
     "scientificName",
@@ -605,7 +604,7 @@ bien_raw <- bien_raw %>% separate("date_collected","year",sep="-",remove=T)
   sort(unique(bien_raw$year))
 
 # keep only necessary columns
-bien_raw <- bien_raw %>% select(
+bien_raw <- bien_raw %>% dplyr::select(
   "name_matched","verbatim_scientific_name",
   #"scrubbed_family","scrubbed_genus",
   "identified_by","identification_remarks","date_identified",
@@ -671,7 +670,7 @@ bien_raw <- bien_raw %>%
     "1" = "MANAGED",
     "0" = "UNKNOWN",
     .missing = "UNKNOWN")) %>%
-  select(-is_cultivated_observation)
+  dplyr::select(-is_cultivated_observation)
 
 # check data
 #percent.filled(bien_raw)
@@ -691,17 +690,29 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","fia_raw")))
   dir.create(file.path(main_dir,"inputs","raw_occurrence","fia_raw"),
   recursive=T)
 
-# read in FIA species codes
+# download/read in supplemental tables
+  # download and read in plot data (has lat-long information)
+download.file("https://apps.fs.usda.gov/fia/datamart/CSV/PLOT.csv",
+  file.path(main_dir,"inputs","fia_tables","PLOT.csv"))
+fia_plots <- read.csv(file.path(main_dir,"inputs","fia_tables","PLOT.csv"))
+  # remove unnecessary columns from plot data
+fia_plots <- fia_plots[,c("INVYR","STATECD","UNITCD","COUNTYCD","PLOT",
+  "LAT","LON")]
+  # read in state and county codes and names
+county_codes <- read.csv(file.path(main_dir,"inputs","fia_tables",
+  "US_state_county_FIPS_codes.csv"), header = T, na.strings=c("","NA"),
+  colClasses="character")
+  # read in FIA species codes
 fia_codes <- read.csv(file.path(main_dir,"inputs","fia_tables",
   "FIA_AppendixF_TreeSpeciesCodes_2016.csv"),colClasses="character")
-# join taxa list to FIA species codes
+  # join taxa list to FIA species codes
 fia_codes <- fia_codes[,c(1,3)]
 names(fia_codes) <- c("SPCD","taxon_name")
   glimpse(fia_codes)
 taxon_fia <- fia_codes[which(fia_codes$taxon_name %in% taxon_names),]
-# make a list of unique FIA species codes to select from the data
+  # make a list of unique FIA species codes to select from the data
 species_codes <- sort(unique(taxon_fia$SPCD))
-# check results
+  # check results
 sort(unique(taxon_fia$taxon_name[which(
   !is.na(taxon_fia$SPCD))]))
 length(species_codes) #56
@@ -719,47 +730,33 @@ state_abb <- c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID",
   "IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE",
   "NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN",
   "TX","UT","VT","WV","WA","VA","WI","WY"
-    # turn these off if you don't want US territories:
+    # turn these off if you don't want territories:
   ,"AS","FM","GU","MP","PW","PR","VI"
 )
   # download each file; this can take a while
 for(i in 1:length(state_abb)){
   download.file(
-    paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",state_abb[[1]],
+    paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",state_abb[[i]],
       "_TREE.csv"),
-    file.path(main_dir,"inputs","raw_occurrence","fia_raw",paste(state_abb[[1]],
-      "_TREE.csv")))
+    file.path(main_dir,"inputs","raw_occurrence","fia_raw",paste0(
+      state_abb[[i]],"_TREE.csv")))
 }
 
 # create list of state files to cycle through
 file_list <- list.files(file.path(main_dir,"inputs","raw_occurrence","fia_raw"),
-  pattern = ".csv", full.names = T)
+  pattern = "TREE", full.names = T)
 # loop through states and pull data
 fia_outputs <- lapply(file_list, extract_tree_data)
-  length(fia_outputs) #50
+  length(fia_outputs) #57
 # stack state-by-state data extracted to create one dataframe
 fia_raw <- data.frame()
 for(file in seq_along(fia_outputs)){
   fia_raw  <- rbind(fia_raw, fia_outputs[[file]])
 }
-nrow(fia_raw) #3312303
+nrow(fia_raw) #3414521
 
 ### standardize column names
 
-# read in supplemental FIA tables:
-#  - list of species tracked and their codes (read in above)
-#  - state and county codes and names
-#  - plot level data (has lat-long)
-county_codes <- read.csv(file.path(imls.meta,
-  "fia_tables/US_state_county_FIPS_codes.csv"),header = T,na.strings=c("","NA"),
-  colClasses="character")
-# download plot data
-download.file("https://apps.fs.usda.gov/fia/datamart/CSV/PLOT.csv",
-  file.path(main_dir,"inputs","fia_tables","PLOT.csv"))
-fia_plots <- read.csv(file.path(imls.meta,"fia_tables/PLOT.csv"))
-  # remove unnecessary columns from plot data
-fia_plots <- fia_plots[,c("INVYR","STATECD","UNITCD","COUNTYCD","PLOT",
-  "LAT","LON")]
 # join FIA data to supplemental tables
 fia_raw <- join(fia_raw,fia_codes)
 fia_raw <- join(fia_raw,county_codes)
@@ -769,7 +766,7 @@ fia_raw <- fia_raw %>% unite("fiaPlotID",
   c("INVYR","UNITCD","COUNTYCD","PLOT","STATECD"),remove=F,sep="-")
 
 # keep only necessary columns
-fia_raw <- fia_raw %>% select(
+fia_raw <- fia_raw %>% dplyr::select(
   "taxon_name",
   "LAT","LON",
   "INVYR","fiaPlotID",
@@ -801,7 +798,7 @@ fia_raw <- fia_raw %>%
     "2" = "CUT",
     "3" = "DEAD",
     "0" = "UNKNOWN"))
-fia_raw <- fia_raw %>% select(-isAlive)
+fia_raw <- fia_raw %>% dplyr::select(-isAlive)
   # basis of record
 fia_raw$basisOfRecord <- "OBSERVATION"
   # year
@@ -812,13 +809,18 @@ fia_raw$year[which(fia_raw$year == 9999)] <- NA
 head(fia_raw)
 
 # write file
-write.csv(fia_raw, file.path(imls.raw, "datasets_raw", "fia_raw.csv"),
-  row.names=FALSE)
+write.csv(fia_raw, file.path(main_dir,"inputs","compiled_occurrence",
+  "fia.csv"), row.names=FALSE)
 rm(fia_raw)
 
 ###############
 # F) Biodiversity Information Serving Our Nation (BISON), USGS
 ###############
+
+# create new folder if not already present
+if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","bison_raw")))
+  dir.create(file.path(main_dir,"inputs","raw_occurrence","bison_raw"),
+  recursive=T)
 
 # download BISON occurrence data for target taxa
 #   there is also county distribution data
@@ -835,11 +837,13 @@ for(i in 1:length(taxon_names)){
   print(taxon_names[i])
 }
 nrow(bison_raw) #4008
+write.csv(bison_raw, file.path(main_dir,"inputs","raw_occurrence",
+  "bison_R_download.csv"),row.names=FALSE)
 
 ### standardize column names
 
 # keep only necessary columns
-bison_raw <- bison_raw %>% select(
+bison_raw <- bison_raw %>% dplyr::select(
   "name",
   "decimalLatitude","decimalLongitude",
   "basis","occurrenceID",
@@ -878,12 +882,12 @@ bison_raw <- bison_raw %>%
 head(bison_raw)
 
 # write file
-write.csv(bison_raw, file.path(imls.raw, "datasets_raw", "bison_raw.csv"),
-  row.names=FALSE)
+write.csv(bison_raw, file.path(main_dir,"inputs","compiled_occurrence",
+  "bison.csv"),row.names=FALSE)
 rm(bison_raw)
 
 # write file of county distribution
 us_cty_dist <- left_join(us_cty_dist,taxon_list)
 head(us_cty_dist)
-write.csv(us_cty_dist, file.path(imls.meta,
-  "known_distribution","BISON_US_county_distribution.csv"), row.names=FALSE)
+write.csv(us_cty_dist, file.path(main_dir,"inputs","known_distribution",
+  "BISON_US_county_distribution.csv"), row.names=FALSE)
