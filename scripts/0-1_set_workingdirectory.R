@@ -19,10 +19,11 @@ if (Sys.info()[4] == "Still-MB-Pro-15.local") {
   # set main working directory
   main_dir <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points"
   # set location of scripts
-  script_dir <- "/scripts"
+  script_dir <- "scripts"
   # OPTIONAL: set local working directory, for trialing locally before saving
   #   to main working directory
   local_dir <- "/Users/aesculus/Box/Research/Active_Projects/IMLS_MortonArb/local_data"
+
   # set location for login information (e.g., for GBIF)
   log_loc <- file.path(local_dir, "gbif.txt")
   # prints computer name, to let you know you're in the right spot

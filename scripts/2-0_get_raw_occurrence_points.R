@@ -41,12 +41,12 @@
 # Load libraries
 ################################################################################
 
-#rm(list=ls())
+rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'spocc', 'rgbif', 'data.table', 'BIEN',
                  'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison')
-# install.packages(my.packages) #Turn on to install current versions
+ # install.packages(my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
-#rm(my.packages)
+    rm(my.packages)
 
 ################################################################################
 # Set working directory
@@ -58,13 +58,12 @@ lapply(my.packages, require, character.only=TRUE)
 #log_loc <- "./Desktop/IMLS_passwords.txt"
 
 # or use 0-1_set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-#source('scripts/0-1_set_workingdirectory.R')
+# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions
 ################################################################################
-
 source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
 
@@ -159,7 +158,7 @@ login <- read_lines(log_loc)
   user  <- login[1] #"user"
   pwd   <- login[2] #"password"
   email <- login[3] #"email"
-
+    rm(login)
 # get GBIF taxon keys for all taxa in target list
 keys <- sapply(taxon_names,function(x) name_backbone(name=x)$speciesKey,
   simplify = "array")
@@ -173,7 +172,7 @@ gbif_taxon_keys <- vector(mode="numeric")
 for(i in 1:length(keys_nodup)){
   gbif_taxon_keys <- c(gbif_taxon_keys,keys_nodup[[i]][1])
 }; sort(gbif_taxon_keys)
-
+  rm(i)
 # download GBIF data (Darwin Core Archive format)
 gbif_download <- occ_download(
                 pred_in("taxonKey", gbif_taxon_keys),
@@ -186,7 +185,7 @@ gbif_download <- occ_download(
                 format = "DWCA", #"SIMPLE_CSV"
                 user=user,pwd=pwd,
                 email=email)
-
+    rm(user, pwd, email)
 # load gbif data just downloaded
   # download and unzip before reading in
 download_key <- gbif_download
@@ -194,6 +193,7 @@ download_key <- gbif_download
   # it may take a while (up to 3 hours) if you have a large taxa list;
   # function below will pause script until the download is ready
 occ_download_wait(download_key, status_ping=10, quiet=TRUE)
+
 occ_download_get(key=download_key[1],path=file.path(main_dir,"inputs",
   "raw_occurrence","gbif_raw"),overwrite=TRUE) #Download file size: 646.22 MB
 unzip(zipfile=paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
@@ -259,7 +259,7 @@ gbif_raw <- gbif_raw %>% rename(nativeDatabaseID = gbifID)
 
 # combine a few similar columns
 gbif_raw <- gbif_raw %>% unite("taxonIdentificationNotes",
-  identificationRemarks:taxonRemarks,na.rm=T,remove=T,sep=" | ")
+    identificationRemarks:taxonRemarks,na.rm=T,remove=T,sep=" | ")
   gbif_raw$taxonIdentificationNotes <-
     gsub("^$",NA,gbif_raw$taxonIdentificationNotes)
 gbif_raw <- gbif_raw %>% unite("locationNotes",
@@ -287,7 +287,12 @@ head(gbif_raw)
 # write file
 write.csv(gbif_raw, file.path(main_dir,"inputs","compiled_occurrence",
   "gbif.csv"),row.names=FALSE)
-rm(gbif_raw)
+
+#delete files no longer needed (large files)
+  unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw", "occurrence.txt")))
+  # unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw", download_key[1]),".zip"))
+##remove objects that no longer need
+  rm(gbif_raw, spp, subsp, form, var, gbif_codes, keys, keys_nodup, download_key, gbif_download, gbif_taxon_keys)
 
 ###############
 # B) Integrated Digitized Biocollections (iDigBio)
@@ -299,7 +304,7 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","idigbio_raw")))
   recursive=T)
 
 # Not sure the R interface actually gets all fields available; use manual
-#    method down below (line 321) if you want to be sure
+#    method down below (line 328) if you want to be sure
 
 # download iDigBio data for target taxa
   # we have to go taxon by taxon; function can only return 100,000
@@ -311,6 +316,7 @@ for(i in 1:length(taxon_names)){
   idigbio_raw <- rbind(idigbio_raw,output_new)
   print(paste(round(i/length(taxon_names)*100,digits=1),"% complete",sep=""))
 }
+  rm(output_new, i)
 nrow(idigbio_raw) #155359
 # remove rows that are lists
 idigbio_raw <- idigbio_raw %>% dplyr::select(everything(),-commonnames,-flags,
@@ -318,7 +324,7 @@ idigbio_raw <- idigbio_raw %>% dplyr::select(everything(),-commonnames,-flags,
 # write file
 write.csv(idigbio_raw,file.path(main_dir,"inputs","raw_occurrence",
   "idigbio_raw","idigbio_R_download.csv"),row.names=FALSE)
-
+############
 # MANUAL WAY:
 # First, download raw data
   # Go to https://www.idigbio.org/portal/search
@@ -417,7 +423,7 @@ head(idigbio_raw)
 # write file
 write.csv(idigbio_raw, file.path(main_dir,"inputs","compiled_occurrence",
   "idigbio.csv"),row.names=FALSE)
-rm(idigbio_raw)
+  rm(idigbio_raw)
 
 ###############
 # C) U.S. Herbaria Consortia (SERNEC, SEINet, etc.)
@@ -573,7 +579,7 @@ head(sernec_raw)
 # write file
 write.csv(sernec_raw, file.path(main_dir,"inputs","compiled_occurrence",
   "sernec.csv"),row.names=FALSE)
-rm(sernec_raw)
+rm(sernec_raw, form, spp, subsp, var, file_dfs, file, file_list)
 
 ###############
 # D) Botanical Information and Ecology Network (BIEN)
@@ -741,7 +747,7 @@ for(i in 1:length(state_abb)){
     file.path(main_dir,"inputs","raw_occurrence","fia_raw",paste0(
       state_abb[[i]],"_TREE.csv")))
 }
-
+rm(i)
 # create list of state files to cycle through
 file_list <- list.files(file.path(main_dir,"inputs","raw_occurrence","fia_raw"),
   pattern = "TREE", full.names = T)
@@ -756,7 +762,20 @@ for(file in seq_along(fia_outputs)){
 nrow(fia_raw) #3414521
 
 ### standardize column names
-
+# read in supplemental FIA tables:
+#  - list of species tracked and their codes (read in above)
+#  - state and county codes and names
+#  - plot level data (has lat-long)
+county_codes <- read.csv(file.path(main_dir, "inputs",
+  "fia_tables/US_state_county_FIPS_codes.csv"),header = T,na.strings=c("","NA"),
+  colClasses="character")
+# download plot data
+download.file("https://apps.fs.usda.gov/fia/datamart/CSV/PLOT.csv",
+  file.path(main_dir,"inputs","fia_tables","PLOT.csv"))
+fia_plots <- read.csv(file.path(main_dir, "inputs","fia_tables/PLOT.csv"))
+  # remove unnecessary columns from plot data
+fia_plots <- fia_plots[,c("INVYR","STATECD","UNITCD","COUNTYCD","PLOT",
+  "LAT","LON")]
 # join FIA data to supplemental tables
 fia_raw <- join(fia_raw,fia_codes)
 fia_raw <- join(fia_raw,county_codes)
