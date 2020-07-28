@@ -79,7 +79,7 @@ source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
 ## IF YOU HAVE CSV OF TARGET TAXA AND SYNONYMS:
 # read in taxa list
-taxon_list <- read.csv(file.path(main_dir, "inputs","taxa",
+taxon_list <- read.csv(file.path(main_dir, "inputs","taxa_list",
   "target_taxa_with_syn.csv"), header = T, colClasses="character")
 head(taxon_list)
 # as needed, filter out cultivars and blank rows
@@ -838,7 +838,7 @@ for(i in 1:length(taxon_names)){
 }
 nrow(bison_raw) #4008
 write.csv(bison_raw, file.path(main_dir,"inputs","raw_occurrence",
-  "bison_R_download.csv"),row.names=FALSE)
+  "bison_raw","bison_R_download.csv"),row.names=FALSE)
 
 ### standardize column names
 

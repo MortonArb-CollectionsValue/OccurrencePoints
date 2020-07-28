@@ -1,5 +1,8 @@
 ################################################################################
 
+## !! NEEDS RUN-THROUGH AND SOME AREAS NEED WORK STILL !!
+
+
 ### Author: Emily Beckman  ###  Date: 12/13/2019
 
 ### DESCRIPTION:
@@ -7,25 +10,21 @@
   #   different institutions, combines them into one dataset, and standardizes
   #   some important fields.
 
-### INPUTS:
+### DATA IN:
   # 1. Folder ("standard_column_names") of CSV files whose column names have
   #     already be standardized by hand using the
   #     "standardizing_accessions_data_fields" template
+  #     (https://docs.google.com/spreadsheets/d/1QLxxWu-bUIRcrjHiaWeSz9n1ms4EQB3yQ8P8PBBx3Zk/edit?usp=sharing)
   # 2. Target taxa list (target_taxa_with_syn.csv), created through
-  #     1_compile_taxon_list.R script
+  #     1-0_get_taxonomic_info.R
 
-### OUTPUTS:
-  # 1. exsitu_compiled_Raw.csv
-  # 2. exsitu_compiled_StandardNames.csv
-  # 3. exsitu_compiled_TaxaMatched.csv
-  # 4. exsitu_compiled_Standardized.csv
-  # 5. exsitu_compiled_ReadyToGeolocate.csv
+### DATA OUT:
 
 ################################################################################
-# Load packages
+# Load libraries
 ################################################################################
 
-rm(list=ls())
+#rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'data.table', 'anchors', 'textclean',
   'measurements', 'naniar')
 # install.packages (my.packages) #Turn on to install current versions
@@ -37,87 +36,73 @@ rm(my.packages)
 ################################################################################
 
 # either set manually:
-imls.meta <- "/Volumes/GoogleDrive/My Drive/Conservation Gap Analysis/Ex situ Survey"
-imls.raw <- "/Volumes/GoogleDrive/My Drive/Conservation Gap Analysis/Ex situ Survey"
-imls.output <- "/Volumes/GoogleDrive/My Drive/Conservation Gap Analysis/Ex situ Survey"
-imls.exsitu <- "/Volumes/GoogleDrive/My Drive/Conservation Gap Analysis/Ex situ Survey/Accessions Data Files"
-imls.local <- "./Desktop"
+#main_dir <- "./Desktop"
+#script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
-# or use set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/set_workingdirectory.R")
-#source('scripts/set_workingdirectory.R')
+# or use 0-1_set_workingdirectory.R script:
+source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+#source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
-# 1. Stack all accessions data
+# Load functions
 ################################################################################
+
+source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
+
+
+################################################################################
+################################ LET'S GO ######################################
+################################################################################
+
+
+################################################################################
+# 1. Read in and stack all accessions data
+################################################################################
+
+# FIRST: After receiving accession data from institutions, you need to process
+#   it manually. See here for instructions:
+#   https://docs.google.com/spreadsheets/d/1QLxxWu-bUIRcrjHiaWeSz9n1ms4EQB3yQ8P8PBBx3Zk/edit?usp=sharing
 
 # ## READ IN FROM MULTIPLE FOLDERS FOR DIFFERENT YEARS/SURVEYS:
-  # function to read in files from different folders/years and stack
-  read.exsitu.csv <- function(path,submission_year){
-    # create list of paths to ex situ accessions CSV files in folder
-    file_list <- list.files(path=path,pattern=".csv",full.names=TRUE)
-    # read in each csv in path list to create list of dataframes
-    file_dfs <- lapply(file_list,read.csv,header=TRUE,fileEncoding="LATIN1",
-      strip.white=TRUE,colClasses="character",na.strings=c("","NA"))
-    print(length(file_dfs))
-      #sapply(file_dfs, nrow) # can look at number of rows in each csv
-    for(file in seq_along(file_dfs)){
-      # add file name as column, to record home institution for each record
-      file_dfs[[file]]$filename <- rep(file_list[file],
-        nrow(file_dfs[[file]]))
-      # remove file path portion
-      file_dfs[[file]]$filename <- mgsub(
-        file_dfs[[file]]$filename,c(paste0(path,"/"),".csv"),"")
-      # add year of submission
-      file_dfs[[file]]$submission_year <- submission_year
-    }
-    print(head(file_dfs[[1]]))
-    # stack all datasets using rbind.fill, which keeps non-matching columns
-    #   and fills with NA; 'Reduce' iterates through and merges with previous
-    # this may take a few minutes if you have lots of data
-    all_data6 <- Reduce(rbind.fill, file_dfs)
-      print(nrow(all_data6))
-      print(ncol(all_data6))
-    return(all_data6)
-  }
-
 #  # read in data from 2017 and 2019 and stack
-  raw_2019 <- read.exsitu.csv(file.path(imls.exsitu, "data_2019"), "2019")
-  raw_2017 <- read.exsitu.csv(file.path(imls.exsitu, "data_2017"), "2017")
+  raw_2019 <- read.exsitu.csv(file.path(main_dir,"inputs",
+    "raw_occurrence","exsitu_standard_column_names","data_2019"), "2019")
+  raw_2017 <- read.exsitu.csv(file.path(main_dir,"inputs",
+    "raw_occurrence","exsitu_standard_column_names","data_2017"), "2017")
   # if genus is blank in 2017 data, make it "Quercus"
   raw_2017[which(is.na(raw_2017$genus)),]$genus <- "Quercus"
   # stack all data
   all_data_raw <- rbind.fill(raw_2019,raw_2017)
 
 # ## OR READ IN FROM ONE FOLDER ONLY:
-  # create list of paths to ex situ accessions CSV files in folder
-  file_list <- list.files(path=imls.exsitu,pattern=".csv",full.names=TRUE)
-  # read in each csv in path list to create list of dataframes
-  file_dfs <- lapply(file_list,read.csv,header=TRUE,fileEncoding="LATIN1",
-    strip.white=TRUE,colClasses="character",na.strings=c("","NA"))
-  print(length(file_dfs))
-    #sapply(file_dfs, nrow) # can look at number of rows in each csv
-  for(file in seq_along(file_dfs)){
-    # add file name as column, to record home institution for each record
-    file_dfs[[file]]$filename <- rep(file_list[file],
-      nrow(file_dfs[[file]]))
-    # remove file path portion
-    file_dfs[[file]]$filename <- mgsub(
-      file_dfs[[file]]$filename,c(paste0(imls.exsitu,"/"),".csv"),"")
-  }
-  print(head(file_dfs[[1]]))
-  # stack all datasets using rbind.fill, which keeps non-matching columns
-  #   and fills with NA; this may take a few minutes if you have lots of data
-  all_data_raw <- data.frame()
-  # first order dataframes by number of rows, to speed things up
-  file_dfs <- file_dfs[order(sapply(file_dfs,nrow))]
-  # now stack everything
-  for(i in 1:length(file_dfs)){
-    all_data_raw <- rbind.fill(file_dfs[[i]],all_data_raw)
-    print(paste(unique(file_dfs[[i]]$filename),i))
-  }
-  nrow(all_data_raw)
-  ncol(all_data_raw)
+#  # create list of paths to ex situ accessions CSV files in folder
+#  file_list <- list.files(path=imls.exsitu,pattern=".csv",full.names=TRUE)
+#  # read in each csv in path list to create list of dataframes
+#  file_dfs <- lapply(file_list,read.csv,header=TRUE,fileEncoding="LATIN1",
+#    strip.white=TRUE,colClasses="character",na.strings=c("","NA"))
+#  print(length(file_dfs))
+#    #sapply(file_dfs, nrow) # can look at number of rows in each csv
+#  for(file in seq_along(file_dfs)){
+#    # add file name as column, to record home institution for each record
+#    file_dfs[[file]]$filename <- rep(file_list[file],
+#      nrow(file_dfs[[file]]))
+#    # remove file path portion
+#    file_dfs[[file]]$filename <- mgsub(
+#      file_dfs[[file]]$filename,c(paste0(imls.exsitu,"/"),".csv"),"")
+#  }
+#  print(head(file_dfs[[1]]))
+#  # stack all datasets using rbind.fill, which keeps non-matching columns
+#  #   and fills with NA; this may take a few minutes if you have lots of data
+#  all_data_raw <- data.frame()
+#  # first order dataframes by number of rows, to speed things up
+#  file_dfs <- file_dfs[order(sapply(file_dfs,nrow))]
+#  # now stack everything
+#  for(i in 1:length(file_dfs)){
+#    all_data_raw <- rbind.fill(file_dfs[[i]],all_data_raw)
+#    print(paste(unique(file_dfs[[i]]$filename),i))
+#  }
+#  nrow(all_data_raw)
+#  ncol(all_data_raw)
 
 # new version before big changes, so can easily go back to original
 all_data <- all_data_raw
@@ -136,7 +121,7 @@ all_data <- all_data %>% separate("specific",
 # IF NEEDED: merge similar columns (you may not need to do this if no schema
 #   mistakes were made when manually editing column names).
 #   Can do this step with lots of unites (see below) or from table ?????
-
+# NOT WORKING:
 #col_align <- read.csv(file.path(imls.meta,"GA2_exsitu_column_headers.csv"),
 #  header=TRUE,strip.white=TRUE,colClasses="character",na.strings=c("","NA"))
 #all_data2 <- all_data
@@ -148,68 +133,6 @@ all_data <- all_data %>% separate("specific",
 #    all_data[,i] <- paste(part[j,1],part[j+1,1],sep=";")
 #  }
 #}
-
-#### GA2
-  all_data <- tidyr::unite(all_data,"inst_short", c("inst_short","ï..inst_short"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"taxon_full_name", c("taxon_full_name",
-    "full_sp_name","ï..taxon_full_name","sp_full_name"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"infra_rank", c("infra_rank","intra_rank",
-    "infra_rank_add","specific_rank"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"infra_name", c("infra_name","intra_name",
-    "infra_name_add","specific_name"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"hybrid", c("hybrid","hybrid.1"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"orig_lat", c("orig_lat","lat"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"orig_long", c("orig_long","long"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"municipality", c("municipality","city"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"state", c("state","maj_region"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"country", c("country","country_code"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"locality", c("locality","loaclity",
-    "locality_notes","locality.1","locallity"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"acc_num", c("acc_num","acc_no",
-    "acc_num2","ï..acc_num"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"lin_num", c("lin_num","lin_no","pedigree"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"orig_source", c("orig_source","donor",
-    "source"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"rec_as", c("rec_as","rec_material"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"num_indiv", c("num_indiv","num_alive",
-    "num_plants"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"garden_loc", c("garden_loc","loc"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"coll_num", c("coll_num","coll_no"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"coll_year", c("coll_year","acq_year",
-    "aqu_year","aqu_yr","coll_yr","year"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"notes", c("notes","note","inst_name",
-    "inst_name2","isnt_name"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"condition", c("condition","status"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"name_determ", c("name_determ","taxa.ID"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- all_data %>% dplyr::select("inst_short","taxon_full_name","genus",
-    "species","infra_rank","infra_name","hybrid","cultivar","prov_type",
-    "orig_lat","orig_long","country","municipality","state","county","locality",
-    "acc_num","lin_num","orig_source","rec_as","num_indiv",
-    "germ_type","garden_loc","coll_num","coll_name","coll_year","notes",
-    "condition","name_determ","habitat","filename")
-  sort(colnames(all_data)); ncol(all_data)
 
 #### IMLS
   all_data <- tidyr::unite(all_data,"acc_num", c("acc_num","acc_no",

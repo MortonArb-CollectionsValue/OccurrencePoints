@@ -68,7 +68,7 @@ source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 families <- "Sapindaceae"
 
 # read in taxa list
-taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa",
+taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
   "target_taxa_Acer.csv"), header = T, colClasses="character")
 nrow(taxa_list_acc)
 # make sure there aren't extra spaces within species names
@@ -508,5 +508,5 @@ setnames(all_data,
   old = c("taxon_name_match","genus_species_acc"),
   new = c("taxon_name","species_name_acc"))
 # write file
-write.csv(all_data,file.path(main_dir,"inputs","taxa",
+write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
   "target_taxa_with_syn_Acer.csv"),row.names=F)

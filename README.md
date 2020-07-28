@@ -147,38 +147,6 @@
   - long_round : longitude rounded to 3 decimal places
   - FIPS : code for US county with centroid matching to 2 places after decimal
 
-# file structure
-
-  **Folders are bolded**
-
-  Folders/files that were manually created/downloaded are marked as such
-
-  - **insitu_occurrence_points** (manually created)
-    - target_taxa_with_syn.csv (manually created)
-    - occurrence_point_count_per_species.csv
-    - **raw_occurrence_point_data** (manually created)
-      - **gbif_read_in**
-        - occurrence.txt
-        - ...
-      - **fia_read_in** (manually created)
-        - AK_TREE.csv (manually downloaded)
-        - ...
-      - **sernec_read_in** (manually created)
-        - occurrences.csv (manually downloaded)
-        - ...
-      - bien_raw.csv
-      - fia_raw.csv
-      - gbif_raw.csv
-      - idigbio_raw.csv
-      - sernec_raw.csv
-    - **FIA_tables** (manually created)
-      - FIA_AppendixF_TreeSpeciesCodes_2016.csv (manually downloaded)
-      - PLOT.csv (manually downloaded)
-      - US_state_county_FIPS_codes.csv (manually downloaded)
-    - **raw_split_by_sp**
-      - Malus_angustifolia.csv
-      - ...
-
 ################################################################################
 4-0_refine_raw_occurrence_points.R
 ################################################################################
@@ -206,7 +174,7 @@
 # standard columns
 
   - species_name_acc : accepted species name (from target_taxa_with_syn.csv)
-  
+
 ################################################################################
  5-0_plot_occurrence_raw_all.R
 ################################################################################
@@ -254,5 +222,38 @@ X-0_Run_Point_Data.R
  INPUTS: List of target taxa
 
  OUTPUTS: List of target taxa with acceptance, authors, and synonyms
+
 ################################################################################
 
+# file structure
+
+  **Folders are bolded**
+
+  Folders/files that were manually created/downloaded are marked as such
+
+  - **occurrence_points** (manually created)
+    - **taxa** (manually created)
+    - target_taxa_with_syn.csv (manually created)
+    - occurrence_point_count_per_species.csv
+    - **raw_occurrence_point_data** (manually created)
+      - **gbif_read_in**
+        - occurrence.txt
+        - ...
+      - **fia_read_in** (manually created)
+        - AK_TREE.csv (manually downloaded)
+        - ...
+      - **sernec_read_in** (manually created)
+        - occurrences.csv (manually downloaded)
+        - ...
+      - bien_raw.csv
+      - fia_raw.csv
+      - gbif_raw.csv
+      - idigbio_raw.csv
+      - sernec_raw.csv
+    - **FIA_tables** (manually created)
+      - FIA_AppendixF_TreeSpeciesCodes_2016.csv (manually downloaded)
+      - PLOT.csv (manually downloaded)
+      - US_state_county_FIPS_codes.csv (manually downloaded)
+    - **raw_split_by_sp**
+      - Malus_angustifolia.csv
+      - ...
