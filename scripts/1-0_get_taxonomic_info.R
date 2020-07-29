@@ -39,7 +39,7 @@ rm(my.packages)
 ################################################################################
 
 # either set manually:
-#main_dir <- "./Desktop"
+#main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Gap Analysis/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
@@ -65,11 +65,13 @@ source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 # CHANGE THIS LIST BASED ON TAXA YOURE LOOKING FOR:
 #tpl_families() # list of families in database
 #families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
-families <- "Sapindaceae"
+#families <- "Sapindaceae"
+families <- c("Juglandaceae","Fagaceae","Leguminosae","Lauraceae","Pinaceae",
+  "Taxaceae")
 
 # read in taxa list
 taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
-  "target_taxa_Acer.csv"), header = T, colClasses="character")
+  "target_taxa.csv"), header = T, colClasses="character")
 nrow(taxa_list_acc)
 # make sure there aren't extra spaces within species names
 taxa_list_acc[,1] <- str_squish(taxa_list_acc[,1])
@@ -324,12 +326,15 @@ pow_names$match_name_with_authors <- paste(
   pow_names$taxon_name_match,pow_names$author)
   # remove duplicates except those matching legitimate names
 pow_names_noDup <- pow_names
+  # keep only necessary columns
+pow_names_noDup <- pow_names_noDup[,c("taxon_name_acc","taxon_name_match",
+  "match_id","database","acceptance","match_name_with_authors")]
+pow_names_noDup$acceptance <- str_to_lower(pow_names_noDup$acceptance)
     # OPTIONAL, IF NOT LOOKING FOR CHILDREN: remove subsp., var., and f.
 pow_names_noDup <- pow_names_noDup %>%
   filter(!grepl("subsp.",taxon_name_match,fixed=T) &
          !grepl("var.",taxon_name_match,fixed=T) &
          !grepl("f.",taxon_name_match,fixed=T))
-pow_names_noDup$acceptance <- str_to_lower(pow_names_noDup$acceptance)
 
 # fix up synonyms df
   # add column stating which database it came from
@@ -337,8 +342,8 @@ pow_syn_df <- pow_syn
 pow_syn_df$database <- "pow"
   # standardize column names for joining later
 setnames(pow_syn_df,
-  old = c("name","fqId","author","taxonomicStatus"),
-  new = c("taxon_name_match","match_id","author","acceptance"))
+  old = c("name","fqId","taxonomicStatus"),
+  new = c("taxon_name_match","match_id","acceptance"))
   # add column with authors
 pow_syn_df$match_name_with_authors <- paste(
   pow_syn_df$taxon_name_match,pow_syn_df$author)
@@ -402,6 +407,7 @@ tpl_names_noDup$acceptance <- str_to_lower(tpl_names_noDup$acceptance)
 # join with taxa list and remove non-matches
 tpl_all <- tpl_names_noDup %>% filter(tpl_names_noDup$taxon_name_acc %in%
   taxa_names)
+head(tpl_all)
 
 ################################################################################
 # 3. Bind all taxonomic status info and synonyms together
@@ -430,13 +436,13 @@ all_data$match_name_with_authors <- stringi::stri_trans_general(
 
 # keep unique values and concatenate database, acceptance, id, authors
 all_data <- all_data %>%
-  group_by(taxon_name_acc,taxon_name_match) %>%
-  summarize(
-    database = paste(database,collapse = ','),
+  dplyr::group_by(taxon_name_acc,taxon_name_match) %>%
+  dplyr::summarize(
+    database = paste(database, collapse = ','),
     acceptance = paste(acceptance,collapse = ','),
     ref_id = paste(match_id,collapse = ','),
     match_name_with_authors = paste(match_name_with_authors,collapse = '|')) %>%
-  ungroup()
+  dplyr::ungroup()
 # remove duplicates in database column
 add <- setDT(all_data)[, list(database = toString(sort(unique(strsplit(database,
   ',')[[1]])))), by = ref_id]
@@ -474,6 +480,9 @@ all_data$genus_species_acc <- paste(all_data$genus_acc,all_data$species_acc,
 all_data$list <- "synonym"
 all_data[which(all_data$taxon_name_acc == all_data$taxon_name_match),]$list <-
   "desiderata"
+# write file
+write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
+  "target_taxa_with_syn_all.csv"),row.names=F)
 
 # IF DESIRED:
   ## remove forms
@@ -482,10 +491,10 @@ all_data <- all_data[which(is.na(all_data$infra_rank) |
   all_data$infra_rank != "f."),]
 nrow(all_data)
   ## remove synonyms with less than two sources
-#all_data <- all_data[which(all_data$database_count > 1 |
-#  grepl("homotypic",all_data$acceptance) |
-#  grepl("accepted",all_data$acceptance)),]
-#nrow(all_data)
+all_data <- all_data[which(all_data$database_count > 1 |
+  grepl("homotypic",all_data$acceptance) |
+  grepl("accepted",all_data$acceptance)),]
+nrow(all_data)
   ## remove records where same syn match name matches more than 1 taxon_name_acc
 all_data$dup <- c(duplicated(all_data$taxon_name_match,fromLast=T)
   | duplicated(all_data$taxon_name_match))
@@ -500,7 +509,7 @@ nrow(all_data)
 
 # final ordering of names and column selection
 all_data <- all_data %>%
-  arrange(taxon_name_acc) %>%
+  dplyr::arrange(taxon_name_acc) %>%
   dplyr::select(taxon_name_acc,taxon_name_match,genus_species_acc,genus,species,
     infra_rank,infra_name,list,database,acceptance,database_count,
     match_name_with_authors)
@@ -509,4 +518,4 @@ setnames(all_data,
   new = c("taxon_name","species_name_acc"))
 # write file
 write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
-  "target_taxa_with_syn_Acer.csv"),row.names=F)
+  "target_taxa_with_syn.csv"),row.names=F)
