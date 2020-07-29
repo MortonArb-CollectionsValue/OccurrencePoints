@@ -3,21 +3,23 @@
 
  OVERVIEW: Sets the working environment based on the computer on which you're working. A new "else if" section needs to be manually added for each computer you're running on.
 
+
 ##  0-2_load_IMLS_functions.R
 
  OVERVIEW: Loads all of the functions to use for the project
+
 
 ## 1-0_get_taxonomic_info.R
 
  OVERVIEW: Takes a list of taxa and uses the taxize package to pull taxonomic information from multiple databases. The output can either be used directly in next script (2-0_get_raw_occurrence_points.R), or can be reviewed and revised manually (recommended). Information pulled includes:
 
-    * Acceptance status and authors from:
+  Acceptance status and authors from:
       - Tropicos,
       - Integrated Taxonomic Information Service (ITIS)
       - Kew’s Plants of the World (POW)
       - The Plant List (TPL)
 
-    * Synonyms from:
+  Synonyms from:
       - Tropicos
       - ITIS
       - POW
@@ -26,17 +28,18 @@
 
  OUTPUT: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
 
+
 ## 2-0_get_raw_occurrence_points.R
 
  OVERVIEW: Provides manual instructions and code chunks for downloading and standardizing wild occurrence points from a variety of online databases. Data from all sources can be pulled, or specific sources can be chosen individually. Sources include:
 
-    * Global databases (though all likely have U.S. bias?):
+  Global databases (though all likely have U.S. bias?):
       - Global Biodiversity Information Facility (GBIF)
       - Integrated Digitized Biocollections (iDigBio)
       - U.S. Herbarium Consortia (SERNEC, SEINet, etc.)
       - Botanical Information and Ecology Network (BIEN)
 
-    * National databases:
+  National databases:
       - Forest Inventory and Analysis (FIA) Program, USDA Forest Service
       - Biodiversity Information Serving Our Nation (BISON), USGS
 
@@ -45,6 +48,7 @@
  INPUTS: List of target taxa and synonyms (target_taxa_with_syn.csv); FIA metadata tables (FIA_AppendixF_TreeSpeciesCodes_2016.csv, US_state_county_FIPS_codes.csv)
 
  OUTPUTS: Raw occurrence records for target taxa or genera (depending on how the database’s download works); one CSV for each database
+
 
 ## 2-1_compile_exsitu_data.R
 
@@ -56,9 +60,10 @@
 
  OUTPUTS: Ex situ accessions data compiled into one CSV, with some fields standardized: provenance type, number of individuals, latitude and longitude, collection/acquisition year (want to add some others eventually, like germplasm type)
 
+
 ## 3-0_compile_raw_occurrence_points.R
 
- ! STILL IN DEVELOPMENT ! ##
+ ! STILL IN DEVELOPMENT !
 
  OVERVIEW: Compiles raw occurrence point data
   - Filter by target taxa list
@@ -71,9 +76,10 @@
 
  OUTPUTS: CSV of occurrence points for each species; also a table of the number of lat-long, locality description only, and water points for each target species (occurrence_point_count_per_species.csv)
 
+
 ## 4-0_refine_raw_occurrence_points.R
 
- ! STILL IN DEVELOPMENT ! ##
+ ! STILL IN DEVELOPMENT !
 
  OVERVIEW: Keep points only in species "accepted" range, based on:
   - GlobalTreeSearch countries of distribution
@@ -82,56 +88,63 @@
 
  ?? Fix neg/pos longitude error in ex situ data ??
 
+
 ## 5-0_plot_occurrence_raw_all.R
 
- ! STILL IN DEVELOPMENT ! ##
+ ! STILL IN DEVELOPMENT !
 
  OVERVIEW: Create occurrence point map for each species, for exploring
 
+
 ## X-0_Run_Point_Data.R
 
- ! STILL IN DEVELOPMENT ! ##
+ ! STILL IN DEVELOPMENT !
 
  OVERVIEW: Runs the whole workflow from start to finish
 
-################################################################################
+
 
 # file structure
 
-  **Folders are bolded**
+ ! STILL IN DEVELOPMENT !
 
-  Folders/files that must be manually created/downloaded are marked as such
+  **Folders/files that must be manually created/downloaded are bolded**
 
-  - **occurrence_points** (manually created)
-    - ! **inputs**
-    - **taxa_list** (manually created)
-    - target_taxa_with_syn.csv (manually created)
-    - occurrence_point_count_per_species.csv
-    - **raw_occurrence_point_data** (manually created)
-      - **gbif_read_in**
-        - occurrence.txt
-        - ...
-      - **fia_read_in** (manually created)
-        - AK_TREE.csv (manually downloaded)
-        - ...
-      - **sernec_read_in** (manually created)
-        - occurrences.csv (manually downloaded)
-        - ...
-      - bien_raw.csv
-      - fia_raw.csv
-      - gbif_raw.csv
-      - idigbio_raw.csv
-      - sernec_raw.csv
-    - **FIA_tables** (manually created)
-      - FIA_AppendixF_TreeSpeciesCodes_2016.csv (manually downloaded)
-      - PLOT.csv (manually downloaded)
-      - US_state_county_FIPS_codes.csv (manually downloaded)
-    - **raw_split_by_sp**
-      - Malus_angustifolia.csv
-      - ...
+  - **occurrence_points**
+    - **inputs**
+      - **taxa_list**
+        - **target_taxa.csv**
+        - target_taxa_with_syn.csv
+      - raw_occurrence
+        - gbif_raw
+        - idigbio_raw
+        - sernec_raw
+        - bien_raw
+        - fia_raw
+        - bison_raw
+        - **exsitu_standard_column_names**
+      - **fia_tables**
+        - **FIA_AppendixF_TreeSpeciesCodes_2016.csv**
+        - **US_state_county_FIPS_codes.csv**
+        - PLOT.csv
+      - compiled_occurrence
+      - **gis_data**
+      - **known_distribution**
+    - outputs
+      - working
+        - occurrence_point_count_per_species.csv
+        - not_on_land.csv
+        - need_geolocation.csv
+        - split_by_sp_working
+        - interactive_maps_split_by_sp
+        - basic_maps_split_by_sp
+      - final
+        - split_by_sp_final
 
 
 # standard columns
+
+ ! NEEDS TO BE UPDATED !
 
   - species_name_acc : accepted species name (from target_taxa_with_syn.csv)
   - taxon_name      
