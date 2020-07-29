@@ -1,12 +1,12 @@
 
 ################################################################################
- 0-1_set_workingdirectory.R
+#  0-1_set_workingdirectory.R
 ################################################################################
 
  OVERVIEW: Sets the working environment based on the computer on which you're working. A new "else if" section needs to be manually added for each computer you're running on.
 
 ################################################################################
- 0-2_load_IMLS_functions.R
+#  0-2_load_IMLS_functions.R
 ################################################################################
 
  OVERVIEW: Loads all of the functions to use for the project
@@ -105,7 +105,7 @@
  OVERVIEW: Create occurrence point map for each species, for exploring
 
 ################################################################################
-X-0_Run_Point_Data.R
+ X-0_Run_Point_Data.R
 ################################################################################
 
   ## ! STILL IN DEVELOPMENT ! ##
