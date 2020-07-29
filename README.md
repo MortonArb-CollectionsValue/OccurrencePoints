@@ -1,19 +1,13 @@
 
-################################################################################
-#  0-1_set_workingdirectory.R
-################################################################################
+##  0-1_set_workingdirectory.R
 
  OVERVIEW: Sets the working environment based on the computer on which you're working. A new "else if" section needs to be manually added for each computer you're running on.
 
-################################################################################
-#  0-2_load_IMLS_functions.R
-################################################################################
+##  0-2_load_IMLS_functions.R
 
  OVERVIEW: Loads all of the functions to use for the project
 
-################################################################################
- 1-0_get_taxonomic_info.R
-################################################################################
+## 1-0_get_taxonomic_info.R
 
  OVERVIEW: Takes a list of taxa and uses the taxize package to pull taxonomic information from multiple databases. The output can either be used directly in next script (2-0_get_raw_occurrence_points.R), or can be reviewed and revised manually (recommended). Information pulled includes:
 
@@ -32,9 +26,7 @@
 
  OUTPUT: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
 
-################################################################################
- 2-0_get_raw_occurrence_points.R
-################################################################################
+## 2-0_get_raw_occurrence_points.R
 
  OVERVIEW: Provides manual instructions and code chunks for downloading and standardizing wild occurrence points from a variety of online databases. Data from all sources can be pulled, or specific sources can be chosen individually. Sources include:
 
@@ -54,11 +46,9 @@
 
  OUTPUTS: Raw occurrence records for target taxa or genera (depending on how the database’s download works); one CSV for each database
 
-################################################################################
- 2-1_compile_exsitu_data.R
-################################################################################
+## 2-1_compile_exsitu_data.R
 
-  ## ! STILL IN DEVELOPMENT ! ##
+ ! STILL IN DEVELOPMENT !
 
  OVERVIEW: This script takes a folder of CSV files representing ex situ accessions data from different institutions, combines them into one dataset, and standardizes some important fields.
 
@@ -66,11 +56,9 @@
 
  OUTPUTS: Ex situ accessions data compiled into one CSV, with some fields standardized: provenance type, number of individuals, latitude and longitude, collection/acquisition year (want to add some others eventually, like germplasm type)
 
-################################################################################
- 3-0_compile_raw_occurrence_points.R
-################################################################################
+## 3-0_compile_raw_occurrence_points.R
 
-  ## ! STILL IN DEVELOPMENT ! ##
+ ! STILL IN DEVELOPMENT ! ##
 
  OVERVIEW: Compiles raw occurrence point data
   - Filter by target taxa list
@@ -83,11 +71,9 @@
 
  OUTPUTS: CSV of occurrence points for each species; also a table of the number of lat-long, locality description only, and water points for each target species (occurrence_point_count_per_species.csv)
 
-################################################################################
- 4-0_refine_raw_occurrence_points.R
-################################################################################
+## 4-0_refine_raw_occurrence_points.R
 
-  ## ! STILL IN DEVELOPMENT ! ##
+ ! STILL IN DEVELOPMENT ! ##
 
  OVERVIEW: Keep points only in species "accepted" range, based on:
   - GlobalTreeSearch countries of distribution
@@ -96,19 +82,15 @@
 
  ?? Fix neg/pos longitude error in ex situ data ??
 
-################################################################################
- 5-0_plot_occurrence_raw_all.R
-################################################################################
+## 5-0_plot_occurrence_raw_all.R
 
-  ## ! STILL IN DEVELOPMENT ! ##
+ ! STILL IN DEVELOPMENT ! ##
 
  OVERVIEW: Create occurrence point map for each species, for exploring
 
-################################################################################
- X-0_Run_Point_Data.R
-################################################################################
+## X-0_Run_Point_Data.R
 
-  ## ! STILL IN DEVELOPMENT ! ##
+ ! STILL IN DEVELOPMENT ! ##
 
  OVERVIEW: Runs the whole workflow from start to finish
 
