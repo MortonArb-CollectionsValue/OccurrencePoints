@@ -27,7 +27,7 @@
 # Load libraries
 ################################################################################
 
-rm(list=ls())
+# rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'rgbif', 'data.table', 'taxize',
   'anchors', 'batchtools', 'textclean', 'stringi')
 # install.packages (my.packages) #Turn on to install current versions
@@ -43,8 +43,8 @@ rm(my.packages)
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-#source('scripts/0-1_set_workingdirectory.R')
+# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions
@@ -70,8 +70,11 @@ families <- c("Juglandaceae","Fagaceae","Leguminosae","Lauraceae","Pinaceae",
   "Taxaceae")
 
 # read in taxa list
+# taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
+  # "target_taxa.csv"), header = T, colClasses="character")
 taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
-  "target_taxa.csv"), header = T, colClasses="character")
+                                    "target_taxa_with_syn.csv"), header = T, colClasses="character")
+
 nrow(taxa_list_acc)
 # make sure there aren't extra spaces within species names
 taxa_list_acc[,1] <- str_squish(taxa_list_acc[,1])
@@ -113,7 +116,6 @@ species_only <- species_names[
 species_names <- gsub(" x "," × ",species_names,fixed=T)
 
 ## GET TAXONOMIC STATUS
-
 tp_names_raw <- data.frame()
 for(i in 1:length(species_names)){
   output_new <- tp_search(species_names[[i]])

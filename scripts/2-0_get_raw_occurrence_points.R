@@ -452,18 +452,48 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","sernec_raw")))
 # Unzip each file and pull the "occurrences.csv" file out into the
 #   "sernec_raw" folder and rename with appropriate genus name
 
-# read in raw occurrence points
-file_list <- list.files(path = file.path(main_dir,"inputs","raw_occurrence",
-  "sernec_raw"), pattern = "occurrence", full.names = T)
-file_dfs <- lapply(file_list, read.csv, colClasses = "character",
-  na.strings=c("", "NA"), strip.white=T, fileEncoding="latin1")
-length(file_dfs) #4
-# stack datasets to create one dataframe
+## this way you do not have to open zips and just extract
+# If you have more than one target genus, repeat the above steps for the
+#   other genera
+# Move all the zipped files you downloaded into the "sernec_raw" folder
+#   Unzip each file and pull the "occurrences.csv" file out into the
+  raw.dir <- "sernec_raw"
+  f.pth  <- file.path(main_dir, "inputs", "raw_occurrence", raw.dir)
+  f.zips <- list.files(file.path(f.pth, "zips_new"), pattern = ".zip", full.names = T)
+
+  file_dfs <- lapply(f.zips, function(i){
+                    read.csv(unz(i, "occurrences.csv"), colClasses = "character",
+                     na.strings=c("", "NA"), strip.white=T, fileEncoding="latin1")
+                 }
+              )
+
 sernec_raw <- data.frame()
-for(file in seq_along(file_dfs)){
-  sernec_raw <- rbind(sernec_raw, file_dfs[[file]])
-}
+  for(file in seq_along(file_dfs)){
+    sernec_raw <- rbind(sernec_raw, file_dfs[[file]])
+  }
 nrow(sernec_raw) #195655
+
+##################
+## If do the code above, do not need to unzip files yourself, and don't need the following block of code
+##################
+# 
+# #   "sernec_raw" folder and rename with appropriate genus name
+# # download zips as above and put in "sernec_raw/zips_new" folder
+# 
+# 
+# # read in raw occurrence points
+# file_list <- list.files(path = file.path(main_dir,"inputs","raw_occurrence",
+#   "sernec_raw"), pattern = "occurrence", full.names = T)
+# file_dfs <- lapply(file_list, read.csv, colClasses = "character",
+#   na.strings=c("", "NA"), strip.white=T, fileEncoding="latin1")
+# length(file_dfs) #4
+# # stack datasets to create one dataframe
+# sernec_raw <- data.frame()
+# for(file in seq_along(file_dfs)){
+#   sernec_raw <- rbind(sernec_raw, file_dfs[[file]])
+# }
+# nrow(sernec_raw) #195655
+##################
 
 ### standardize column names
 
@@ -620,6 +650,21 @@ bien_raw <- bien_raw %>% dplyr::select(
   #"collection_code",
   "dataset","datasource",
   "is_cultivated_observation")
+
+## On a computer at UC Davis, I get an error message and cannot get data and I 
+  ##    am unable to connect to the correct port:
+  # Here is the error message:
+  #   Error in postgresqlNewConnection(drv, ...) : 
+  #   RS-DBI driver: (could not connect public_bien@vegbiendev.nceas.ucsb.edu:5432 on dbname "public_vegbien": could not connect to server: Connection timed out (0x0000274C/10060)
+  #                   Is the server running on host "vegbiendev.nceas.ucsb.edu" (128.111.85.31) and accepting
+  #                   TCP/IP connections on port 5432?
+
+## This is the line about the issue on the vignette("BIEN"):
+  ##Database connection issues Some institution and computer programs 
+  ##  (e.g. some antivirus programs) block the SQL connections that this package 
+  ##  relies on. While we are exploring ways around this issue, at present the 
+  ##  simplest method is to use the package on a computer/network that doesn’t 
+  ##  block SQL connections.
 
 # rename columns
 setnames(bien_raw,

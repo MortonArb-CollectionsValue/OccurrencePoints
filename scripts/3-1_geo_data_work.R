@@ -27,7 +27,7 @@
 my.packages <- c("raster", "sp", "tools", "spatialEco", "rgdal", "geosphere",
   "readxl", "writexl", "dplyr", "tidyr", "tidyverse", "housingData",
   "data.table", "textclean", "CoordinateCleaner", "countrycode", "usmap",
-  "rnaturalearth", "rnaturalearthdata", "maps", "rnaturalearthhires")#, "sf"
+  "rnaturalearth", "rnaturalearthdata", "maps")#, "sf"
 #install.packages(my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
 rm(my.packages)
@@ -110,56 +110,45 @@ taxon_co <- left_join(taxon_list, gts_list[,c(2,4)],
 write_xlsx(taxon_co, path=file.path(main_dir,"inputs","known_distribution",
   "taxa_work.xlsx"))
 
+# WORKING: can also get RL country-level species distribution data like this:
+#library(rredlist)
+#countries <- data.frame()
+#target_taxa <- taxon_list[,1]
+#for(i in 1:length(target_taxa)){
+	#print(target_sp[[i]])
+#	dist <- rl_occ_country(target_taxa[[i]])
+#	name <- dist$name
+#	dist <- as.data.frame(dist$result)
+#	if(nrow(dist>0)){
+#		dist$genus_species <- rep(name)
+#		countries <- rbind(countries,dist)
+#	} else {
+#		print(paste(target_taxa[[i]],"not found"))
+#	}
+#}
+
 ################################################################################
 # 2. Create native country list for each taxon using GlobalTreeSearch data
 ################################################################################
 
 # bring in polygon for world regions and US (down to county level);
-#  could use maps::county() function instead
+#   could use maps::county() function instead
+  # may need to run this line first, to get rnaturalearthhires package working:
+  #devtools::install_github("ropensci/rnaturalearthhires")
 adm0.poly <- ne_countries(type = "countries", scale = "large")
 adm1.poly <- ne_states(country=NULL)
 adm2.poly <- readOGR(dsn=file.path(main_dir,"inputs","gis_data","usa",
   "USA_adm"), "USA_adm2")
-# plot(adm1.poly)
-# names(adm0.poly)
-# names(adm1.poly)
-# names(adm2.poly)
-# head(adm2.poly)
-# write_xlsx(adm0.poly@data, path=file.path(imls.meta, "gis_data", "geo_work0.xlsx"))
-# write_xlsx(adm1.poly@data, path=file.path(imls.meta, "gis_data", "geo_work1.xlsx"))
-# write_xlsx(adm2.poly@data, path=file.path(imls.meta, "gis_data", "geo_work2.xlsx"))
-#
-# save(adm0.poly, adm1.poly, adm2.poly, gts_list, file=file.path(imls.meta, "gis_data", "IMLS_GIS_data.RData"))
-# ################################################################################
-# ## calculate centroid of polygons
-#   ##first countries (adm0)
-#   adm0.poly@data <- adm0.poly@data %>% mutate(long_centroid = centroid(adm0.poly)[,1], lat_centroid = centroid(adm0.poly)[,2])
-#     adm0 <- adm0.poly@data
-#   ##second states (adm1)
-#   adm1.poly@data <- adm1.poly@data %>% mutate(long_centroid = centroid(adm1.poly)[,1], lat_centroid = centroid(adm1.poly)[,2])
-#     adm1 <- adm1.poly@data
-#   ##third counties/municipalities/parishes (adm2)
-#   adm2.poly@data <- adm2.poly@data %>% mutate(long_centroid = centroid(adm2.poly)[,1], lat_centroid = centroid(adm2.poly)[,2])
-#     adm2 <- adm2.poly@data
-# ## save these objects for later use
-# save(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, adm0, adm1, adm2, file=file.path(imls.meta, "gis_data", "IMLS_GIS_data.RData"))
-#   rm(adm0, adm1, adm2)
-
-################################################################################
-# # # # ###   NEEDS TO BE COMPLETED   ###
-# # # #   ## Assign coordinates to records that are missing coordinates
-# # # #     ## based on country/state/county
-# # # #   load(file.path(imls.meta, "gis_data", "IMLS_GIS_data.RData"))
-# # # #
-# # # #   ## bring in records (at least those missing coordinates)
-################################################################################
-    # # # #
-# ################################################################################
-# ###   NEEDS TO BE COMPLETED   ###
-#   ## Flag occurrences outside their native distribution
-#       ## based on country/state/county
-
-  # spp.test <- c("Quercus georgiana", "Quercus imbricaria", "Quercus arkansana", "Quercus falcata", "Quercus stellata", "Quercus acutissima")
+#plot(adm1.poly)
+#names(adm0.poly); names(adm1.poly); names(adm2.poly); head(adm2.poly)
+write_xlsx(adm0.poly@data, path=file.path(main_dir,"inputs","gis_data",
+  "geo_work0.xlsx"))
+write_xlsx(adm1.poly@data, path=file.path(main_dir,"inputs","gis_data",
+  "geo_work1.xlsx"))
+write_xlsx(adm2.poly@data, path=file.path(main_dir,"inputs","gis_data",
+  "geo_work2.xlsx"))
+#save(adm0.poly, adm1.poly, adm2.poly, gts_list, file=file.path(main_dir,
+#  "inputs","gis_data","IMLS_GIS_data.RData"))
 
 
   load(file.path(imls.meta, "gis_data", "IMLS_GIS_data.RData"))
@@ -237,7 +226,7 @@ for (i in 1:length(to.adm2)){
         cat("Starting ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
 
   ## bring in records (load from *.RData file or bring in from text file)
-    eo.df  <- read.csv(file.path(imls.output, "split_by_sp", paste0(f.nm, ".csv")))
+  eo.df  <- read.csv(file.path(imls.output, "split_by_sp", paste0(f.nm, ".csv")))
       if(nrow(eo.df) < 2) next
 
     ## extract administrative area (0,1,2) based upon inforamtion provided in record for country/state/county.
@@ -377,6 +366,41 @@ for (i in 1:length(to.adm2)){
     ## if not in country, where are they located and how far is that from the correct admin area?
 
 unique(eo.spdf$occ_flag)
+
+# ## calculate centroid of polygons
+#   ##first countries (adm0)
+#   adm0.poly@data <- adm0.poly@data %>% mutate(long_centroid = centroid(adm0.poly)[,1], lat_centroid = centroid(adm0.poly)[,2])
+#     adm0 <- adm0.poly@data
+#   ##second states (adm1)
+#   adm1.poly@data <- adm1.poly@data %>% mutate(long_centroid = centroid(adm1.poly)[,1], lat_centroid = centroid(adm1.poly)[,2])
+#     adm1 <- adm1.poly@data
+#   ##third counties/municipalities/parishes (adm2)
+#   adm2.poly@data <- adm2.poly@data %>% mutate(long_centroid = centroid(adm2.poly)[,1], lat_centroid = centroid(adm2.poly)[,2])
+#     adm2 <- adm2.poly@data
+# ## save these objects for later use
+# save(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, adm0, adm1, adm2, file=file.path(imls.meta, "gis_data", "IMLS_GIS_data.RData"))
+#   rm(adm0, adm1, adm2)
+
+################################################################################
+# # # # ###   NEEDS TO BE COMPLETED   ###
+# # # #   ## Assign coordinates to records that are missing coordinates
+# # # #     ## based on country/state/county
+# # # #   load(file.path(imls.meta, "gis_data", "IMLS_GIS_data.RData"))
+# # # #
+# # # #   ## bring in records (at least those missing coordinates)
+################################################################################
+    # # # #
+# ################################################################################
+# ###   NEEDS TO BE COMPLETED   ###
+#   ## Flag occurrences outside their native distribution
+#       ## based on country/state/county
+
+  # spp.test <- c("Quercus georgiana", "Quercus imbricaria", "Quercus arkansana", "Quercus falcata", "Quercus stellata", "Quercus acutissima")
+
+
+
+
+
 # ################################################################################
 #
 #   cat("Starting ", "rest of world ", "taxa (", length(to.adm0), " total)", ".\n\n", sep="")
