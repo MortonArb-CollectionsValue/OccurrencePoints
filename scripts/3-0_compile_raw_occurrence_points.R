@@ -26,13 +26,13 @@
 # Load libraries
 ################################################################################
 
-#rm(list=ls())
+# rm(list=ls())
   my.packages <- c('plyr','tidyverse','housingData','data.table','textclean',
   'CoordinateCleaner','maps','rnaturalearth','rnaturalearthdata','sf','sp',
   'raster')
 # install.packages (my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
-rm(my.packages)
+  rm(my.packages)
 
 ################################################################################
 # Set working directory
@@ -43,8 +43,8 @@ rm(my.packages)
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-#source('scripts/0-1_set_workingdirectory.R')
+# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions
