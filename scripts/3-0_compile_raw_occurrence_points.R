@@ -43,8 +43,8 @@ rm(my.packages)
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-#source('scripts/0-1_set_workingdirectory.R')
+# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions
