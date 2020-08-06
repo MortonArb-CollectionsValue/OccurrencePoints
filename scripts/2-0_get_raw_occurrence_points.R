@@ -891,6 +891,7 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","bison_raw")))
 # if loop gets hung up, generally best to just try again instead of waiting
 bison_raw <- data.frame()
 us_cty_dist <- data.frame()
+
 for(i in 1:length(taxon_names)){
   occ <- bison(species = taxon_names[i])
   bison_raw <- rbind.fill(bison_raw,occ$points)

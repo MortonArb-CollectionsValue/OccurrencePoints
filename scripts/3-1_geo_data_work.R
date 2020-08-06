@@ -1,7 +1,7 @@
 ################################################################################
 
 ## 3.1_geo_data_work.R
-### Authors: Shannon M. Still & Emily Beckman ### Date: 05/19/2020
+### Authors: Shannon M. Still & Emily Beckman ### Date: 08/04/2020
 
 ### DESCRIPTION:
   # This script is meant for massaging geographical data in both spatial
@@ -25,12 +25,11 @@
 
 #rm(list=ls())
 my.packages <- c("raster", "sp", "tools", "spatialEco", "rgdal", "geosphere",
-  "readxl", "writexl", "dplyr", "tidyr", "tidyverse", "housingData",
-  "data.table", "textclean", "CoordinateCleaner", "countrycode", "usmap",
-  "rnaturalearth", "rnaturalearthdata", "maps")#, "sf"
+  "readxl", "writexl", "dplyr", "tidyr", "tidyverse", "housingData", "maps",
+  "data.table", "textclean", "CoordinateCleaner", "countrycode", "usmap")
 #install.packages(my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
-rm(my.packages)
+  rm(my.packages)
 
 ################################################################################
 # Set working directory
@@ -41,176 +40,63 @@ rm(my.packages)
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-#source("scripts/0-1_set_workingdirectory.R")
+# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
 # Load functions
 ################################################################################
-
 source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
 
 ################################################################################
-################################ LET'S GO ######################################
+# 1. 
 ################################################################################
 
-
-################################################################################
-# 1. Create native country list for each taxon using GlobalTreeSearch data
-################################################################################
-
-# create folder for final files
-if(!dir.exists(file.path(main_dir,"outputs","final")))
-  dir.create(file.path(main_dir,"outputs","final"), recursive=T)
-
-# read in taxa list
-taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
-  "target_taxa_with_syn.csv"), header = T, na.strings=c("","NA"),
-  colClasses="character")
-# read in GlobalTreeSearch data
-gts_list <- read.csv(file.path(main_dir,"inputs","known_distribution",
-  "globaltreesearch_country_distribution.csv"), header = T,
-  na.strings=c("","NA"), colClasses="character")
-
-# split countries by delimiter
-gts_all <- gts_list %>%
-  mutate(native_distribution =
-    strsplit(as.character(native_distribution), "; ")) %>%
-  unnest(native_distribution)
-# write out all GTS countries to check
-spp_countries <- as.data.frame(sort(unique(gts_all$native_distribution)))
-write_xlsx(spp_countries, path=file.path(main_dir,"inputs","known_distribution",
-  "globaltreesearch_countries.xlsx"))
-
-# use countrycode package to translate country codes from the country names
-countrycode(sort(unique(gts_list$native_distribution)), origin="country.name",
-  destination="fips")
-country_set <- as.data.frame(sort(unique(gts_all$native_distribution))) %>%
-  add_column(iso3c = countrycode(sort(unique(gts_all$native_distribution)),
-    origin="country.name", destination="iso3c")) %>%
-  add_column(iso2c = countrycode(sort(unique(gts_all$native_distribution)),
-    origin="country.name", destination="iso2c")) %>%
-  add_column(iso3n = countrycode(sort(unique(gts_all$native_distribution)),
-    origin="country.name", destination="iso3n")) %>%
-  add_column(fips = countrycode(sort(unique(gts_all$native_distribution)),
-    origin="country.name", destination="fips"))
-names(country_set)[1] <- "country_name"
-# save the country codes for species, ISO2, ISO3, and numeric and character
-#   codes, FIPS code
-write_xlsx(country_set, path=file.path(main_dir,"inputs","gis_data",
-  "global_admin_areas.xlsx"))
-
-# add the country code to the GTS list by matching taxon names
-names(gts_list)
-gts_list <- gts_list %>%
-# add the country code to the taxon list by matching taxon names
-taxon_co <- left_join(taxon_list, gts_list[,c(2,4)],
-  by=c("species_name_acc" = "taxon"))
-write_xlsx(taxon_co, path=file.path(main_dir,"inputs","known_distribution",
-  "taxa_work.xlsx"))
-
-# WORKING: can also get RL country-level species distribution data like this:
-#library(rredlist)
-#countries <- data.frame()
-#target_taxa <- taxon_list[,1]
-#for(i in 1:length(target_taxa)){
-	#print(target_sp[[i]])
-#	dist <- rl_occ_country(target_taxa[[i]])
-#	name <- dist$name
-#	dist <- as.data.frame(dist$result)
-#	if(nrow(dist>0)){
-#		dist$genus_species <- rep(name)
-#		countries <- rbind(countries,dist)
-#	} else {
-#		print(paste(target_taxa[[i]],"not found"))
-#	}
-#}
-
-################################################################################
-# 2. Create native country list for each taxon using GlobalTreeSearch data
-################################################################################
-
-# bring in polygon for world regions and US (down to county level);
-#   could use maps::county() function instead
-  # may need to run this line first, to get rnaturalearthhires package working:
-  #devtools::install_github("ropensci/rnaturalearthhires")
-adm0.poly <- ne_countries(type = "countries", scale = "large")
-adm1.poly <- ne_states(country=NULL)
-adm2.poly <- readOGR(dsn=file.path(main_dir,"inputs","gis_data","usa",
-  "USA_adm"), "USA_adm2")
-#plot(adm1.poly)
-#names(adm0.poly); names(adm1.poly); names(adm2.poly); head(adm2.poly)
-write_xlsx(adm0.poly@data, path=file.path(main_dir,"inputs","gis_data",
-  "geo_work0.xlsx"))
-write_xlsx(adm1.poly@data, path=file.path(main_dir,"inputs","gis_data",
-  "geo_work1.xlsx"))
-write_xlsx(adm2.poly@data, path=file.path(main_dir,"inputs","gis_data",
-  "geo_work2.xlsx"))
-#save(adm0.poly, adm1.poly, adm2.poly, gts_list, file=file.path(main_dir,
-#  "inputs","gis_data","IMLS_GIS_data.RData"))
-
-
-  load(file.path(imls.meta, "gis_data", "IMLS_GIS_data.RData"))
-
+  load(file.path(main_dir, "inputs", "gis_data", "IMLS_GIS_data.RData"))
+    
   ## set the distance in meters to check from a point (for comparing centroids to EOs)
   d.rm <- 1000
-
-  ## give a unique identifier to adm0 (country), adm1 (state) and adm2 (county level)
-      adm0 <- adm0 %>% mutate(UID = as.character(paste0("adm0_", iso_a2))) %>% select(UID, colnames(adm0))
-      adm1 <- adm1 %>% mutate(UID = as.character(paste0("adm1_", iso_a2))) %>% select(UID, colnames(adm1))
-      adm2 <- adm2 %>% mutate(UID = as.character(paste0("adm2_", ID_2))) %>% select(UID, colnames(adm2))
 
   ## create proj4string to set coords
       proj4string4poly <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 
-  ## Antarctica has NaN for centroid...remove it
-      adm0 <- adm0[!is.na(adm0$long_centroid),]
-      adm1 <- adm1[!is.na(adm1$long_centroid),]
-      adm2 <- adm2[!is.na(adm2$long_centroid),]
-
-  ## create spatialPolygonDataframes for adm0, adm1, adm2 levels
-      adm0.spdf <- SpatialPointsDataFrame(adm0[,c("long_centroid", "lat_centroid")], adm0,
-                                          proj4string = CRS(proj4string4poly))
-      adm1.spdf <- SpatialPointsDataFrame(adm1[,c("long_centroid", "lat_centroid")], adm1,
-                                          proj4string = CRS(proj4string4poly))
-      adm2.spdf <- SpatialPointsDataFrame(adm2[,c("long_centroid", "lat_centroid")], adm2,
-                                          proj4string = CRS(proj4string4poly))
 
     #######
 ## this is start of iterative loop from the United States and other countries
-        ## get list of files to iterate
-      all.spp.files <- list.files(path=file.path(imls.output, "split_by_sp"), ignore.case=FALSE, full.names=FALSE, recursive=TRUE) #pattern=".thresh", # can use this "pattern=..." to find only files that have a specific pattern
-      # all.spp.files <- all.spp.files[1:5]
-      ## subset the species list to only those on GTS list within US
+      ## get list of files to iterate
+    all.spp.files <- list.files(path=file.path(main_dir, "outputs", "working", "split_by_sp"), 
+        ignore.case=FALSE, full.names=FALSE, recursive=TRUE) #pattern=".thresh", 
+                # can use this "pattern=..." to find only files that have a specific pattern
+    # all.spp.files <- all.spp.files[1:5]
+    ## subset the species list to only those on GTS list within US
 
-        f.subs <- file_path_sans_ext(all.spp.files)
+      f.subs <- file_path_sans_ext(all.spp.files)
 
-        gts_sub <- gts_all[gts_all$taxon %in% gsub("_", " ", f.subs),]
-        # f.nms <- gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution == "United States"])
-        # gts_sub <- gts_sub[!is.na(gts_sub),]
-      ## subset the species list to only those on GTS list within US, going to adm2 (county-level)
-          to.adm2 <- unique(gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution == "United States"]))
-          to.adm2 <- to.adm2[!is.na(to.adm2)]
-      ## subset the species list to only those on GTS list to centroid at state level (adm1)
-          # to.adm1 <- gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution == "United States"])
-          # to.adm1 <- to.adm1[!is.na(to.adm1)]
-      ## subset the species list to only those on GTS list outside US, going to adm0 (country-level)
-          to.adm0 <- unique(gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution != "United States"]))
-          to.adm0 <- to.adm0[!is.na(to.adm0)]
-          # to.adm0 <- unique(gsub(" ", "_", gts_sub$taxon[!gts_sub$taxon %in% gsub("_", " ", to.adm2)]))
+      gts_sub <- gts_all[gts_all$taxon %in% gsub("_", " ", f.subs),]
+      # f.nms <- gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution == "United States"])
+      # gts_sub <- gts_sub[!is.na(gts_sub),]
+    ## subset the species list to only those on GTS list within US, going to adm2 (county-level)
+        to.adm2 <- unique(gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution == "United States"]))
+        to.adm2 <- to.adm2[!is.na(to.adm2)]
+    ## subset the species list to only those on GTS list to centroid at state level (adm1)
+        # to.adm1 <- gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution == "United States"])
+        # to.adm1 <- to.adm1[!is.na(to.adm1)]
+    ## subset the species list to only those on GTS list outside US, going to adm0 (country-level)
+        to.adm0 <- unique(gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution != "United States"]))
+        to.adm0 <- to.adm0[!is.na(to.adm0)]
+        # to.adm0 <- unique(gsub(" ", "_", gts_sub$taxon[!gts_sub$taxon %in% gsub("_", " ", to.adm2)]))
 
-    # if(gts_sub$native_distribution == "United States"){
+  # if(gts_sub$native_distribution == "United States"){
 
+    ## create new folder for revised points, if not already existing
+    out.fld.nm <- "spp_edited_points"
+    if(dir.exists(file.path(main_dir, "outputs", out.fld.nm))) print("directory already created") else
+      dir.create(file.path(main_dir, "outputs", out.fld.nm), recursive=TRUE)
 
-      ## create new folder for revised points, if not already existing
-      out.fld.nm <- "spp_edited_points"
-      if(dir.exists(file.path(imls.output, out.fld.nm))) print("directory already created") else
-        dir.create(file.path(imls.output, out.fld.nm), recursive=TRUE)
-
-      ## to county/adm2 level
-      ## United States goes down to county centroids
-      cat("Starting ", "United States ", "taxa (", length(to.adm2), " total)", ".\n\n", sep="")
+    ## to county/adm2 level
+    ## United States goes down to county centroids
+    cat("Starting ", "United States ", "taxa (", length(to.adm2), " total)", ".\n\n", sep="")
 # i <- 10
       # for (i in 1:length(to.adm2)){
       #   f.nms <- to.adm2
@@ -226,7 +112,7 @@ for (i in 1:length(to.adm2)){
         cat("Starting ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
 
   ## bring in records (load from *.RData file or bring in from text file)
-  eo.df  <- read.csv(file.path(imls.output, "split_by_sp", paste0(f.nm, ".csv")))
+  eo.df  <- read.csv(file.path(main_dir, "outputs", "working", "split_by_sp", paste0(f.nm, ".csv")))
       if(nrow(eo.df) < 2) next
 
     ## extract administrative area (0,1,2) based upon inforamtion provided in record for country/state/county.
@@ -271,10 +157,15 @@ for (i in 1:length(to.adm2)){
         head(eo.spdf@data)
 
     if(length(eo.spdf[!is.na(eo.spdf$occ_flag),]) > 0){
-      if(file.exists(file.path(imls.raw, "records_to_examine", "water_points.csv"))){
-        write.csv(eo.spdf[!is.na(eo.spdf$occ_flag),], file.path(imls.raw, "records_to_examine", paste0("water_points_", Sys.Date(), ".csv")),
+      out.fld.nm <- "spp_edited_points"
+        if(dir.exists(file.path(main_dir, "outputs", "working", "records_to_examine"))) print("directory already created") else
+          dir.create(file.path(main_dir, "outputs", "working", "records_to_examine"), recursive=TRUE)
+        if(file.exists(file.path(main_dir, "outputs", "working", "records_to_examine", "water_points_", Sys.Date(), ".csv"))){
+            write.csv(eo.spdf[!is.na(eo.spdf$occ_flag),], file.path(main_dir, "outputs", "working", "records_to_examine", 
+                paste0("water_points_", Sys.Date(), ".csv")),
                   row.names = F, append = TRUE)
-      } else write.csv(eo.spdf[!is.na(eo.spdf$occ_flag),], file.path(imls.raw, "records_to_examine", paste0("water_points_", Sys.Date(), ".csv")),
+      } else write.csv(eo.spdf[!is.na(eo.spdf$occ_flag),], file.path(main_dir, "outputs", "working", "records_to_examine", 
+                paste0("water_points_", Sys.Date(), ".csv")),
                   row.names = F)
     }
 
@@ -308,7 +199,7 @@ for (i in 1:length(to.adm2)){
     eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(NAME_0 %in% gts_sub$native_distribution, TRUE, FALSE)))
         # names(eo.post)
       out.uid <- eo.post$UID[eo.post$ISO1_match == FALSE]
-      # write_xlsx(eo.post, path=file.path(imls.output, "match_work.xlsx"))
+      # write_xlsx(eo.post, path=file.path(main_dir, "outputs", "working", "match_work.xlsx"))
 
   ## flag records where country doesn"t match and then output into folder (as *.csv)
     eo.post$occ_flag[eo.spdf$UID %in% out.uid] <- paste0("Given coordinates not in the same country (adm0) provided in dataset.")
@@ -320,7 +211,7 @@ for (i in 1:length(to.adm2)){
     # ## Could flag records where state (adm1) or county (adm2) do not match using similar code to above.
     # eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(NAME_1 %in% gts_sub$native_distribution, TRUE, FALSE)))
 
-  write.csv(eo.out, file.path(imls.output, out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
+  write.csv(eo.out, file.path(main_dir, "outputs", out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
 
 
   eo.spdf <- SpatialPointsDataFrame(eo.out[,c("decimalLongitude", "decimalLatitude")], eo.out,
@@ -354,32 +245,20 @@ for (i in 1:length(to.adm2)){
       cat("No points are within ", d.rm, " meters of a centroid for any administrative area.\n\n", sep="")
       }
 
-
-      write.csv(eo.spdf@data, file.path(imls.output, out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
+      write.csv(eo.spdf@data, file.path(main_dir, "outputs", out.fld.nm, 
+            paste0(f.nm, ".csv")), row.names=FALSE)
 
       cat("Ending ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
 
     }
 
+################################################################################
+################################################################################
 ## for records that are flagged, what is the distance away from their actual listed location?
     ## if in water, how far away from land
     ## if not in country, where are they located and how far is that from the correct admin area?
 
-unique(eo.spdf$occ_flag)
-
-# ## calculate centroid of polygons
-#   ##first countries (adm0)
-#   adm0.poly@data <- adm0.poly@data %>% mutate(long_centroid = centroid(adm0.poly)[,1], lat_centroid = centroid(adm0.poly)[,2])
-#     adm0 <- adm0.poly@data
-#   ##second states (adm1)
-#   adm1.poly@data <- adm1.poly@data %>% mutate(long_centroid = centroid(adm1.poly)[,1], lat_centroid = centroid(adm1.poly)[,2])
-#     adm1 <- adm1.poly@data
-#   ##third counties/municipalities/parishes (adm2)
-#   adm2.poly@data <- adm2.poly@data %>% mutate(long_centroid = centroid(adm2.poly)[,1], lat_centroid = centroid(adm2.poly)[,2])
-#     adm2 <- adm2.poly@data
-# ## save these objects for later use
-# save(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, adm0, adm1, adm2, file=file.path(imls.meta, "gis_data", "IMLS_GIS_data.RData"))
-#   rm(adm0, adm1, adm2)
+# unique(eo.spdf$occ_flag)
 
 ################################################################################
 # # # # ###   NEEDS TO BE COMPLETED   ###
@@ -399,8 +278,6 @@ unique(eo.spdf$occ_flag)
 
 
 
-
-
 # ################################################################################
 #
 #   cat("Starting ", "rest of world ", "taxa (", length(to.adm0), " total)", ".\n\n", sep="")
@@ -411,7 +288,7 @@ unique(eo.spdf$occ_flag)
 #             cat("Starting ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
 #
 #       ## bring in records (load from *.RData file or bring in from text file)
-#       eo.df  <- read.csv(file.path(imls.output, "split_by_sp", paste0(f.nm, ".csv")))
+#       eo.df  <- read.csv(file.path(main_dir, "outputs", "working", "split_by_sp", paste0(f.nm, ".csv")))
 #         if(nrow(eo.df)<2) next
 #       # eo.df  <- eo.df %>% select(-FIPS)
 #       ## extract administrative area (0,1,2) based upon inforamtion provided in record for country/state/county.
@@ -429,7 +306,7 @@ unique(eo.spdf$occ_flag)
 #       eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(name %in% gts_sub$native_distribution, TRUE, FALSE)))
 #       # eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(NAME_0 %in% strsplit(native_distribution, split = "; "), TRUE, FALSE)))
 #
-#       # write_xlsx(eo.post, path=file.path(imls.output, "match_work.xlsx"))
+#       # write_xlsx(eo.post, path=file.path(main_dir, "outputs", "working", "match_work.xlsx"))
 #
 #       ## flag records where country doesn"t match and then output into folder (as *.csv)
 #       eo.out <- eo.post %>% filter(ISO1_match==TRUE) %>% select(names(eo.df))
@@ -437,7 +314,7 @@ unique(eo.spdf$occ_flag)
 #       ## remove records where country doesn"t match and then output into folder (as *.csv)
 #       # eo.out <- eo.post %>% filter(ISO1_match==TRUE) %>% select(names(eo.df))
 #
-#       write.csv(eo.out, file.path(imls.output, out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
+#       write.csv(eo.out, file.path(main_dir, "outputs", out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
 #
 #
 #       eo.spdf <- SpatialPointsDataFrame(eo.out[,c("decimalLongitude", "decimalLatitude")], eo.out,
@@ -467,7 +344,7 @@ unique(eo.spdf$occ_flag)
 #         cat("No points are within ", d.rm, " meters of a centroid for any administrative area.\n\n", sep="")
 #       }
 #
-#       write.csv(eo.spdf@data, file.path(imls.output, out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
+#       write.csv(eo.spdf@data, file.path(main_dir, "outputs", out.fld.nm, paste0(f.nm, ".csv")), row.names=FALSE)
 #
 #       cat("Ending ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
 #
@@ -525,10 +402,6 @@ unique(eo.spdf$occ_flag)
 #   # class(dst)
 ################################################################################
 
-
-
-
-
 # # TO DO:
 #
 
@@ -563,5 +436,4 @@ unique(eo.spdf$occ_flag)
 #
 # #   - Coordinate uncertainty in meters
 # #(remove record if coordinate uncertainty is larger than specified acceptable uncertainty)
-#
 #

@@ -147,3 +147,43 @@ read.exsitu.csv <- function(path,submission_year){
     print(ncol(all_data6))
   return(all_data6)
 }
+
+################################################################################
+################################################################################
+## fxn: map.pts
+# function for mapping points
+################################################################################
+
+map.pts <- function(pts){
+  map <- leaflet() %>%
+    addProviderTiles("CartoDB.PositronNoLabels") %>%
+    ## addPolygon() -- country level distibution from GTS
+    addCircleMarkers(
+      data = pts,
+      lng = ~decimalLongitude,
+      lat = ~decimalLatitude,
+      popup = ~paste(
+        "Species name:",taxon_name_full,"(",list,")","<br/>",
+        "Database:",database,"<br/>",
+        "Dataset name:",datasetName,"<br/>",
+        #"All source databases:",source_databases,"<br/>",
+        "Year:",year,"<br/>",
+        "Basis of record:",basisOfRecord,"<br/>",
+        "Establishment means:",establishmentMeans,"<br/>",
+        "Coordinate uncertainty:",coordinateUncertaintyInMeters,"<br/>",
+        "ID:",unique_id),
+      radius = 5,
+      fillOpacity = 0.6,
+      stroke = F,
+      color = ~palette(database)) %>%
+    addControl(
+      pts$species_name_acc[1],
+      position = "topright") %>%
+    addLegend(
+      pal = palette,
+      values = unique(dat.now$database),
+      title = "Source database",
+      position = "bottomright",
+      opacity = 0.6)
+  return(map)
+}
