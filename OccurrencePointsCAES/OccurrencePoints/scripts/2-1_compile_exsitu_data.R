@@ -164,8 +164,10 @@ all_data <- all_data %>% separate("specific",
   all_data <- tidyr::unite(all_data,"taxon_full_name", c("taxon_full_name",
     "sp_full_name","ï..sp_full_name","ï..taxon_full_name"),
     sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"infra_name", c("infra_name","specific"),
-    sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"infra_name", c("infra_name",
+    "infra_name_add"),sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"infra_rank", c("infra_rank",
+    "infra_rank_add"),sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"name_determ", c("name_determ","id_by",
     "id_notes","uncert_id"),
     sep=";",remove=T,na.rm=T)
@@ -186,7 +188,12 @@ all_data <- all_data %>% separate("specific",
     "plant_dbh_units","plant_ht","plant_ht_units","spatial_proj",
     "species_distrib","syn","voucher"))]
   #colnames(all_data)[colnames(all_data)=="elevation"] <- "altitude"
-    sort(colnames(all_data)); ncol(all_data) # There should be max of 36
+    sort(colnames(all_data)); ncol(all_data) # There should be max of 36...
+  # acc_num,assoc_sp,coll_name,coll_num,coll_year,condition,country,county,
+  # cultivar,dataset_year,filename,garden_loc,genus,germ_type,habitat,hybrid,
+  # infra_name,infra_rank,inst_short,lin_num,locality,municipality,name_determ,
+  # notes,num_indiv,orig_lat,orig_long,orig_source,private,prov_type,rec_as,
+  # species,state,submission_year,taxon_full_name,trade_name
 
 # fill in inst_short column with filename if none provided
 all_data$inst_short[all_data$inst_short==""] <-
@@ -199,7 +206,6 @@ all_data <- all_data[which(all_data$inst_short!=""),]
 #   to prevent future errors
 all_data <- as.data.frame(lapply(all_data, function(x) str_squish(x)),
   stringsAsFactors=F)
-
 # replace "" cells with NA in whole dataset
 all_data[all_data == ""] <- NA
 
@@ -220,6 +226,15 @@ quercus_remove <- c("MissouriBG","RanchoSantaAnaBG","StarhillForestArb")
 all_data <- all_data[!(all_data$filename=="PCNQuercus" &
   all_data$inst_short %in% quercus_remove),]
 nrow(all_data) #108722
+
+# !! WORKING: create unique ID column
+#all_data <- tidyr::unite(all_data,"unique_id",
+#  c("inst_short","acc_num","taxon_full_name","genus","species","infra_rank",
+#    "infra_name","cultivar","hybrid","prov_type","germ_type","coll_year",
+#    "orig_lat","orig_long"),
+#  sep=";",remove=F,na.rm=T)
+#head(all_data[which(duplicated(all_data$unique_id)),])
+#nrow(all_data[which(duplicated(all_data$unique_id)),])
 
 # write raw CSV file
 #write.csv(all_data,"exsitu_compiled_raw.csv",row.names=F)
@@ -423,9 +438,9 @@ sort(unique(all_data5$taxon_full_name))
 all_data6 <- all_data5
 
 # read in target taxa list
-taxon_list <- read.csv(file.path(imls.meta, "target_taxa_with_syn.csv"),
+taxon_list <- read.csv(file.path(main_dir, "inputs", "taxa_list", "target_taxa_with_syn.csv"),
   header = T, na.strings = c("","NA"), colClasses = "character")
-#taxon_list <- read.csv(file.path(imls.local,
+#taxon_list <- read.csv(file.path(main_dir, "inputs", "taxa_list",
 #  "global_quercus_and_IMLS_taxa_with_syn.csv"),
 #  header = T, na.strings=c("","NA"), colClasses="character")
 

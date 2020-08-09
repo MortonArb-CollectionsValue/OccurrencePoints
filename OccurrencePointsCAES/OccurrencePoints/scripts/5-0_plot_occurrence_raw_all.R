@@ -1,36 +1,76 @@
-# Script to quickly map occurrence points for all species
+################################################################################
+##------------------------------------------------------------------------------
+##   5-0_plot_occurrences_all.R
+##------------------------------------------------------------------------------
 
-library(ggplot2); library(maps)
+### Authors: Shannon M. Still & Emily Beckman ### Date: 08/04/2020
 
-# ---------------------------------------
-# Set up file paths etc.
-# ---------------------------------------
+### DESCRIPTION:
+  # Script to quickly map occurrence points for all species
 
-#source('scripts/set_workingdirectory.R')
+### DATA IN:
+  # output from ...
+  # tabular data:
+  # - ...
+  # - ...
+  # - ...
+  #
 
-imls.output <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points/outputs"
-path.pts <- file.path(imls.output, "split_by_sp")
+### DATA OUT:
+  # ...
+  # ...
+
+################################################################################
+# Load libraries
+################################################################################
+
+# rm(list=ls())
+my.packages <- c("ggplot2", "maps", "leaflet", "RColorBrewer", "dplyr")
+#install.packages(my.packages) #Turn on to install current versions
+lapply(my.packages, require, character.only=TRUE)
+  rm(my.packages)
+
+################################################################################
+# Set working directory
+################################################################################
+
+# use 0-1_set_workingdirectory.R script:
+# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source("scripts/0-1_set_workingdirectory.R")
+
+################################################################################
+# Load functions
+################################################################################
+source(file.path(script_dir, "0-2_load_IMLS_functions.R"))
+
+################################################################################
+# 1. Load file paths and data
+################################################################################
+
+imls.output <- file.path(main_dir, "outputs")
+path.pts <- file.path(imls.output, "working", "split_by_sp")
 path.figs <- file.path(imls.output, "basic_maps_split_by_sp")
 
 if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
 
 map.world <- map_data("world")
-# ---------------------------------------
-
-
-
-# ---------------------------------------
-#
+# ------------------------------------------------------------------------------
 # ---------------------------------------
 # spp.test <- c("Quercus georgiana", "Quercus imbricaria", "Quercus arkansana", "Quercus falcata", "Quercus stellata", "Quercus acutissima")
+spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
 
-spp.all <- dir(path.pts, ".csv")
+################################################################################
+# 1. Load file paths and data
+################################################################################
+# spp.v <- spp.test
+spp.v <- spp.all
 
-for(i in 1:length(spp.all)){
-  spp.now <- strsplit(spp.all[i], "[.]")[[1]][1]
+for(i in 1:length(spp.v)){
+  spp.now <- spp.v[i]
   # spp.now <- gsub(spp.n)
+  cat("Starting ", spp.now, ", ", i, " of ", length(spp.v), ".\n", sep="")
   
-  dat.now <- read.csv(file.path(path.pts, spp.all[i]))
+  dat.now <- read.csv(file.path(path.pts, paste0(spp.v[i], ".csv")))
   dat.now$decimalLatitude <- as.numeric(dat.now$decimalLatitude)
   dat.now$decimalLongitude <- as.numeric(dat.now$decimalLongitude)
   # summary(dat.now[dat.now$decimalLatitude<0,])
@@ -50,6 +90,8 @@ for(i in 1:length(spp.all)){
       theme_minimal()
   )
   dev.off()
+  
+    cat("\tEnding ", spp.now, ", ", i, " of ", length(spp.v), ".\n\n", sep="")
 }
 # ---------------------------------------
 
@@ -58,12 +100,13 @@ for(i in 1:length(spp.all)){
 # Use leaflet package to create interactive maps to explore (html)
 ################################################################################
 
-library(leaflet); library(RColorBrewer)
-
 # list of test species
-spp.test <- c("Quercus_boyntonii","Quercus_dalechampii","Quercus_georgiana",
-              "Quercus_imbricaria","Quercus_arkansana","Quercus_falcata","Quercus_stellata",
-              "Quercus_acutissima","Quercus_palmeri")
+# spp.test <- c("Quercus_boyntonii","Quercus_dalechampii","Quercus_georgiana",
+#               "Quercus_imbricaria","Quercus_arkansana","Quercus_falcata","Quercus_stellata",
+#               "Quercus_acutissima","Quercus_palmeri")
+
+# spp.v <- spp.test
+# spp.v <- spp.all
 
 # function for mapping points
 map.pts <- function(pts){
@@ -100,11 +143,14 @@ map.pts <- function(pts){
   return(map)
 }
 
-# run through species and save maps
-for(i in 1:length(spp.test)){
+## run through species and save maps
+for(i in 1:length(spp.v)){
+    cat("Starting ", spp.v[i], ", ", i, " of ", length(spp.v), ".\n", sep="")
+
   # read file
-  dat.now <- read.csv(file.path(imls.output, "split_by_sp",
-                                paste0(spp.test[1], ".csv")), colClasses = "character")
+  dat.now <- read.csv(file.path(path.pts,
+                                paste0(spp.v[i], ".csv")), colClasses = "character")
+                                # paste0(spp.all[1], ".csv")), colClasses = "character")
   # lat and long to numeric
   dat.now$decimalLatitude <- as.numeric(dat.now$decimalLatitude)
   dat.now$decimalLongitude <- as.numeric(dat.now$decimalLongitude)
@@ -120,5 +166,9 @@ for(i in 1:length(spp.test)){
   map_final <- map.pts(dat.now); map_final
   # save map
   htmlwidgets::saveWidget(map_final, file.path(imls.output,
-                                               "interactive_maps_split_by_sp",paste0(spp.test[i],"_leaflet_map.html")))
+                                               "interactive_maps_split_by_sp", paste0(spp.v[i], "_leaflet_map.html")))
+  
+      cat("\tEnding ", spp.v[i], ", ", i, " of ", length(spp.v), ".\n\n", sep="")
+
 }
+
