@@ -149,7 +149,7 @@ for(i in 1:length(spp.v)){
 
   # read file
   dat.now <- read.csv(file.path(path.pts,
-                                paste0(spp.v[1], ".csv")), colClasses = "character")
+                                paste0(spp.v[i], ".csv")), colClasses = "character")
                                 # paste0(spp.all[1], ".csv")), colClasses = "character")
   # lat and long to numeric
   dat.now$decimalLatitude <- as.numeric(dat.now$decimalLatitude)

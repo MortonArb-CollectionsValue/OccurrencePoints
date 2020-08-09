@@ -635,8 +635,8 @@ write.csv(bien_raw, file.path(main_dir,"inputs","raw_occurrence","bien_raw",
 
 # split date collected column to just get year
   # first remove extra date_collected column (no idea where this comes from)
-bien_raw <- bien_raw[,-24]
-bien_raw <- bien_raw %>% separate("date_collected","year",sep="-",remove=T)
+    bien_raw <- bien_raw[, !duplicated(colnames(bien_raw), fromLast = TRUE)] #bien_raw <- bien_raw[,-24]
+    bien_raw <- bien_raw %>% separate("date_collected","year",sep="-",remove=T)
   sort(unique(bien_raw$year))
 
 # keep only necessary columns

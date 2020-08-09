@@ -438,9 +438,9 @@ sort(unique(all_data5$taxon_full_name))
 all_data6 <- all_data5
 
 # read in target taxa list
-taxon_list <- read.csv(file.path(imls.meta, "target_taxa_with_syn.csv"),
+taxon_list <- read.csv(file.path(main_dir, "inputs", "taxa_list", "target_taxa_with_syn.csv"),
   header = T, na.strings = c("","NA"), colClasses = "character")
-#taxon_list <- read.csv(file.path(imls.local,
+#taxon_list <- read.csv(file.path(main_dir, "inputs", "taxa_list",
 #  "global_quercus_and_IMLS_taxa_with_syn.csv"),
 #  header = T, na.strings=c("","NA"), colClasses="character")
 
