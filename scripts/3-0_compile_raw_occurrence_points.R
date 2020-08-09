@@ -117,6 +117,8 @@ table(still_no_match$database)
 all_data <- all_data[which(!is.na(all_data$list)),]
   nrow(all_data) #6281758
 
+  
+  save(all_data, file="all_data_save.RData")
 ################################################################################
 # 3. Standardize some key columns
 ################################################################################
@@ -126,8 +128,6 @@ all_data <- all_data[which(!is.na(all_data$list)),]
 all_data <- all_data %>% unite("localityDescription",
   c(locality,municipality,higherGeography,county,stateProvince,country,
     countryCode,locationNotes,verbatimLocality), remove = F, sep = " | ")
-
-### This is failing as we have some non-UTF-8 characters (I think). This needs work done.
 
   # get rid of NAs but keep pipes, so you can split back into parts if desired
 all_data$localityDescription <- mgsub(all_data$localityDescription,
@@ -340,3 +340,6 @@ if(!dir.exists(file.path(main_dir,"outputs","working","split_by_sp")))
 lapply(seq_along(sp_split), function(i) write.csv(sp_split[[i]],
   file.path(main_dir,"outputs","working","split_by_sp",
   paste0(names(sp_split)[[i]], ".csv")),row.names = F))
+
+
+  unlink("all_data_save.RData")
