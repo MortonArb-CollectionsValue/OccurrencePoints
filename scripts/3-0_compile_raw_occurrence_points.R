@@ -29,7 +29,7 @@
 # rm(list=ls())
   my.packages <- c('plyr','tidyverse','housingData','data.table','textclean',
   'CoordinateCleaner','maps','rnaturalearth','rnaturalearthdata','sf','sp',
-  'raster')
+  'raster', 'tools')
 # install.packages (my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
   rm(my.packages)
@@ -122,11 +122,13 @@ all_data <- all_data[which(!is.na(all_data$list)),]
 ################################################################################
 
 ## this section could potentially be moved to script 2-0
-
 # create localityDescription column
 all_data <- all_data %>% unite("localityDescription",
   c(locality,municipality,higherGeography,county,stateProvince,country,
     countryCode,locationNotes,verbatimLocality), remove = F, sep = " | ")
+
+### This is failing as we have some non-UTF-8 characters (I think). This needs work done.
+
   # get rid of NAs but keep pipes, so you can split back into parts if desired
 all_data$localityDescription <- mgsub(all_data$localityDescription,
   c("NA "," NA"), "")
