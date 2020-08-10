@@ -26,10 +26,11 @@
 # Load libraries
 ################################################################################
 
-# rm(list=ls())
+rm(list=ls())
   my.packages <- c('plyr','tidyverse','housingData','data.table','textclean',
   'CoordinateCleaner','maps','rnaturalearth','rnaturalearthdata','sf','sp',
   'raster', 'tools')
+  select <- dplyr::select
 # install.packages (my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
   rm(my.packages)
@@ -52,11 +53,9 @@ source('scripts/0-1_set_workingdirectory.R')
 
 source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
-
 ################################################################################
 ################################ LET'S GO ######################################
 ################################################################################
-
 
 ################################################################################
 # 1. Read in raw occurrence point data and stack
@@ -79,6 +78,14 @@ length(file_dfs) #7
 all_data_raw <- Reduce(rbind.fill, file_dfs)
   nrow(all_data_raw) #6437517
   ncol(all_data_raw) #27
+
+##add unique identifier
+  nms <- names(all_data_raw)
+all_data_raw <- all_data_raw %>% mutate(UID=paste0('imls', sprintf("%08d", 1:nrow(all_data_raw)))) %>% select(c('UID', all_of(nms)))
+      rm(nms, file_dfs, file_list)
+# all_data$UID <- seq.int(nrow(all_data))
+## write out file to review if needed
+write.csv(all_data_raw, file.path(main_dir, "outputs", "working", paste0("all_data_cleaning_", Sys.Date(), ".csv")), row.names=FALSE)
 
 ################################################################################
 # 2. Filter by target taxa
@@ -113,21 +120,24 @@ still_no_match <- all_data[which(is.na(all_data$list)),]
 table(still_no_match$database)
 #sort(table(still_no_match$taxon_name))
 
+write.csv(still_no_match, file.path(main_dir, "outputs", "working", paste0("no_taxon_match_", Sys.Date(), ".csv")), row.names=FALSE)
+
 # keep only rows for target taxa
 all_data <- all_data[which(!is.na(all_data$list)),]
   nrow(all_data) #6281758
 
-  
-  save(all_data, file="all_data_save.RData")
+save(all_data, all_data_raw, file="all_data_to_clean.RData")
+  rm(still_no_match, matched, need_match, all_data_raw)
 ################################################################################
 # 3. Standardize some key columns
 ################################################################################
-
+load("all_data_to_clean.RData")
 ## this section could potentially be moved to script 2-0
 # create localityDescription column
 all_data <- all_data %>% unite("localityDescription",
   c(locality,municipality,higherGeography,county,stateProvince,country,
-    countryCode,locationNotes,verbatimLocality), remove = F, sep = " | ")
+    countryCode,locationNotes,verbatimLocality), remove = F, sep = " | ") %>%
+      mutate(decimalLatitude=as.numeric(decimalLatitude), decimalLongitude=as.numeric(decimalLongitude))
 
   # get rid of NAs but keep pipes, so you can split back into parts if desired
 all_data$localityDescription <- mgsub(all_data$localityDescription,
@@ -151,9 +161,6 @@ all_data$establishmentMeans[which(is.na(all_data$establishmentMeans))] <-
   "UNKNOWN"
 
 # check validity of lat and long
-  # convert to numeric
-all_data$decimalLatitude <- as.numeric(all_data$decimalLatitude)
-all_data$decimalLongitude <- as.numeric(all_data$decimalLongitude)
   # if coords are both 0, set to NA
 zero <- which(all_data$decimalLatitude == 0 & all_data$decimalLongitude == 0)
 all_data$decimalLatitude[zero] <- NA; all_data$decimalLongitude[zero] <- NA
@@ -161,24 +168,28 @@ all_data$decimalLatitude[zero] <- NA; all_data$decimalLongitude[zero] <- NA
   # lon > 180, and lon < -180
 coord_test <- cc_val(all_data, lon = "decimalLongitude",lat = "decimalLatitude",
   value = "flagged", verbose = TRUE) #Flagged 467682 records.
+  ## mark these as flagged
+  all_data$coords_error <- ""
+    all_data[!coord_test,]$coords_error <- paste0("Coordinates are in error")
   # try switching lat and long for invalid points and check validity again
-all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <-
-  all_data[!coord_test,c("decimalLongitude","decimalLatitude")]
-coord_test <- cc_val(all_data,lon = "decimalLongitude",lat = "decimalLatitude",
-  value = "flagged",verbose = TRUE) #Flagged 467682 records.
-  # make coords NA if they are still flagged
-all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <- c(NA,NA)
+  all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <-
+    all_data[!coord_test,c("decimalLongitude","decimalLatitude")]
+  
+coord_test <- cc_val(all_data, lon = "decimalLongitude",lat = "decimalLatitude",
+  value = "flagged", verbose = TRUE) #Flagged 467682 records.
+
+# all_data[!coord_test,c("decimalLatitude","decimalLongitude")] <- c(NA,NA)
+
+## set header/column name order
+h.nms <- c("UID", "species_name_acc", "taxon_name", "scientificName",
+  "taxonIdentificationNotes", "database", "year", "basisOfRecord", "establishmentMeans",
+  "decimalLatitude", "decimalLongitude", "coordinateUncertaintyInMeters",
+  "geolocationNotes", "localityDescription", "county", "stateProvince", "country", "countryCode",
+  "locationNotes", "datasetName", "publisher", "nativeDatabaseID", "references",
+  "informationWithheld", "issue", "taxon_name_full", "list", "coords_error")
 
 # set column order and remove a few unnecessary columns
-all_data <- all_data %>% dplyr::select(species_name_acc,taxon_name,
-  scientificName,taxonIdentificationNotes,database,year,basisOfRecord,
-  establishmentMeans,decimalLatitude,decimalLongitude,
-  coordinateUncertaintyInMeters,geolocationNotes,localityDescription,county,
-  stateProvince,country,countryCode,locationNotes,datasetName,publisher,
-  nativeDatabaseID,references,informationWithheld,issue,taxon_name_full,list)
-
-# add unique ID column
-all_data$unique_id <- seq.int(nrow(all_data))
+all_data <- all_data %>% select(all_of(h.nms))
 
 # create folder for working files
 if(!dir.exists(file.path(main_dir,"outputs","working")))
@@ -192,7 +203,7 @@ locality_pts <- all_data %>% filter(!is.na(localityDescription) &
 nrow(locality_pts) #241011
 table(locality_pts$database)
 write.csv(locality_pts, file.path(main_dir,"outputs","working",
-  "need_geolocation.csv"),row.names = F)
+  paste0("need_geolocation_", Sys.Date(), ".csv")),row.names = F)
 
 # move forward with subset of points that do have lat and long
 geo_pts <- all_data %>%
@@ -202,21 +213,20 @@ geo_pts <- all_data %>%
     nrow(geo_pts) #5814076
 
 # check if points are in water, mark, and separate out as other file
-  # read in world country shapefile
-world_polygons <- ne_countries(type = 'countries', scale = 'medium')
-  # add buffer; 0.01 dd = ~ 0.4 to 1 km depending on location
-world_buff <- buffer(world_polygons, width=0.01, dissolve=F)
-  # check if in water and mark, then separate out
-geo_pts$in_water <- is.na(map.where(world_buff, geo_pts$decimalLongitude,
-  geo_pts$decimalLatitude))
-water_pts <- geo_pts %>%
-  filter(in_water) %>%
-  dplyr::select(-in_water)
-nrow(water_pts) #48947
-table(water_pts$database)
-write.csv(water_pts, file.path(main_dir,"outputs","working",
-  "not_on_land.csv"),row.names = F)
-
+  world_polygons <- ne_countries(type = 'countries', scale = 'medium')
+# add buffer; 0.01 dd = ~ 0.4 to 1 km depending on location
+  world_buff <- buffer(world_polygons, width=0.01, dissolve=F)
+# check if in water and mark, then separate out
+  geo_pts$in_water <- is.na(map.where(world_buff, geo_pts$decimalLongitude,
+    geo_pts$decimalLatitude))
+  water_pts <- geo_pts %>%
+    filter(in_water) %>%
+    dplyr::select(-in_water)
+  nrow(water_pts) #66361
+  table(water_pts$database)
+  write.csv(water_pts, file.path(main_dir,"outputs","working",
+    paste0("not_on_land_", Sys.Date(), ".csv")),row.names = F)
+  
 # create final subset of geolocated points which are on land
 geo_pts <- geo_pts %>%
   filter(!in_water) %>%
@@ -342,4 +352,4 @@ lapply(seq_along(sp_split), function(i) write.csv(sp_split[[i]],
   paste0(names(sp_split)[[i]], ".csv")),row.names = F))
 
 
-  unlink("all_data_save.RData")
+  unlink("all_data_to_clean.RData")

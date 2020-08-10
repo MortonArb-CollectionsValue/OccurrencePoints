@@ -126,7 +126,7 @@ map.pts <- function(pts){
         "Basis of record:",basisOfRecord,"<br/>",
         "Establishment means:",establishmentMeans,"<br/>",
         "Coordinate uncertainty:",coordinateUncertaintyInMeters,"<br/>",
-        "ID:",unique_id),
+        "ID:",UID),
       radius = 5,
       fillOpacity = 0.6,
       stroke = F,

@@ -61,7 +61,6 @@ source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
   ## create proj4string to set coords
       proj4string4poly <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
 
-
     #######
 ## this is start of iterative loop from the United States and other countries
       ## get list of files to iterate
@@ -249,9 +248,15 @@ for (i in 1:length(to.adm2)){
             paste0(f.nm, ".csv")), row.names=FALSE)
 
       cat("Ending ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
-
+      
     }
+  save(gts_all, taxon_list, adm0.spdf, adm1.spdf, adm2.spdf, proj4string4poly, file="IMLS_data_workng.RData")
+  # save(gts_all, taxon_list, adm0.spdf, adm1.spdf, adm2.spdf, proj4string4poly, file=file.path(main_dir, "outputs", 
+  #   "working", "IMLS_data_workng.RData"))
 
+  rm(i, out.fld.nm, f.nm, f.nms, f.subs, out.uid)
+  rm(adm0, adm1, adm2, adm0.poly, adm1.poly, adm2.poly, d.mat)
+  
 ################################################################################
 ################################################################################
 ## for records that are flagged, what is the distance away from their actual listed location?
