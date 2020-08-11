@@ -34,7 +34,7 @@
 # Load libraries
 ################################################################################
 
-#rm(list=ls())
+rm(list=ls())
 my.packages <- c("raster", "sp", "tools", "spatialEco", "rgdal", "geosphere",
   "readxl", "writexl", "dplyr", "tidyr", "tidyverse", "housingData",
   "data.table", "textclean", "CoordinateCleaner", "countrycode", "usmap",
@@ -81,6 +81,8 @@ taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
 gts_list <- read.csv(file.path(main_dir,"inputs","known_distribution",
   "globaltreesearch_country_distribution.csv"), header = T,
   na.strings=c("","NA"), colClasses="character")
+# gadm <- read_xlsx(file.path(main_dir,"inputs", "gis_data",
+#   "global_admin_areas.xlsx"), sheet = "Sheet1")
 
 # split countries by delimiter
 gts_all <- gts_list %>%
@@ -105,8 +107,8 @@ country_set <- as.data.frame(sort(unique(gts_all$native_distribution))) %>%
 names(country_set)[1] <- "country_name"
 # save the country codes for species, ISO2, ISO3, and numeric and character codes, FIPS code
   write_xlsx(country_set, path=file.path(main_dir,"inputs","gis_data",
-      "global_admin_areas.xlsx"))
-
+      "imls_global_admin_areas.xlsx"))
+gadm <- country_set; rm(country_set)
 ## add the country code to the GTS list by matching taxon names
     ## this part is incomplete, so skip next couple of lines
           # names(gts_list)
@@ -160,35 +162,44 @@ write_xlsx(adm1.poly@data, path=file.path(main_dir,"inputs","gis_data",
   "geo_work1.xlsx"))
 write_xlsx(adm2.poly@data, path=file.path(main_dir,"inputs","gis_data",
   "geo_work2.xlsx"))
-save(adm0.poly, adm1.poly, adm2.poly, gts_list, file=file.path(main_dir,
+save(adm0.poly, adm1.poly, adm2.poly, gts_list, gadm, file=file.path(main_dir,
  "inputs","gis_data","IMLS_GIS_data.RData"))
 
 ################################################################################
 ## calculate centroid of polygons
   ##first countries (adm0)
-  adm0.poly@data <- adm0.poly@data %>% mutate(long_centroid = centroid(adm0.poly)[,1], 
-        lat_centroid = centroid(adm0.poly)[,2])
+  adm0.poly@data <- adm0.poly@data %>% mutate(long_centroid=centroid(adm0.poly)[,1], 
+        lat_centroid=centroid(adm0.poly)[,2], UID=as.character(paste0("adm0_", 
+          sprintf("%04d", 1:nrow(adm0.poly@data))))) %>% rename(iso3c=adm0_a3_us, 
+              adm0_type=type, iso2c=iso_a2, iso3n=iso_n3, NAME_0=admin)
     adm0 <- adm0.poly@data
   ##second states (adm1)
   adm1.poly@data <- adm1.poly@data %>% mutate(long_centroid = centroid(adm1.poly)[,1], 
-        lat_centroid = centroid(adm1.poly)[,2])
+        lat_centroid = centroid(adm1.poly)[,2], UID = as.character(paste0("adm0_", 
+          sprintf("%04d", 1:nrow(adm1.poly@data))))) %>% rename(iso3c=adm0_a3, 
+            iso2c=iso_a2, NAME_0=admin, NAME_1=name, adm1_type=type_en)
     adm1 <- adm1.poly@data
   ##third counties/municipalities/parishes (adm2)
-  adm2.poly@data <- adm2.poly@data %>% mutate(long_centroid = centroid(adm2.poly)[,1], 
-        lat_centroid = centroid(adm2.poly)[,2])
+  adm2.poly@data <- adm2.poly@data %>% mutate(long_centroid=centroid(adm2.poly)[,1], 
+        lat_centroid=centroid(adm2.poly)[,2], UID = as.character(paste0("adm0_", 
+          sprintf("%04d", 1:nrow(adm2.poly@data))))) %>% rename(iso3c=ISO, 
+          adm2_type=TYPE_2) %>% select(-Shape_Leng, -Shape_Area)
     adm2 <- adm2.poly@data
 ## save these objects for later use
 save(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, 
-      adm0, adm1, adm2, file=file.path(main_dir, "inputs", "gis_data", 'IMLS_GIS_data.RData'))
+      adm0, adm1, adm2, gadm, file=file.path(main_dir, "inputs", "gis_data", 'IMLS_GIS_data.RData'))
   rm(adm0, adm1, adm2)
 ################################################################################
 
   load(file.path(main_dir, "inputs", "gis_data", "IMLS_GIS_data.RData"))
 
   ## give a unique identifier to adm0 (country), adm1 (state) and adm2 (county level)
-      adm0 <- adm0 %>% mutate(UID = as.character(paste0("adm0_", iso_a2))) %>% select(UID, colnames(adm0))
-      adm1 <- adm1 %>% mutate(UID = as.character(paste0("adm1_", iso_a2))) %>% select(UID, colnames(adm1))
-      adm2 <- adm2 %>% mutate(UID = as.character(paste0("adm2_", ID_2))) %>% select(UID, colnames(adm2))
+      adm0 <- adm0 %>% select(UID, colnames(adm0))
+      adm1 <- adm1 %>% select(UID, colnames(adm1))
+      adm2 <- adm2 %>% select(UID, colnames(adm2))
+      # adm0 <- adm0 %>% mutate(UID = as.character(paste0("adm0_", sprintf("%04d", 1:nrow(adm0))))) %>% select(UID, colnames(adm0))
+      # adm1 <- adm1 %>% mutate(UID = as.character(paste0("adm1_", sprintf("%04d", 1:nrow(adm1))))) %>% select(UID, colnames(adm1))
+      # adm2 <- adm2 %>% mutate(UID = as.character(paste0("adm2_", sprintf("%04d", 1:nrow(adm2))))) %>% select(UID, colnames(adm2))
 
   ## create proj4string to set coords
       proj4string4poly <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
@@ -208,7 +219,9 @@ save(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all,
 
 ## save these objects for later use
 save(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, 
-      adm0, adm1, adm2, adm0.spdf, adm1.spdf, adm2.spdf,
+      adm0, adm1, adm2, adm0.spdf, adm1.spdf, adm2.spdf, gadm,
       file=file.path(main_dir, "inputs", "gis_data", 'IMLS_GIS_data.RData'))
   rm(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, 
       adm0, adm1, adm2, adm0.spdf, adm1.spdf, adm2.spdf)
+
+  

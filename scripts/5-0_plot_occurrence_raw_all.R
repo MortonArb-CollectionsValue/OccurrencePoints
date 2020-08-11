@@ -94,7 +94,7 @@ for(i in 1:length(spp.v)){
     cat("\tEnding ", spp.now, ", ", i, " of ", length(spp.v), ".\n\n", sep="")
 }
 # ---------------------------------------
-
+rm(data.now)
 
 ################################################################################
 # Use leaflet package to create interactive maps to explore (html)
@@ -108,40 +108,44 @@ for(i in 1:length(spp.v)){
 # spp.v <- spp.test
 # spp.v <- spp.all
 
-# function for mapping points
-map.pts <- function(pts){
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    ## addPolygon() -- country level distibution from GTS
-    addCircleMarkers(
-      data = pts,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      popup = ~paste(
-        "Species name:",taxon_name_full,"(",list,")","<br/>",
-        "Database:",database,"<br/>",
-        "Dataset name:",datasetName,"<br/>",
-        #"All source databases:",source_databases,"<br/>",
-        "Year:",year,"<br/>",
-        "Basis of record:",basisOfRecord,"<br/>",
-        "Establishment means:",establishmentMeans,"<br/>",
-        "Coordinate uncertainty:",coordinateUncertaintyInMeters,"<br/>",
-        "ID:",UID),
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(database)) %>%
-    addControl(
-      pts$species_name_acc[1],
-      position = "topright") %>%
-    addLegend(
-      pal = palette,
-      values = unique(dat.now$database),
-      title = "Source database",
-      position = "bottomright",
-      opacity = 0.6)
-  return(map)
-}
+################################################################################
+################################################################################
+# # function for mapping points
+# map.pts <- function(pts){
+#   map <- leaflet() %>%
+#     addProviderTiles("CartoDB.PositronNoLabels") %>%
+#     ## addPolygon() -- country level distibution from GTS
+#     addCircleMarkers(
+#       data = pts,
+#       lng = ~decimalLongitude,
+#       lat = ~decimalLatitude,
+#       popup = ~paste(
+#         "Species name:",taxon_name_full,"(",list,")","<br/>",
+#         "Database:",database,"<br/>",
+#         "Dataset name:",datasetName,"<br/>",
+#         #"All source databases:",source_databases,"<br/>",
+#         "Year:",year,"<br/>",
+#         "Basis of record:",basisOfRecord,"<br/>",
+#         "Establishment means:",establishmentMeans,"<br/>",
+#         "Coordinate uncertainty:",coordinateUncertaintyInMeters,"<br/>",
+#         "ID:",UID),
+#       radius = 5,
+#       fillOpacity = 0.6,
+#       stroke = F,
+#       color = ~palette(database)) %>%
+#     addControl(
+#       pts$species_name_acc[1],
+#       position = "topright") %>%
+#     addLegend(
+#       pal = palette,
+#       values = unique(dat.now$database),
+#       title = "Source database",
+#       position = "bottomright",
+#       opacity = 0.6)
+#   return(map)
+# }
+################################################################################
+################################################################################
 
 ## run through species and save maps
 for(i in 1:length(spp.v)){

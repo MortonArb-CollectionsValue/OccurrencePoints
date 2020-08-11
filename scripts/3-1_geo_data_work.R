@@ -23,7 +23,7 @@
 # Load libraries
 ################################################################################
 
-#rm(list=ls())
+rm(list=ls())
 my.packages <- c("raster", "sp", "tools", "spatialEco", "rgdal", "geosphere",
   "readxl", "writexl", "dplyr", "tidyr", "tidyverse", "housingData", "maps",
   "data.table", "textclean", "CoordinateCleaner", "countrycode", "usmap")
@@ -79,8 +79,8 @@ source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
         to.adm2 <- unique(gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution == "United States"]))
         to.adm2 <- to.adm2[!is.na(to.adm2)]
     ## subset the species list to only those on GTS list to centroid at state level (adm1)
-        # to.adm1 <- gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution == "United States"])
-        # to.adm1 <- to.adm1[!is.na(to.adm1)]
+        to.adm1 <- gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution != "United States"])
+        to.adm1 <- to.adm1[!is.na(to.adm1)]
     ## subset the species list to only those on GTS list outside US, going to adm0 (country-level)
         to.adm0 <- unique(gsub(" ", "_", gts_sub$taxon[gts_sub$native_distribution != "United States"]))
         to.adm0 <- to.adm0[!is.na(to.adm0)]
@@ -96,16 +96,18 @@ source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
     ## to county/adm2 level
     ## United States goes down to county centroids
     cat("Starting ", "United States ", "taxa (", length(to.adm2), " total)", ".\n\n", sep="")
-# i <- 10
+i <- 43
       # for (i in 1:length(to.adm2)){
       #   f.nms <- to.adm2
       #   f.nm <- f.nms[i]
       #   cat("Starting ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
       # }
 
-## let"s iterate!
-
-for (i in 1:length(to.adm2)){
+## let us iterate!
+nms0 <- c("iso3c", "iso2c", "NAME_0", "iso3n", "ne_id", "long_centroid", "lat_centroid")
+nms1 <- c("adm1_code", "iso_3166_2", "iso2c", "adm1_type", "latitude", "longitude", "iso3c", "NAME_0", "NAME_1", "ne_id", "long_centroid", "lat_centroid")
+    
+# for (i in 1:length(to.adm2)){
       f.nms <- to.adm2
       f.nm <- f.nms[i]
         cat("Starting ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
@@ -185,27 +187,20 @@ for (i in 1:length(to.adm2)){
     eo.0 <- point.in.poly(eo.spdf, adm0.poly, sp=TRUE)
     eo.1 <- point.in.poly(eo.spdf, adm1.poly, sp=TRUE)
     eo.2 <- point.in.poly(eo.spdf, adm2.poly, sp=TRUE)
-    # eo.1@data <- eo.1@data %>% select(-FIPS)
-    # eo.2@data <- eo.2@data %>% select(-FIPS)
 
     ## compare the calculated point to the provided admin area and flag those that do not match
         ##assign the native country (ISO0), state (ISO1), and county (ISO2) to the SPDF or dataset
 
     gts_sub <- gts_all[gts_all$taxon %in% eo.2@data$species_name_acc,]
     # eo.2@data <- eo.2@data %>% select(-FIPS)
-    eo.post <- left_join(eo.2@data, gts_list[,c(2,4)], by=c("species_name_acc" = "taxon")) %>% select(-Shape_Leng, -Shape_Area, -long_centroid, -lat_centroid)
+    eo.post <- left_join(eo.2@data, gts_list[,c(2,4)], by=c("species_name_acc" = "taxon")) %>% select(-long_centroid, -lat_centroid)
       # eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(NAME_0 %in% strsplit(native_distribution, split = "; "), TRUE, FALSE)))
     eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(NAME_0 %in% gts_sub$native_distribution, TRUE, FALSE)))
-        # names(eo.post)
-      out.uid <- eo.post$UID[eo.post$ISO1_match == FALSE]
-      # write_xlsx(eo.post, path=file.path(main_dir, "outputs", "working", "match_work.xlsx"))
+      out.uid <- as.character(eo.spdf$UID[eo.spdf$ISO1_match == TRUE])
 
   ## flag records where country doesn"t match and then output into folder (as *.csv)
     eo.post$occ_flag[eo.spdf$UID %in% out.uid] <- paste0("Given coordinates not in the same country (adm0) provided in dataset.")
     eo.out <- select(eo.post, -ISO1_match)#, -in_water, -in_lakes
-      # names(eo.post)
-      # head(eo.post)
-      # unique(eo.post$occ_flag)
 
     # ## Could flag records where state (adm1) or county (adm2) do not match using similar code to above.
     # eo.post <- eo.post %>% mutate(ISO1_match=(ifelse(NAME_1 %in% gts_sub$native_distribution, TRUE, FALSE)))
@@ -215,11 +210,8 @@ for (i in 1:length(to.adm2)){
 
   eo.spdf <- SpatialPointsDataFrame(eo.out[,c("decimalLongitude", "decimalLatitude")], eo.out,
                                     proj4string = CRS(proj4string4poly))
-  # save(eo.spdf, adm0.poly, us0.poly, us1.poly, us2.poly, taxon_list, gts_list, gts_all, adm0, adm1, adm2, file=file.path(imls.meta, "gis_data", "IMLS_GIS_data.RData"))
-  # plot(eo.spdf)
-  # names(adm2.spdf)
-  # adm2.spdf$UID
-    ## make a distance matrix
+  
+  ## make a distance matrix
     d.mat <- distm(eo.spdf, adm2.spdf)
       row.names(d.mat) <- eo.spdf$UID
       colnames(d.mat) <- adm2.spdf$UID
@@ -249,14 +241,23 @@ for (i in 1:length(to.adm2)){
 
       cat("Ending ", f.nm, ", ", i, " of ", length(f.nms), ".\n\n", sep="")
       
-    }
-  save(gts_all, taxon_list, adm0.spdf, adm1.spdf, adm2.spdf, proj4string4poly, file="IMLS_data_workng.RData")
-  # save(gts_all, taxon_list, adm0.spdf, adm1.spdf, adm2.spdf, proj4string4poly, file=file.path(main_dir, "outputs", 
-  #   "working", "IMLS_data_workng.RData"))
+    # }
+  # save(gts_all, taxon_list, adm0.spdf, adm1.spdf, adm2.spdf, proj4string4poly, file="IMLS_data_workng.RData")
+  save(gts_all, taxon_list, adm0.spdf, adm1.spdf, adm2.spdf, proj4string4poly, file=file.path(main_dir, "outputs",
+    "working", "IMLS_data_workng_US.RData"))
 
   rm(i, out.fld.nm, f.nm, f.nms, f.subs, out.uid)
   rm(adm0, adm1, adm2, adm0.poly, adm1.poly, adm2.poly, d.mat)
-  
+
+
+# ## reorder columns
+# h.nms <- c("UID", "species_name_acc", "taxon_name", "scientificName",
+#   "taxonIdentificationNotes", "database", "year", "basisOfRecord", "establishmentMeans",
+#   "decimalLatitude", "decimalLongitude", "coordinateUncertaintyInMeters",
+#   "geolocationNotes", "localityDescription", "county", "stateProvince", "country", "countryCode",
+#   "locationNotes", "datasetName", "publisher", "nativeDatabaseID", "references",
+#   "informationWithheld", "issue", "taxon_name_full", "list", "coords_error", "occ_flag")
+#   
 ################################################################################
 ################################################################################
 ## for records that are flagged, what is the distance away from their actual listed location?
