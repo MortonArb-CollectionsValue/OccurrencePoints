@@ -108,7 +108,9 @@ species_only <- species_names[
 
 # IF NEEDED: can save Tropicos API key as .txt an source from local drive
 ## check environment for the tropicos_key object
-## or look for the tropicos_key.txt file and import if it is present
+    ## "topicos_key.txt" should be a simple text file with only tee key. 
+    ##    It should be stored in the local drive (local_dir) with file path set 
+    ##      in script 0-1_set_workingdirectory.R
 
   if(file.exists(file.path(local_dir, "tropicos_key.txt"))){
   tpkey <- read_lines(file.path(local_dir, "tropicos_key.txt"))
