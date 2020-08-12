@@ -179,3 +179,21 @@
   - lat_round : latitude rounded to 3 decimal places
   - long_round : longitude rounded to 3 decimal places
   - FIPS : code for US county with centroid matching to 2 places after decimal
+
+
+ -coords_error : Whether the coordinates can be used.
+ -occ_flag : Coordinates flagged for one of a few reasons: 
+                Given coordinates are in water
+                Check record for proximity to country/adm0 centroid (within 1000 meters).
+                Check record for proximity to state/adm1 centroid (within 1000 meters).
+                Check record for proximity to county/adm2 centroid (within 1000 meters).
+ 
+ -adm0_match1 : Global Tree Search listed country of distribution does not match the coordinates provided by the dataset
+ -adm0_match2 : listed country (adm0) of distribution does not match the coordinates provided by the dataset
+ -adm0_match3 : Global Tree Search listed country of distribution does not match the country (adm0) provided by the dataset
+ -adm1_match1 : (don't currently have) Global Tree Search listed state/province (adm1) of distribution does not match the coordinates provided by the dataset
+ -adm1_match2 : listed state/province (adm1) of distribution does not match the coordinates provided by the dataset
+ -adm1_match3 : (don't currently have) Global Tree Search listed county/parish (adm2) of distribution does not match the state/province (adm1) provided by the dataset
+ -adm2_match1 : (don't currently have) Global Tree Search listed county/parish (adm2) of distribution does not match the coordinates provided by the dataset
+ -adm2_match2 : listed state/province (adm1) of distribution does not match the coordinates provided by the dataset
+ -adm2_match3 : (don't currently have) Global Tree Search listed county/parish (adm2) of distribution does not match the county/parish (adm2) provided by the dataset

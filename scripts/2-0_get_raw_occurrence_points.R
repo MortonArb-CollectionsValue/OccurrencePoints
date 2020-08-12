@@ -43,7 +43,7 @@
 
 rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'spocc', 'rgbif', 'data.table', 'BIEN',
-                 'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison')
+                 'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison', 'tools')
  # install.packages(my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
     rm(my.packages)
@@ -805,6 +805,7 @@ for(file in seq_along(fia_outputs)){
   fia_raw  <- rbind(fia_raw, fia_outputs[[file]])
 }
 nrow(fia_raw) #3414521
+# save(fia_raw, file=file.path(main_dir, "inputs", ""))
 
 ### standardize column names
 # read in supplemental FIA tables:

@@ -90,10 +90,10 @@ children.compiled <- function(child_output,db_name,greater_than){
 
 ################################################################################
 ################################################################################
-## fxn: XXXXX
-# XXXXX
-################################################################################
+## fxn: extract_tree_data
 # function to extract target species data from each state CSV
+################################################################################
+
 extract_tree_data <- function(file_name){
   data <- data.frame()
   # read in tree data, which lists all species and the plots in which they were
@@ -109,7 +109,8 @@ extract_tree_data <- function(file_name){
   # remove state file to make space for reading in next one
   rm(state_df)
   # take a look at how much data were pulled
-  print(paste(nrow(data), file_name))
+  cat(file_path_sans_ext(basename(file_name)), ": ", nrow(data), " observations. ", grep(file_name, file_list), " of ", length(file_list), ".")
+  # print(paste(nrow(data), basename(file_name)))
   return(data)
   rm(sp)
 }
@@ -171,7 +172,7 @@ map.pts <- function(pts){
         "Basis of record:",basisOfRecord,"<br/>",
         "Establishment means:",establishmentMeans,"<br/>",
         "Coordinate uncertainty:",coordinateUncertaintyInMeters,"<br/>",
-        "ID:",unique_id),
+        "ID:",UID),
       radius = 5,
       fillOpacity = 0.6,
       stroke = F,
