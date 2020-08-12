@@ -48,7 +48,7 @@ source(file.path(script_dir, "0-2_load_IMLS_functions.R"))
 ################################################################################
 
 imls.output <- file.path(main_dir, "outputs")
-path.pts <- file.path(imls.output, "working", "split_by_sp")
+path.pts <- file.path(imls.output, "spp_edited_points")
 path.figs <- file.path(imls.output, "basic_maps_split_by_sp")
 
 if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
