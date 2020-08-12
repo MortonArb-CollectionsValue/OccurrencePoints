@@ -114,9 +114,66 @@
 
   - **occurrence_points**
     - **inputs**
-      - **taxa_list**
-        - **target_taxa.csv**
-        - target_taxa_with_syn.csv
+      - compiled_occurrence
+        - bien.csv
+        - bison.csv
+        - fia.csv
+        - gbif.csv
+        - idigbio.csv
+        - sernec.csv
+        - exsitu.csv
+      - **fia_tables**
+        - **FIA_AppendixF_TreeSpeciesCodes_2016.csv**
+        - **US_state_county_FIPS_codes.csv**
+        - PLOT.csv
+      - **gis_data**
+        - datum_walkover.txt
+        - gadm.xlsx
+        - geo_work0.xlsx
+        - geo_work1.xlsx
+        - geo_work2.xlsx
+        - global_admin_areas.xlsx
+        - IMLS_GIS_data.RData
+        - imls_global_admin_areas.xlsx
+        - usa
+          - **USA_adm**
+            - **info**
+              - **arc.dir**
+            - **USA_adm0.dbf**
+            - **USA_adm0.prj**
+            - **USA_adm0.sbn**
+            - **USA_adm0.sbx**
+            - **USA_adm0.shp**
+            - **USA_adm0.shx**
+            - **USA_adm1.dbf**
+            - **USA_adm1.prj**
+            - **USA_adm1.sbn**
+            - **USA_adm1.sbx**
+            - **USA_adm1.shp**
+            - **USA_adm1.shx**
+            - **USA_adm2.dbf**
+            - **USA_adm2.prj**
+            - **USA_adm2.sbn**
+            - **USA_adm2.sbx**
+            - **USA_adm2.shp**
+            - **USA_adm2.shx**
+            - **USA_readme.txt**
+          -USA_Counties_continental2.dbf
+          -USA_Counties_continental2.prj
+          -USA_Counties_continental2.sbn
+          -USA_Counties_continental2.sbx
+          -USA_Counties_continental2.shp
+          -USA_Counties_continental2.shx
+        - world
+          -TM_WORLD_BORDERS-0.3
+            -Readme.txt
+            -TM_WORLD_BORDERS-0.3.dbf
+            -TM_WORLD_BORDERS-0.3.prj
+            -TM_WORLD_BORDERS-0.3.shp
+            -TM_WORLD_BORDERS-0.3.shx
+      - **IMLS_headers.xlsx**
+      - **known_distribution**
+        - **exsitu_standard_column_names**
       - raw_occurrence
         - gbif_raw
         - idigbio_raw
@@ -124,22 +181,38 @@
         - bien_raw
         - fia_raw
         - bison_raw
-        - **exsitu_standard_column_names**
-      - **fia_tables**
-        - **FIA_AppendixF_TreeSpeciesCodes_2016.csv**
-        - **US_state_county_FIPS_codes.csv**
-        - PLOT.csv
-      - compiled_occurrence
-      - **gis_data**
-      - **known_distribution**
+      - **taxa_list**
+        - **target_taxa.csv**
+        - target_taxa_with_syn.csv
     - outputs
       - working
-        - occurrence_point_count_per_species.csv
-        - not_on_land.csv
-        - need_geolocation.csv
-        - split_by_sp_working
+        - occurrence_point_count_per_species_<<YYYY-MM-DD>>.csv
+        - records_to_examine
+          - no_taxon_match_<<YYYY-MM-DD>>.csv
+          - need_geolocation_<<YYYY-MM-DD>>.csv
+          - not_on_land_<<YYYY-MM-DD>>.csv
+          - water_points_<<YYYY-MM-DD>>.csv
+        - split_by_sp
+          - <<taxon>>.csv
         - interactive_maps_split_by_sp
+          - <<taxon>>_leaflet_map_files
+            - htmlwidgets-1.5.1
+            - jquery-1.12.4
+            - leaflet-1.3.1
+            - leaflet-binding-2.0.3
+            - leaflet-providers-1.9.0
+            - leaflet-providers-plugin-2.0.3
+            - leafletfix-1.0.0
+            - Proj4Leaflet-1.0.1
+              - proj4-compressed.js
+              - proj4leaflet.js
+            - rstudio_leaflet-1.3.1
+              - images
+                - 1px.png
+              - rstudio_leaflet.css
+          - <<taxon>>_leaflet_map.html
         - basic_maps_split_by_sp
+          - <<taxon>>_raw.png
       - final
         - split_by_sp_final
 
@@ -197,3 +270,8 @@
  -adm2_match1 : (don't currently have) Global Tree Search listed county/parish (adm2) of distribution does not match the coordinates provided by the dataset
  -adm2_match2 : listed state/province (adm1) of distribution does not match the coordinates provided by the dataset
  -adm2_match3 : (don't currently have) Global Tree Search listed county/parish (adm2) of distribution does not match the county/parish (adm2) provided by the dataset
+
+
+### Still to come ###
+IMLS_headers.xlsx : This file is used to help standardiuze column/field names. However, it is not currently in use.
+  - 

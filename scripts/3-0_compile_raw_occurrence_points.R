@@ -120,7 +120,7 @@ still_no_match <- all_data[which(is.na(all_data$list)),]
 table(still_no_match$database)
 #sort(table(still_no_match$taxon_name))
 
-write.csv(still_no_match, file.path(main_dir, "outputs", "working", paste0("no_taxon_match_", Sys.Date(), ".csv")), row.names=FALSE)
+write.csv(still_no_match, file.path(main_dir, "outputs", "working", "records_to_examine", paste0("no_taxon_match_", Sys.Date(), ".csv")), row.names=FALSE)
 
 # keep only rows for target taxa
 all_data <- all_data[which(!is.na(all_data$list)),]
@@ -202,7 +202,7 @@ locality_pts <- all_data %>% filter(!is.na(localityDescription) &
   distinct(species_name_acc,localityDescription,.keep_all=T)
 nrow(locality_pts) #241011
 table(locality_pts$database)
-write.csv(locality_pts, file.path(main_dir,"outputs","working",
+write.csv(locality_pts, file.path(main_dir,"outputs","working", "records_to_examine",
   paste0("need_geolocation_", Sys.Date(), ".csv")),row.names = F)
 
 # move forward with subset of points that do have lat and long
@@ -224,7 +224,7 @@ geo_pts <- all_data %>%
     dplyr::select(-in_water)
   nrow(water_pts) #66361
   table(water_pts$database)
-  write.csv(water_pts, file.path(main_dir,"outputs","working",
+  write.csv(water_pts, file.path(main_dir,"outputs","working", "records_to_examine",
     paste0("not_on_land_", Sys.Date(), ".csv")),row.names = F)
   
 # create final subset of geolocated points which are on land
@@ -326,7 +326,7 @@ summary <- Reduce(full_join, files)
 head(summary)
   # write file
 write.csv(summary, file.path(main_dir,"outputs","working",
-  "occurrence_point_count_per_sp.csv"),row.names = F)
+  paste0("occurrence_point_count_per_sp_", Sys.Date(), ".csv")),row.names = F)
 
 ## can save data out to a file so don't have to rerun
 #save(all_data, taxon_list, s, geo_pts2, need_match,
@@ -353,3 +353,4 @@ lapply(seq_along(sp_split), function(i) write.csv(sp_split[[i]],
 
 
   unlink("all_data_to_clean.RData")
+  unlink(file.path(main_dir, "outputs", "working", paste0("all_data_cleaning_", Sys.Date(), ".csv")))

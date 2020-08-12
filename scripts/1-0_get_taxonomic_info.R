@@ -106,6 +106,19 @@ species_only <- species_names[
 ### https://www.missouribotanicalgarden.org/media/fact-pages/tropicos.aspx
 ###############
 
+# IF NEEDED: can save Tropicos API key as .txt an source from local drive
+  ## check environment for the tropicos_key object
+    ## or look for the tropicos_key.txt file and import if it is present
+  if(file.exists(file.path(local_dir, "tropicos_key.txt"))){
+  login <- read_lines(log_loc)    
+  } else {print("Get your own dang Tropicos key!")}
+  
+  #taxize::use_tropicos() # get API
+  #usethis::edit_r_environ() # set API
+    # TROPICOS_KEY='________' # paste this in
+
+
+
 # IF NEEDED: set API key and restart R
   #taxize::use_tropicos() # get API
   #usethis::edit_r_environ() # set API
