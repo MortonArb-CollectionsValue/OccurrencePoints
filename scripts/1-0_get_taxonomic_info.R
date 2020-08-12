@@ -29,7 +29,7 @@
 
 # rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'rgbif', 'data.table', 'taxize',
-  'anchors', 'batchtools', 'textclean', 'stringi')
+  'anchors', 'batchtools', 'textclean', 'stringi', "devtools")
 # install.packages (my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
 rm(my.packages)
@@ -107,17 +107,15 @@ species_only <- species_names[
 ###############
 
 # IF NEEDED: can save Tropicos API key as .txt an source from local drive
-  ## check environment for the tropicos_key object
-    ## or look for the tropicos_key.txt file and import if it is present
+## check environment for the tropicos_key object
+    ## "topicos_key.txt" should be a simple text file with only tee key. 
+    ##    It should be stored in the local drive (local_dir) with file path set 
+    ##      in script 0-1_set_workingdirectory.R
+
   if(file.exists(file.path(local_dir, "tropicos_key.txt"))){
-  login <- read_lines(log_loc)    
+  tpkey <- read_lines(file.path(local_dir, "tropicos_key.txt"))
+  print("Good, you have your own dang Tropicos key!")
   } else {print("Get your own dang Tropicos key!")}
-  
-  #taxize::use_tropicos() # get API
-  #usethis::edit_r_environ() # set API
-    # TROPICOS_KEY='________' # paste this in
-
-
 
 # IF NEEDED: set API key and restart R
   #taxize::use_tropicos() # get API
@@ -131,11 +129,16 @@ species_names <- gsub(" x "," × ",species_names,fixed=T)
 ## GET TAXONOMIC STATUS
 tp_names_raw <- data.frame()
 for(i in 1:length(species_names)){
-  output_new <- tp_search(species_names[[i]])
+  if(exists("tpkey")){
+    output_new <- tp_search(species_names[[i]], key=tpkey)
+  } else {
+    output_new <- tp_search(species_names[[i]])
+  }
   output_new$taxon_name_acc <- species_names[[i]]
   tp_names_raw <- rbind.fill(tp_names_raw,output_new)
   print(species_names[i])
 }
+    rm(tpkey)
 head(tp_names_raw); class(tp_names_raw); names(tp_names_raw)
 # standardize column names for joining later
 tp_names <- tp_names_raw
