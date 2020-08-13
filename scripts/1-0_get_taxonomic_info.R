@@ -138,7 +138,6 @@ for(i in 1:length(species_names)){
   tp_names_raw <- rbind.fill(tp_names_raw,output_new)
   print(species_names[i])
 }
-    rm(tpkey)
 head(tp_names_raw); class(tp_names_raw); names(tp_names_raw)
 # standardize column names for joining later
 tp_names <- tp_names_raw
@@ -176,7 +175,12 @@ tp_names_noDup$acceptance <- str_to_lower(tp_names_noDup$acceptance)
 
 ## GET SYNONYMS
 
-tp_syn <- synonyms(species_names, db="tropicos")
+if(exists("tpkey")){
+tp_syn <- synonyms(species_names, db="tropicos", key=tpkey)
+} else {
+  tp_syn <- synonyms(species_names, db="tropicos")
+}
+rm(tpkey)
 
 # !! STOP BEFORE RUNNING NEXT SECTION -- YOU MAY HAVE TO ANSWER SOME PROMPTS
 
