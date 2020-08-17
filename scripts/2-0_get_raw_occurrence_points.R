@@ -43,7 +43,8 @@
 
 rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'spocc', 'rgbif', 'data.table', 'BIEN',
-                 'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison', 'tools')
+                 'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison', 
+                 'tools')
  # install.packages(my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
     rm(my.packages)
@@ -65,7 +66,6 @@ source('scripts/0-1_set_workingdirectory.R')
 # Load functions
 ################################################################################
 source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
-
 
 ################################################################################
 ################################ LET'S GO ######################################
@@ -89,7 +89,7 @@ nrow(taxon_list) #805
 taxon_names <- taxon_list$taxon_name
 
 ## IF JUST ONE OR A FEW TAXA, CREATE A LIST BY HAND:
-#taxon_names <- "Quercus havardii"
+#taxon_names <- c("Quercus havardii")
 
 ################################################################################
 # Shannon working here 4/21/2020
@@ -102,7 +102,9 @@ taxon_names <- taxon_list$taxon_name
   ## this can be repeated for each new data source
   ## we may have to move some of these steps around
 
-# b.h <- read_excel('/Users/sstill/Box/Seed Menus Project/HerbariumRecords/HerbariumRecords_wHeaders/Burke_AllSpp_wHeaders.xlsx', col_types = 'text')
+# b.h <- read_excel('/Users/sstill/Box/Seed Menus Project/HerbariumRecords/HerbariumRecords_wHeaders/Burke_AllSpp_wHeaders.xlsx',
+#                    col_types = 'text')
+
 ## this line sets the correct data.frame
   # n.h <- 'burke'
 
@@ -289,10 +291,13 @@ write.csv(gbif_raw, file.path(main_dir,"inputs","compiled_occurrence",
   "gbif.csv"),row.names=FALSE)
 
 #delete files no longer needed (large files)
-  unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw", "occurrence.txt")))
-  # unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw", download_key[1]),".zip"))
+  unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw", 
+            "occurrence.txt")))
+  # unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
+  #           download_key[1]),".zip"))
 ##remove objects that no longer need
-  rm(gbif_raw, spp, subsp, form, var, gbif_codes, keys, keys_nodup, download_key, gbif_download, gbif_taxon_keys)
+  rm(gbif_raw, spp, subsp, form, var, gbif_codes, keys, keys_nodup, 
+            download_key, gbif_download, gbif_taxon_keys)
 
 ###############
 # B) Integrated Digitized Biocollections (iDigBio)
@@ -474,7 +479,8 @@ sernec_raw <- data.frame()
 nrow(sernec_raw) #195655
 
 ##################
-## If do the code above, do not need to unzip files yourself, and don't need the following block of code
+## If do the code above, do not need to unzip files yourself, and don't need 
+  ##  the following block of code
 ##################
 # 
 # #   "sernec_raw" folder and rename with appropriate genus name

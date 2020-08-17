@@ -1,5 +1,4 @@
 ################################################################################
-
 ## 0-2_laod_IMLS_functions.R
 ### Authors: Shannon Still & Emily Beckman ### Date: 05/21/2020
 
@@ -109,7 +108,8 @@ extract_tree_data <- function(file_name){
   # remove state file to make space for reading in next one
   rm(state_df)
   # take a look at how much data were pulled
-  cat(file_path_sans_ext(basename(file_name)), ": ", nrow(data), " observations. ", grep(file_name, file_list), " of ", length(file_list), ".")
+  cat(file_path_sans_ext(basename(file_name)), ": ", nrow(data), " observations. ", 
+        grep(file_name, file_list), " of ", length(file_list), ".")
   # print(paste(nrow(data), basename(file_name)))
   return(data)
   rm(sp)
@@ -117,10 +117,9 @@ extract_tree_data <- function(file_name){
 
 ################################################################################
 ################################################################################
-## fxn: XXXXX
-# XXXXX
-################################################################################
+## fxn: read.exsitu.csv
 # function to read in ex situ files from different folders/years and stack
+################################################################################
 read.exsitu.csv <- function(path,submission_year){
   # create list of paths to ex situ accessions CSV files in folder
   file_list <- list.files(path=path,pattern=".csv",full.names=TRUE)
@@ -154,7 +153,6 @@ read.exsitu.csv <- function(path,submission_year){
 ## fxn: map.pts
 # function for mapping points
 ################################################################################
-
 map.pts <- function(pts){
   map <- leaflet() %>%
     addProviderTiles("CartoDB.PositronNoLabels") %>%

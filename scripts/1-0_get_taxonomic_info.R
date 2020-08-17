@@ -73,7 +73,7 @@ families <- c("Juglandaceae","Fagaceae","Leguminosae","Lauraceae","Pinaceae",
 # taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
   # "target_taxa.csv"), header = T, colClasses="character")
 taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
-                                    "target_taxa_with_syn.csv"), header = T, colClasses="character")
+            "target_taxa_with_syn.csv"), header = T, colClasses="character")
 
 nrow(taxa_list_acc)
 # make sure there aren't extra spaces within species names
