@@ -464,7 +464,8 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","sernec_raw")))
 #   Unzip each file and pull the "occurrences.csv" file out into the
   raw.dir <- "sernec_raw"
   f.pth  <- file.path(main_dir, "inputs", "raw_occurrence", raw.dir)
-  f.zips <- list.files(file.path(f.pth, "zips_new"), pattern = ".zip", full.names = T)
+  f.zips <- list.files(file.path(f.pth, "zips_new"), pattern = ".zip", 
+              full.names = T)
 
   file_dfs <- lapply(f.zips, function(i){
                     read.csv(unz(i, "occurrences.csv"), colClasses = "character",
@@ -671,6 +672,10 @@ bien_raw <- bien_raw %>% dplyr::select(
   ##  relies on. While we are exploring ways around this issue, at present the 
   ##  simplest method is to use the package on a computer/network that doesn’t 
   ##  block SQL connections.
+
+## This will not be fixed in the immediate future. If this deos not work in an 
+  ##  IT setting that bloacks the specific port, then simply have to run from a 
+  ## computer outside that system.
 
 # rename columns
 setnames(bien_raw,
