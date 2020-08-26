@@ -1,7 +1,7 @@
 ################################################################################
 
 ## 2-0_get_raw_occurrence_points.R
-### Author: Emily Beckman & Shannon Still ### Date: 02/05/2020
+### Authors: Emily Beckman & Shannon Still ### Date: 02/05/2020
 
 ### DESCRIPTION:
   # This script provides instructions and code chunks for downloading and
@@ -14,9 +14,9 @@
     # NATIONAL DATABASES
       # Forest Inventory and Analysis (FIA) Program of the USDA Forest Service
       # Biodiversity Information Serving Our Nation (BISON), USGS
-  ## NOTES: Not all data from these sources are reliable. The aim of this
-  #         script is to get all easily-downloadable occurrence data, which
-  #         can then be sorted and vetted for the user's specific purposes.
+  ## NOTE: Not all data from these sources are reliable. The aim of this
+  #        script is to get all easily-downloadable occurrence data, which
+  #        can then be sorted and vetted for the user's specific purposes.
 
 ### DATA IN:
   # (optional) target_taxa_with_syn.csv
@@ -43,7 +43,7 @@
 
 rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'spocc', 'rgbif', 'data.table', 'BIEN',
-                 'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison', 
+                 'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison',
                  'tools')
  # install.packages(my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
@@ -67,11 +67,8 @@ source('scripts/0-1_set_workingdirectory.R')
 ################################################################################
 source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
-################################################################################
-################################ LET'S GO ######################################
-################################################################################
 
-
+################################################################################
 ################################################################################
 # 1. Load/create target taxa list
 ################################################################################
@@ -291,12 +288,12 @@ write.csv(gbif_raw, file.path(main_dir,"inputs","compiled_occurrence",
   "gbif.csv"),row.names=FALSE)
 
 #delete files no longer needed (large files)
-  unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw", 
+  unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
             "occurrence.txt")))
   # unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
   #           download_key[1]),".zip"))
 ##remove objects that no longer need
-  rm(gbif_raw, spp, subsp, form, var, gbif_codes, keys, keys_nodup, 
+  rm(gbif_raw, spp, subsp, form, var, gbif_codes, keys, keys_nodup,
             download_key, gbif_download, gbif_taxon_keys)
 
 ###############
@@ -464,7 +461,7 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","sernec_raw")))
 #   Unzip each file and pull the "occurrences.csv" file out into the
   raw.dir <- "sernec_raw"
   f.pth  <- file.path(main_dir, "inputs", "raw_occurrence", raw.dir)
-  f.zips <- list.files(file.path(f.pth, "zips_new"), pattern = ".zip", 
+  f.zips <- list.files(file.path(f.pth, "zips_new"), pattern = ".zip",
               full.names = T)
 
   file_dfs <- lapply(f.zips, function(i){
@@ -480,14 +477,14 @@ sernec_raw <- data.frame()
 nrow(sernec_raw) #195655
 
 ##################
-## If do the code above, do not need to unzip files yourself, and don't need 
+## If do the code above, do not need to unzip files yourself, and don't need
   ##  the following block of code
 ##################
-# 
+#
 # #   "sernec_raw" folder and rename with appropriate genus name
 # # download zips as above and put in "sernec_raw/zips_new" folder
-# 
-# 
+#
+#
 # # read in raw occurrence points
 # file_list <- list.files(path = file.path(main_dir,"inputs","raw_occurrence",
 #   "sernec_raw"), pattern = "occurrence", full.names = T)
@@ -658,23 +655,23 @@ bien_raw <- bien_raw %>% dplyr::select(
   "dataset","datasource",
   "is_cultivated_observation")
 
-## On a computer at UC Davis, I get an error message and cannot get data and I 
+## On a computer at UC Davis, I get an error message and cannot get data and I
   ##    am unable to connect to the correct port:
   # Here is the error message:
-  #   Error in postgresqlNewConnection(drv, ...) : 
+  #   Error in postgresqlNewConnection(drv, ...) :
   #   RS-DBI driver: (could not connect public_bien@vegbiendev.nceas.ucsb.edu:5432 on dbname "public_vegbien": could not connect to server: Connection timed out (0x0000274C/10060)
   #                   Is the server running on host "vegbiendev.nceas.ucsb.edu" (128.111.85.31) and accepting
   #                   TCP/IP connections on port 5432?
 
 ## This is the line about the issue on the vignette("BIEN"):
-  ##Database connection issues Some institution and computer programs 
-  ##  (e.g. some antivirus programs) block the SQL connections that this package 
-  ##  relies on. While we are exploring ways around this issue, at present the 
-  ##  simplest method is to use the package on a computer/network that doesn’t 
+  ##Database connection issues Some institution and computer programs
+  ##  (e.g. some antivirus programs) block the SQL connections that this package
+  ##  relies on. While we are exploring ways around this issue, at present the
+  ##  simplest method is to use the package on a computer/network that doesn’t
   ##  block SQL connections.
 
-## This will not be fixed in the immediate future. If this deos not work in an 
-  ##  IT setting that bloacks the specific port, then simply have to run from a 
+## This will not be fixed in the immediate future. If this deos not work in an
+  ##  IT setting that bloacks the specific port, then simply have to run from a
   ## computer outside that system.
 
 # rename columns

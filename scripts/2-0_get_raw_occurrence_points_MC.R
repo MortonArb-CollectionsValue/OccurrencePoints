@@ -1,7 +1,7 @@
 ################################################################################
 
 ## 2-0_get_raw_occurrence_points.R
-### Author: Emily Beckman & Shannon Still ### Date: 02/05/2020
+### Authors: Emily Beckman & Shannon Still ### Date: 02/05/2020
 
 ### DESCRIPTION:
   # This script provides instructions and code chunks for downloading and
@@ -66,15 +66,14 @@ source('scripts/0-1_set_workingdirectory.R')
 ################################################################################
 source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
+
 ################################################################################
-################################ LET'S GO ######################################
 ## future package may work well.
-    
+
   # ## Set the multicore environment
   #   no_cores <- availableCores() - 2
   #   plan(multisession, workers = no_cores)
 ################################################################################
-
 
 ################################################################################
 # 1. Load/create target taxa list
@@ -480,11 +479,11 @@ nrow(sernec_raw) #195655
 ##################
 ## If do the code above, do not need to unzip files yourself, and don't need the following block of code
 ##################
-# 
+#
 # #   "sernec_raw" folder and rename with appropriate genus name
 # # download zips as above and put in "sernec_raw/zips_new" folder
-# 
-# 
+#
+#
 # # read in raw occurrence points
 # file_list <- list.files(path = file.path(main_dir,"inputs","raw_occurrence",
 #   "sernec_raw"), pattern = "occurrence", full.names = T)
@@ -655,19 +654,19 @@ bien_raw <- bien_raw %>% dplyr::select(
   "dataset","datasource",
   "is_cultivated_observation")
 
-## On a computer at UC Davis, I get an error message and cannot get data and I 
+## On a computer at UC Davis, I get an error message and cannot get data and I
   ##    am unable to connect to the correct port:
   # Here is the error message:
-  #   Error in postgresqlNewConnection(drv, ...) : 
+  #   Error in postgresqlNewConnection(drv, ...) :
   #   RS-DBI driver: (could not connect public_bien@vegbiendev.nceas.ucsb.edu:5432 on dbname "public_vegbien": could not connect to server: Connection timed out (0x0000274C/10060)
   #                   Is the server running on host "vegbiendev.nceas.ucsb.edu" (128.111.85.31) and accepting
   #                   TCP/IP connections on port 5432?
 
 ## This is the line about the issue on the vignette("BIEN"):
-  ##Database connection issues Some institution and computer programs 
-  ##  (e.g. some antivirus programs) block the SQL connections that this package 
-  ##  relies on. While we are exploring ways around this issue, at present the 
-  ##  simplest method is to use the package on a computer/network that doesn’t 
+  ##Database connection issues Some institution and computer programs
+  ##  (e.g. some antivirus programs) block the SQL connections that this package
+  ##  relies on. While we are exploring ways around this issue, at present the
+  ##  simplest method is to use the package on a computer/network that doesn’t
   ##  block SQL connections.
 
 # rename columns

@@ -20,7 +20,7 @@
 ### DATA OUT:
   # globaltreesearch_countries.xlsx
   # IMLS_GIS_data.RData
-      # adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, 
+      # adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all,
       # adm0, adm1, adm2, adm0.spdf, adm1.spdf, adm2.spdf
   # These 5 files are for looking/working over the data
     # global_admin_areas.xlsx
@@ -28,7 +28,6 @@
     # geo_work0.xlsx
     # geo_work1.xlsx
     # geo_work2.xlsx
-
 
 ################################################################################
 # Load libraries
@@ -52,7 +51,7 @@ lapply(my.packages, require, character.only=TRUE)
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+#source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
@@ -61,14 +60,12 @@ source("scripts/0-1_set_workingdirectory.R")
 
 source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
-################################################################################
-################################ LET'S GO ######################################
-################################################################################
 
-
+################################################################################
 ################################################################################
 # 1. Create native country list for each taxon using GlobalTreeSearch data
 ################################################################################
+
 # create folder for final files
 if(!dir.exists(file.path(main_dir,"outputs","final")))
   dir.create(file.path(main_dir,"outputs","final"), recursive=T)
@@ -88,24 +85,27 @@ gts_list <- read.csv(file.path(main_dir,"inputs","known_distribution",
 gts_all <- gts_list %>%
   mutate(native_distribution =
     strsplit(as.character(native_distribution), "; ")) %>%
-  unnest(native_distribution) %>% mutate(native_distribution = str_trim(native_distribution, side="both"))
+  unnest(native_distribution) %>% mutate(native_distribution =
+    str_trim(native_distribution, side="both"))
 # write out all GTS countries to check
-spp_countries <- as.data.frame(sort(unique(str_trim(gts_all$native_distribution, side = c("both")))))
-write_xlsx(spp_countries, path=file.path(main_dir,"inputs","known_distribution",
-  "globaltreesearch_countries.xlsx"))
+spp_countries <- as.data.frame(sort(unique(str_trim(
+  gts_all$native_distribution, side = c("both")))))
+write_xlsx(spp_countries, path=file.path(main_dir,"inputs",
+  "known_distribution","globaltreesearch_countries.xlsx"))
 
 # use countrycode package to translate country codes from the country names
 country_set <- as.data.frame(sort(unique(gts_all$native_distribution))) %>%
   add_column(iso3c = countrycode(sort(unique(gts_all$native_distribution)),
       origin="country.name", destination="iso3c")) %>%
-    add_column(iso2c = countrycode(sort(unique(gts_all$native_distribution)),
-        origin="country.name", destination="iso2c")) %>%
-      add_column(iso3n = countrycode(sort(unique(gts_all$native_distribution)),
-          origin="country.name", destination="iso3n")) %>%
-        add_column(fips = countrycode(sort(unique(gts_all$native_distribution)),
-            origin="country.name", destination="fips"))
+  add_column(iso2c = countrycode(sort(unique(gts_all$native_distribution)),
+      origin="country.name", destination="iso2c")) %>%
+  add_column(iso3n = countrycode(sort(unique(gts_all$native_distribution)),
+      origin="country.name", destination="iso3n")) %>%
+  add_column(fips = countrycode(sort(unique(gts_all$native_distribution)),
+      origin="country.name", destination="fips"))
 names(country_set)[1] <- "country_name"
-# save the country codes for species, ISO2, ISO3, and numeric and character codes, FIPS code
+# save the country codes for species, ISO2, ISO3, and numeric and character
+#   codes, FIPS code
   write_xlsx(country_set, path=file.path(main_dir,"inputs","gis_data",
       "imls_global_admin_areas.xlsx"))
 gadm <- country_set; rm(country_set)
@@ -120,9 +120,8 @@ write_xlsx(taxon_co, path=file.path(main_dir,"inputs","known_distribution",
     "taxa_work.xlsx"))
 
 ################################################################################
-## This next little section ~20 lines is not implemented but is an idea about 
+## This next little section ~20 lines is not implemented but is an idea about
     ## how to use rredlist package to get taxon names and spp. dist.
-# WORKING: can also get RL country-level species distribution data like this:
 #library(rredlist)
   #countries <- data.frame()
   #target_taxa <- taxon_list[,1]
@@ -141,13 +140,13 @@ write_xlsx(taxon_co, path=file.path(main_dir,"inputs","known_distribution",
 ################################################################################
 
 ################################################################################
-# 2. Create native country list for each taxon using GlobalTreeSearch data
+# 2. Download polygon data for countries, states, counties
 ################################################################################
 
 ## bring in polygon for world regions and US (down to county level);
-##   could use maps::county() function instead
-##    but will use the rnaturalearthhires package for polygons at adm0/adm1 levels
-##        will use a provided shapefile for the adm2 level (county)
+##  could use maps::county() function instead
+##  but will use the rnaturalearthhires package for polygons at adm0/adm1 levels
+##  will use a provided shapefile for the adm2 level (county)
   # may need to run this line first, to get rnaturalearthhires package working:
   #devtools::install_github("ropensci/rnaturalearthhires")
 adm0.poly <- ne_countries(type = "countries", scale = "large")
@@ -162,66 +161,50 @@ write_xlsx(adm1.poly@data, path=file.path(main_dir,"inputs","gis_data",
   "geo_work1.xlsx"))
 write_xlsx(adm2.poly@data, path=file.path(main_dir,"inputs","gis_data",
   "geo_work2.xlsx"))
-save(adm0.poly, adm1.poly, adm2.poly, gts_list, gadm, file=file.path(main_dir,
- "inputs","gis_data","IMLS_GIS_data.RData"))
 
-################################################################################
-## calculate centroid of polygons
+## calculate centroid of each polygon
   ##first countries (adm0)
-  adm0.poly@data <- adm0.poly@data %>% mutate(long_centroid=centroid(adm0.poly)[,1], 
-        lat_centroid=centroid(adm0.poly)[,2], UID=as.character(paste0("adm0_", 
-          sprintf("%04d", 1:nrow(adm0.poly@data))))) %>% rename(iso3c=adm0_a3_us, 
-              adm0_type=type, iso2c=iso_a2, iso3n=iso_n3, NAME_0=admin)
+  adm0.poly@data <- adm0.poly@data %>% mutate(long_centroid =
+    centroid(adm0.poly)[,1],
+      lat_centroid=centroid(adm0.poly)[,2], UID=as.character(paste0("adm0_",
+        sprintf("%04d", 1:nrow(adm0.poly@data))))) %>% rename(iso3c=adm0_a3_us,
+          adm0_type=type, iso2c=iso_a2, iso3n=iso_n3, NAME_0=admin)
     adm0 <- adm0.poly@data
   ##second states (adm1)
-  adm1.poly@data <- adm1.poly@data %>% mutate(long_centroid = centroid(adm1.poly)[,1], 
-        lat_centroid = centroid(adm1.poly)[,2], UID = as.character(paste0("adm0_", 
-          sprintf("%04d", 1:nrow(adm1.poly@data))))) %>% rename(iso3c=adm0_a3, 
-            iso2c=iso_a2, NAME_0=admin, NAME_1=name, adm1_type=type_en)
+  adm1.poly@data <- adm1.poly@data %>% mutate(long_centroid =
+    centroid(adm1.poly)[,1],
+      lat_centroid = centroid(adm1.poly)[,2], UID = as.character(paste0("adm0_",
+        sprintf("%04d", 1:nrow(adm1.poly@data))))) %>% rename(iso3c=adm0_a3,
+          iso2c=iso_a2, NAME_0=admin, NAME_1=name, adm1_type=type_en)
     adm1 <- adm1.poly@data
   ##third counties/municipalities/parishes (adm2)
-  adm2.poly@data <- adm2.poly@data %>% mutate(long_centroid=centroid(adm2.poly)[,1], 
-        lat_centroid=centroid(adm2.poly)[,2], UID = as.character(paste0("adm0_", 
-          sprintf("%04d", 1:nrow(adm2.poly@data))))) %>% rename(iso3c=ISO, 
+  adm2.poly@data <- adm2.poly@data %>% mutate(long_centroid =
+    centroid(adm2.poly)[,1],
+      lat_centroid=centroid(adm2.poly)[,2], UID = as.character(paste0("adm0_",
+        sprintf("%04d", 1:nrow(adm2.poly@data))))) %>% rename(iso3c=ISO,
           adm2_type=TYPE_2) %>% select(-Shape_Leng, -Shape_Area)
     adm2 <- adm2.poly@data
-## save these objects for later use
-save(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, 
-      adm0, adm1, adm2, gadm, file=file.path(main_dir, "inputs", "gis_data", 'IMLS_GIS_data.RData'))
-  rm(adm0, adm1, adm2)
-################################################################################
-
-  load(file.path(main_dir, "inputs", "gis_data", "IMLS_GIS_data.RData"))
-
-  ## give a unique identifier to adm0 (country), adm1 (state) and adm2 (county level)
-      adm0 <- adm0 %>% select(UID, colnames(adm0))
-      adm1 <- adm1 %>% select(UID, colnames(adm1))
-      adm2 <- adm2 %>% select(UID, colnames(adm2))
-      # adm0 <- adm0 %>% mutate(UID = as.character(paste0("adm0_", sprintf("%04d", 1:nrow(adm0))))) %>% select(UID, colnames(adm0))
-      # adm1 <- adm1 %>% mutate(UID = as.character(paste0("adm1_", sprintf("%04d", 1:nrow(adm1))))) %>% select(UID, colnames(adm1))
-      # adm2 <- adm2 %>% mutate(UID = as.character(paste0("adm2_", sprintf("%04d", 1:nrow(adm2))))) %>% select(UID, colnames(adm2))
-
-  ## create proj4string to set coords
-      proj4string4poly <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
-
   ## Antarctica has NaN for centroid...remove it
       adm0 <- adm0[!is.na(adm0$long_centroid),]
       adm1 <- adm1[!is.na(adm1$long_centroid),]
       adm2 <- adm2[!is.na(adm2$long_centroid),]
 
-  ## create spatialPolygonDataframes for adm0, adm1, adm2 levels
-      adm0.spdf <- SpatialPointsDataFrame(adm0[,c("long_centroid", "lat_centroid")], adm0,
-                                          proj4string = CRS(proj4string4poly))
-      adm1.spdf <- SpatialPointsDataFrame(adm1[,c("long_centroid", "lat_centroid")], adm1,
-                                          proj4string = CRS(proj4string4poly))
-      adm2.spdf <- SpatialPointsDataFrame(adm2[,c("long_centroid", "lat_centroid")], adm2,
-                                          proj4string = CRS(proj4string4poly))
+## create SpatialPointsDataFrames
+  ## create proj4string to set coords
+      proj4string4poly <-
+        "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+  ## create spatialPointsDataframes for adm0, adm1, adm2 levels
+      adm0.spdf <- SpatialPointsDataFrame(adm0[,
+        c("long_centroid","lat_centroid")],
+        adm0,proj4string = CRS(proj4string4poly))
+      adm1.spdf <- SpatialPointsDataFrame(adm1[,
+        c("long_centroid", "lat_centroid")],
+        adm1,proj4string = CRS(proj4string4poly))
+      adm2.spdf <- SpatialPointsDataFrame(adm2[,
+        c("long_centroid", "lat_centroid")],
+        adm2,proj4string = CRS(proj4string4poly))
 
 ## save these objects for later use
-save(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, 
-      adm0, adm1, adm2, adm0.spdf, adm1.spdf, adm2.spdf, gadm,
+save(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all,
+      adm0, adm1, adm2, gadm, adm0.spdf, adm1.spdf, adm2.spdf,
       file=file.path(main_dir, "inputs", "gis_data", 'IMLS_GIS_data.RData'))
-  rm(adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all, 
-      adm0, adm1, adm2, adm0.spdf, adm1.spdf, adm2.spdf)
-
-  

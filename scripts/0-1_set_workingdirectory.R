@@ -37,7 +37,7 @@ if (Sys.info()[4] == "Still-MB-Pro-15.local") {
   script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
   # OPTIONAL: set local working directory, for trialing locally before saving
   #   to main working directory
-  local_dir <- "./Desktop"
+  local_dir <- "./Desktop/work"
   # set location for login information (e.g., for GBIF)
   log_loc <- file.path(local_dir, "IMLS_passwords.txt")
   # prints computer name, to let you know you're in the right spot

@@ -2,8 +2,8 @@
 
 ## !! NEEDS RUN-THROUGH AND SOME AREAS NEED WORK STILL !!
 
-
-### Author: Emily Beckman  ###  Date: 12/13/2019
+## 2-1_compile_exsitu_data.R
+### Author: Emily Beckman ### Date: 12/13/2019
 
 ### DESCRIPTION:
   # This script takes a folder of CSV files representing accessions data from
@@ -51,10 +51,6 @@ source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
 
 ################################################################################
-################################ LET'S GO ######################################
-################################################################################
-
-
 ################################################################################
 # 1. Read in and stack all accessions data
 ################################################################################

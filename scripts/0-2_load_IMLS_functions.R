@@ -1,4 +1,5 @@
 ################################################################################
+
 ## 0-2_laod_IMLS_functions.R
 ### Authors: Shannon Still & Emily Beckman ### Date: 05/21/2020
 
@@ -86,7 +87,6 @@ children.compiled <- function(child_output,db_name,greater_than){
   return(child_output_df)
 }
 
-
 ################################################################################
 ################################################################################
 ## fxn: extract_tree_data
@@ -108,7 +108,7 @@ extract_tree_data <- function(file_name){
   # remove state file to make space for reading in next one
   rm(state_df)
   # take a look at how much data were pulled
-  cat(file_path_sans_ext(basename(file_name)), ": ", nrow(data), " observations. ", 
+  cat(file_path_sans_ext(basename(file_name)), ": ", nrow(data), " observations. ",
         grep(file_name, file_list), " of ", length(file_list), ".")
   # print(paste(nrow(data), basename(file_name)))
   return(data)

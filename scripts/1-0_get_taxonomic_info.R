@@ -1,7 +1,7 @@
 ################################################################################
 
 ## 1-0_get_taxonomic_info.R
-### Author: Emily Beckman & Shannon Still ### Date: 5/30/2020
+### Authors: Emily Beckman & Shannon Still ### Date: 5/30/2020
 
 ### DESCRIPTION:
   # This script takes a list of taxa and uses the taxize package to pull
@@ -54,27 +54,20 @@ source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
 
 ################################################################################
-################################ LET'S GO ######################################
-################################################################################
-
-
 ################################################################################
 # 1. Load/create target taxa list
 ################################################################################
 
 # CHANGE THIS LIST BASED ON TAXA YOURE LOOKING FOR:
 #tpl_families() # list of families in database
-#families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
+families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
 #families <- "Sapindaceae"
-families <- c("Juglandaceae","Fagaceae","Leguminosae","Lauraceae","Pinaceae",
-  "Taxaceae")
+#families <- c("Juglandaceae","Fagaceae","Leguminosae","Lauraceae","Pinaceae",
+#  "Taxaceae")
 
 # read in taxa list
-# taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
-  # "target_taxa.csv"), header = T, colClasses="character")
 taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
-            "target_taxa_with_syn.csv"), header = T, colClasses="character")
-
+  "target_taxa.csv"), header = T, colClasses="character")
 nrow(taxa_list_acc)
 # make sure there aren't extra spaces within species names
 taxa_list_acc[,1] <- str_squish(taxa_list_acc[,1])
@@ -84,7 +77,7 @@ taxa_names <- taxa_list_acc[,1]
   #taxa_names <- taxa_list_acc[which(taxa_list_acc$can_match == "match"),]
   #taxa_names <- taxa_names[,1]
 
-## OR you can create vector of taxa names here instead of reading in
+## OR: you can create vector of taxa names here instead of reading in
 #taxa_names <- c("name1","name2","name3")
 
 # create list of target species names, with infraspecific taxa removed
@@ -106,27 +99,27 @@ species_only <- species_names[
 ### https://www.missouribotanicalgarden.org/media/fact-pages/tropicos.aspx
 ###############
 
-# IF NEEDED: can save Tropicos API key as .txt an source from local drive
+# IF NEEDED: can save Tropicos API key as .txt and source from local drive
 ## check environment for the tropicos_key object
-    ## "topicos_key.txt" should be a simple text file with only tee key. 
-    ##    It should be stored in the local drive (local_dir) with file path set 
+    ## "topicos_key.txt" should be a simple text file with only the key.
+    ##    It should be stored in the local drive (local_dir) with file path set
     ##      in script 0-1_set_workingdirectory.R
-
-  if(file.exists(file.path(local_dir, "tropicos_key.txt"))){
+if(file.exists(file.path(local_dir, "tropicos_key.txt"))){
   tpkey <- read_lines(file.path(local_dir, "tropicos_key.txt"))
   print("Good, you have your own dang Tropicos key!")
-  } else {print("Get your own dang Tropicos key!")}
-
-# IF NEEDED: set API key and restart R
-  #taxize::use_tropicos() # get API
-  #usethis::edit_r_environ() # set API
-    # TROPICOS_KEY='________' # paste this in
+} else {print("Get your own dang Tropicos key!")}
+  # or you can set API key in your R environment and restart R
+    #taxize::use_tropicos() # get API
+    #usethis::edit_r_environ() # set API
+      # TROPICOS_KEY='________' # paste this in
 
 # Tropicos does not search for infrataxa, so we will use species list
+
 # replace characters to match Tropicos system
 species_names <- gsub(" x "," × ",species_names,fixed=T)
 
 ## GET TAXONOMIC STATUS
+
 tp_names_raw <- data.frame()
 for(i in 1:length(species_names)){
   if(exists("tpkey")){
@@ -176,7 +169,7 @@ tp_names_noDup$acceptance <- str_to_lower(tp_names_noDup$acceptance)
 ## GET SYNONYMS
 
 if(exists("tpkey")){
-tp_syn <- synonyms(species_names, db="tropicos", key=tpkey)
+  tp_syn <- synonyms(species_names, db="tropicos", key=tpkey)
 } else {
   tp_syn <- synonyms(species_names, db="tropicos")
 }
@@ -352,7 +345,7 @@ pow_names_noDup <- pow_names
 pow_names_noDup <- pow_names_noDup[,c("taxon_name_acc","taxon_name_match",
   "match_id","database","acceptance","match_name_with_authors")]
 pow_names_noDup$acceptance <- str_to_lower(pow_names_noDup$acceptance)
-    # OPTIONAL, IF NOT LOOKING FOR CHILDREN: remove subsp., var., and f.
+  # OPTIONAL, IF NOT LOOKING FOR CHILDREN: remove subsp., var., and f.
 pow_names_noDup <- pow_names_noDup %>%
   filter(!grepl("subsp.",taxon_name_match,fixed=T) &
          !grepl("var.",taxon_name_match,fixed=T) &
