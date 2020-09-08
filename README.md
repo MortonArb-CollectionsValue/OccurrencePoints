@@ -1,37 +1,54 @@
 
+## This workflow is meant for downloading and cleaning occurrence point data for target species. The following text gives an overview of each script in the workflow.
+
+### 0-1_set_workingdirectory.R
+
+ Sets the working environment based on the computer on which you're working.
+
+ >*INPUTS:* Need to update based on your computer and setup
 
 
-##  0-1_set_workingdirectory.R
+### 0-2_load_IMLS_functions.R
 
- OVERVIEW: Sets the working environment based on the computer on which you're working. A new "else if" section needs to be manually added for each computer you're running on.
-
-
-##  0-2_load_IMLS_functions.R
-
- OVERVIEW: Loads all of the functions to use for the project
+ Loads all of the functions to use for the project.
 
 
-## 1-0_get_taxonomic_info.R
+### 1-0_get_taxonomic_info.R
 
- OVERVIEW: Takes a list of taxa and uses the taxize package to pull taxonomic information from multiple databases. The output can either be used directly in next script (2-0_get_raw_occurrence_points.R), or can be reviewed and revised manually (recommended). Information pulled includes:
+ Takes a list of taxa and uses the 'taxize' package to pull taxonomic information from multiple databases. The output can either be used directly in following scripts, or can be reviewed and revised manually (recommended). Information pulled includes:
 
-  Acceptance status and authors from:
-      - Tropicos,
-      - Integrated Taxonomic Information Service (ITIS)
-      - Kew’s Plants of the World (POW)
-      - The Plant List (TPL)
+ **Acceptance status and authors from:**
+ - Tropicos
+ - Integrated Taxonomic Information Service (ITIS)
+ - Kew’s Plants of the World (POW)
+ - The Plant List (TPL)
 
-  Synonyms from:
-      - Tropicos
-      - ITIS
-      - POW
+ **Synonyms from:**
+ - Tropicos
+ - ITIS
+ - POW
 
- INPUT: List of target taxa (target_taxa.csv)
+ >*INPUTS:* List of target taxa (target_taxa.csv)
+ >
+ >*OUTPUTS:* List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
 
- OUTPUT: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
+
+### 1-1_prepare_gis_data.R
+
+ OVERVIEW: Add GlobalTreeSearch country-level distribution data to taxa list and prep country (adm0), state/province (adm1), and county (adm2) polygons for later use (download, add centroids, save for later use)  
+
+ INPUTS:
+  - List of target taxa with synonyms (target_taxa_with_syn.csv)
+  - GlobalTreeSearch country-level distribution data for each target species, downloaded from https://tools.bgci.org/global_tree_search.php
+
+ OUTPUTS:
+  - List of target taxa native country distribution from GTS and IUCN RL added (target_taxa_with_syn_and_dist.csv); RL also has some introduced country distribution data that is added
+  - adm0.poly (countries shapefile)
+  - adm1.poly (state-level shapefile)
+  - adm2.poly (county-level shapefile)
 
 
-## 2-0_get_raw_occurrence_points.R
+### 2-0_get_raw_occurrence_points.R
 
  OVERVIEW: Provides manual instructions and code chunks for downloading and standardizing wild occurrence points from a variety of online databases. Data from all sources can be pulled, or specific sources can be chosen individually. Sources include:
 
@@ -52,7 +69,7 @@
  OUTPUTS: Raw occurrence records for target taxa or genera (depending on how the database’s download works); one CSV for each database
 
 
-## 2-1_compile_exsitu_data.R
+### 2-1_compile_exsitu_data.R
 
  ! STILL IN DEVELOPMENT !
 
@@ -63,7 +80,7 @@
  OUTPUTS: Ex situ accessions data compiled into one CSV, with some fields standardized: provenance type, number of individuals, latitude and longitude, collection/acquisition year (want to add some others eventually, like germplasm type)
 
 
-## 3-0_compile_raw_occurrence_points.R
+### 3-0_compile_raw_occurrence_points.R
 
  ! STILL IN DEVELOPMENT !
 
@@ -79,7 +96,7 @@
  OUTPUTS: CSV of occurrence points for each species; also a table of the number of lat-long, locality description only, and water points for each target species (occurrence_point_count_per_species.csv)
 
 
-## 4-0_refine_raw_occurrence_points.R
+### 4-0_refine_raw_occurrence_points.R
 
  ! STILL IN DEVELOPMENT !
 
@@ -91,14 +108,14 @@
  ?? Fix neg/pos longitude error in ex situ data ??
 
 
-## 5-0_plot_occurrence_raw_all.R
+### 5-0_plot_occurrence_raw_all.R
 
  ! STILL IN DEVELOPMENT !
 
  OVERVIEW: Create occurrence point map for each species, for exploring
 
 
-## X-0_Run_Point_Data.R
+### X-0_Run_Point_Data.R
 
  ! STILL IN DEVELOPMENT !
 
@@ -106,7 +123,7 @@
 
 
 
-# file structure
+## file structure
 
  ! STILL IN DEVELOPMENT !
 
@@ -217,7 +234,7 @@
         - split_by_sp_final
 
 
-# standard columns
+## standard columns
 
  ! NEEDS TO BE UPDATED !
 
@@ -255,12 +272,12 @@
 
 
  -coords_error : Whether the coordinates can be used.
- -occ_flag : Coordinates flagged for one of a few reasons: 
+ -occ_flag : Coordinates flagged for one of a few reasons:
                 Given coordinates are in water
                 Check record for proximity to country/adm0 centroid (within 1000 meters).
                 Check record for proximity to state/adm1 centroid (within 1000 meters).
                 Check record for proximity to county/adm2 centroid (within 1000 meters).
- 
+
  -adm0_match1 : Global Tree Search listed country of distribution does not match the coordinates provided by the dataset
  -adm0_match2 : listed country (adm0) of distribution does not match the coordinates provided by the dataset
  -adm0_match3 : Global Tree Search listed country of distribution does not match the country (adm0) provided by the dataset
@@ -274,4 +291,4 @@
 
 ### Still to come ###
 IMLS_headers.xlsx : This file is used to help standardiuze column/field names. However, it is not currently in use.
-  - 
+  -
