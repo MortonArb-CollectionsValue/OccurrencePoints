@@ -1,75 +1,56 @@
 
-## This workflow is meant for downloading and cleaning occurrence point data for target species. The following text gives an overview of each script in the workflow.
+## This workflow is meant for downloading and cleaning occurrence point data for target species. The following gives an overview of each script in the workflow.
 
-### 0-1_set_workingdirectory.R
+## 0-1_set_workingdirectory.R
 
  Sets the working environment based on the computer on which you're working.
 
- >*INPUTS:* Need to update based on your computer and setup
+ >INPUTS: Need to update based on your computer and setup
 
-
-### 0-2_load_IMLS_functions.R
+## 0-2_load_IMLS_functions.R
 
  Loads all of the functions to use for the project.
 
+## 1-0_get_taxonomic_info.R
 
-### 1-0_get_taxonomic_info.R
+ Takes a list of taxa and uses the 'taxize' package to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually (recommended). Information pulled includes:
 
- Takes a list of taxa and uses the 'taxize' package to pull taxonomic information from multiple databases. The output can either be used directly in following scripts, or can be reviewed and revised manually (recommended). Information pulled includes:
-
- **Acceptance status and authors from:**
+ Acceptance status and authors from:
  - Tropicos
  - Integrated Taxonomic Information Service (ITIS)
  - Kew’s Plants of the World (POW)
  - The Plant List (TPL)
 
- **Synonyms from:**
+ Synonyms from:
  - Tropicos
  - ITIS
  - POW
 
- >*INPUTS:* List of target taxa (target_taxa.csv)
+ >INPUTS: List of target taxa (target_taxa.csv)
  >
  >*OUTPUTS:* List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
 
+## 2-0_get_raw_occurrence_points.R
 
-### 1-1_prepare_gis_data.R
+ Provides manual instructions and code chunks for downloading and standardizing occurrence points from a variety of online databases. Data from all sources can be pulled, or specific sources can be chosen individually. Sources include:
 
- OVERVIEW: Add GlobalTreeSearch country-level distribution data to taxa list and prep country (adm0), state/province (adm1), and county (adm2) polygons for later use (download, add centroids, save for later use)  
+ Global databases (though all likely have U.S. bias?):
+ - Global Biodiversity Information Facility (GBIF)
+ - Integrated Digitized Biocollections (iDigBio)
+ - U.S. Herbarium Consortia (SERNEC, SEINet, etc.)
+ - Botanical Information and Ecology Network (BIEN)
 
- INPUTS:
-  - List of target taxa with synonyms (target_taxa_with_syn.csv)
-  - GlobalTreeSearch country-level distribution data for each target species, downloaded from https://tools.bgci.org/global_tree_search.php
+ National databases:
+ - Forest Inventory and Analysis (FIA) Program, USDA Forest Service
+ - Biodiversity Information Serving Our Nation (BISON), USGS
 
- OUTPUTS:
-  - List of target taxa native country distribution from GTS and IUCN RL added (target_taxa_with_syn_and_dist.csv); RL also has some introduced country distribution data that is added
-  - adm0.poly (countries shapefile)
-  - adm1.poly (state-level shapefile)
-  - adm2.poly (county-level shapefile)
+ >INPUTS: List of target taxa and synonyms (target_taxa_with_syn.csv); FIA metadata tables (FIA_AppendixF_TreeSpeciesCodes_2016.csv, US_state_county_FIPS_codes.csv)
+ >
+ >OUTPUTS: Raw occurrence records for target taxa or genera (depending on how the database’s download works); one CSV for each database
+ >
+ >NOTE: Not all data from these sources are reliable and many have duplicates from one or more datasets. The aim of this script is to get all easily-downloadable occurrence data, which can then be sorted and vetted for the user's specific purposes.
 
-
-### 2-0_get_raw_occurrence_points.R
-
- OVERVIEW: Provides manual instructions and code chunks for downloading and standardizing wild occurrence points from a variety of online databases. Data from all sources can be pulled, or specific sources can be chosen individually. Sources include:
-
-  Global databases (though all likely have U.S. bias?):
-      - Global Biodiversity Information Facility (GBIF)
-      - Integrated Digitized Biocollections (iDigBio)
-      - U.S. Herbarium Consortia (SERNEC, SEINet, etc.)
-      - Botanical Information and Ecology Network (BIEN)
-
-  National databases:
-      - Forest Inventory and Analysis (FIA) Program, USDA Forest Service
-      - Biodiversity Information Serving Our Nation (BISON), USGS
-
- NOTE: Not all data from these sources are reliable. The aim of this script is to get all easily-downloadable occurrence data, which can then be sorted and vetted for the user's specific purposes.
-
- INPUTS: List of target taxa and synonyms (target_taxa_with_syn.csv); FIA metadata tables (FIA_AppendixF_TreeSpeciesCodes_2016.csv, US_state_county_FIPS_codes.csv)
-
- OUTPUTS: Raw occurrence records for target taxa or genera (depending on how the database’s download works); one CSV for each database
-
-
-### 2-1_compile_exsitu_data.R
+## 2-1_compile_exsitu_data.R
 
  ! STILL IN DEVELOPMENT !
 
@@ -79,8 +60,7 @@
 
  OUTPUTS: Ex situ accessions data compiled into one CSV, with some fields standardized: provenance type, number of individuals, latitude and longitude, collection/acquisition year (want to add some others eventually, like germplasm type)
 
-
-### 3-0_compile_raw_occurrence_points.R
+## 3-0_compile_raw_occurrence_points.R
 
  ! STILL IN DEVELOPMENT !
 
@@ -95,8 +75,21 @@
 
  OUTPUTS: CSV of occurrence points for each species; also a table of the number of lat-long, locality description only, and water points for each target species (occurrence_point_count_per_species.csv)
 
+## 1-1_prepare_gis_data.R
 
-### 4-0_refine_raw_occurrence_points.R
+ Add GlobalTreeSearch country-level distribution data to taxa list and prep country (adm0), state/province (adm1), and county (adm2) polygons for later use (download, add centroids, save for later use)  
+
+ INPUTS:
+  - List of target taxa with synonyms (target_taxa_with_syn.csv)
+  - GlobalTreeSearch country-level distribution data for each target species, downloaded from https://tools.bgci.org/global_tree_search.php
+
+ OUTPUTS:
+  - List of target taxa native country distribution from GTS and IUCN RL added (target_taxa_with_syn_and_dist.csv); RL also has some introduced country distribution data that is added
+  - adm0.poly (countries shapefile)
+  - adm1.poly (state-level shapefile)
+  - adm2.poly (county-level shapefile)
+
+## 4-0_refine_raw_occurrence_points.R
 
  ! STILL IN DEVELOPMENT !
 
@@ -107,15 +100,13 @@
 
  ?? Fix neg/pos longitude error in ex situ data ??
 
-
-### 5-0_plot_occurrence_raw_all.R
+## 5-0_plot_occurrence_raw_all.R
 
  ! STILL IN DEVELOPMENT !
 
  OVERVIEW: Create occurrence point map for each species, for exploring
 
-
-### X-0_Run_Point_Data.R
+## X-0_Run_Point_Data.R
 
  ! STILL IN DEVELOPMENT !
 
