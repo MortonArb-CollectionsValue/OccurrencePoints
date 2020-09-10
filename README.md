@@ -7,10 +7,6 @@
 
  >INPUTS: Need to update based on your computer and setup
 
-## 0-2_load_IMLS_functions.R
-
- Loads all of the functions to use for the project.
-
 ## 1-0_get_taxonomic_info.R
 
  Takes a list of taxa and uses the 'taxize' package to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually (recommended). Information pulled includes:
@@ -26,60 +22,69 @@
  - ITIS
  - POW
 
- >INPUTS: List of target taxa (target_taxa.csv)
+ >INPUTS: List of target taxa (target_taxa.csv or create list by hand in script)
  >
- >*OUTPUTS:* List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
+ >OUTPUTS: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
+ >
+ >NOTE: The functions in this script ('taxize' package) are slow and require manual input while running; therefore if your list is long, you may need to find synonyms a different way.
 
 ## 2-0_get_raw_occurrence_points.R
 
- Provides manual instructions and code chunks for downloading and standardizing occurrence points from a variety of online databases. Data from all sources can be pulled, or specific sources can be chosen individually. Sources include:
+ Provides manual instructions and code chunks for downloading and standardizing occurrence points from a variety of online databases. Data from all sources can be pulled, or specific sources can be chosen individually.
 
- Global databases (though all likely have U.S. bias?):
+ Global databases (though all likely have U.S. bias?) include:
  - Global Biodiversity Information Facility (GBIF)
  - Integrated Digitized Biocollections (iDigBio)
  - U.S. Herbarium Consortia (SERNEC, SEINet, etc.)
  - Botanical Information and Ecology Network (BIEN)
 
- National databases:
+ National databases include:
  - Forest Inventory and Analysis (FIA) Program, USDA Forest Service
  - Biodiversity Information Serving Our Nation (BISON), USGS
 
- >INPUTS: List of target taxa and synonyms (target_taxa_with_syn.csv); FIA metadata tables (FIA_AppendixF_TreeSpeciesCodes_2016.csv, US_state_county_FIPS_codes.csv)
+ >INPUTS:
+ > - List of target taxa and synonyms (target_taxa_with_syn.csv)
+ > - FIA metadata tables (FIA_AppendixF_TreeSpeciesCodes_2016.csv; US_state_county_FIPS_codes.csv)
  >
- >OUTPUTS: Raw occurrence records for target taxa or genera (depending on how the database’s download works); one CSV for each database
+ >OUTPUTS: Raw occurrence records for target taxa or genera (depending on how the database’s download works), one CSV for each database (e.g., gbif.csv)
  >
- >NOTE: Not all data from these sources are reliable and many have duplicates from one or more datasets. The aim of this script is to get all easily-downloadable occurrence data, which can then be sorted and vetted for the user's specific purposes.
+ >NOTE: Not all data from these sources are reliable and many have duplicates from one or more datasets. The aim of this script is to get all easily-downloadable, public occurrence data, which can then be sorted and vetted for the user's specific purposes.
 
 ## 2-1_compile_exsitu_data.R
 
  ! STILL IN DEVELOPMENT !
 
- OVERVIEW: This script takes a folder of CSV files representing ex situ accessions data from different institutions, combines them into one dataset, and standardizes some important fields.
+ This script takes a folder of CSV files representing ex situ accessions data from different institutions, combines them into one dataset, and standardizes some important fields.
 
- INPUTS: Folder of CSV files whose column names have be standardized by hand using the "standardizing_accessions_data_fields" template (https://docs.google.com/spreadsheets/d/1QLxxWu-bUIRcrjHiaWeSz9n1ms4EQB3yQ8P8PBBx3Zk/edit?usp=sharing); list of target taxa and synonyms (target_taxa_with_syn.csv) created through 1-0_get_taxonomic_info.R
-
- OUTPUTS: Ex situ accessions data compiled into one CSV, with some fields standardized: provenance type, number of individuals, latitude and longitude, collection/acquisition year (want to add some others eventually, like germplasm type)
+ >INPUTS:
+ > - Folder of CSV files whose column names have be standardized by hand using the "standardizing_accessions_data_fields" template (https://docs.google.com/spreadsheets/d/1QLxxWu-bUIRcrjHiaWeSz9n1ms4EQB3yQ8P8PBBx3Zk/edit?usp=sharing)
+ > - List of target taxa and synonyms (target_taxa_with_syn.csv)
+ >
+ >OUTPUTS: Ex situ accessions data compiled into one CSV, with some fields standardized: provenance type, number of individuals, latitude and longitude, collection/acquisition year (want to add some others eventually, like germplasm type)
 
 ## 3-0_compile_raw_occurrence_points.R
 
- ! STILL IN DEVELOPMENT !
+ Compiles raw occurrence point data previously downloaded.
 
- OVERVIEW: Compiles raw occurrence point data
-  - Filter by target taxa list
-  - Standardize some key columns (year, basisOfRecord, establishmentMeans)
-  - Separate out points with locality description only (no lat-long) and points in water
-  - Remove duplicates based on species name and lat-long rounded to 3 digits after decimal
-  - Write a CSV of lat-long points for each target species
+ Steps include:
+ - Stack all data
+ - Filter by target taxa
+ - Standardize some key columns (year, basisOfRecord, establishmentMeans)
+ - Check validity of latitude and longitude (can be plotted; not both equal to zero; not further than 0.01 decimal degree from land)
+ - Separate out points with locality description only (no valid lat-long), which can later be geolocated manually, as desired
+ - Standardize country code column to contain valid ISO3 values, for later analysis
+ - Remove duplicates based on species name and lat-long rounded to 3 digits after decimal
+ - Write a separate CSV of lat-long points for each target species
 
- INPUTS: Raw occurrence point data from 2-0_get_raw_occurrence_points.R and 2-1_compile_exsitu_data.R; list of target taxa and synonyms
+ >INPUTS: Raw occurrence point data from 2-0_get_raw_occurrence_points.R and (optionally) 2-1_compile_exsitu_data.R; list of target taxa and synonyms (target_taxa_with_syn.csv)
+ >
+ >OUTPUTS: CSV of occurrence points for each target species (e.g., Quercus_lobata.csv); summary table with one row for each target species and two columns: 1) number of points with valid a lat-long 2) number of points with locality description only (occurrence_point_count_per_sp.csv)
 
- OUTPUTS: CSV of occurrence points for each species; also a table of the number of lat-long, locality description only, and water points for each target species (occurrence_point_count_per_species.csv)
+## 3-1_prepare_gis_data.R
 
-## 1-1_prepare_gis_data.R
+ Add GlobalTreeSearch and IUCN Red List country-level distribution data to target taxa list and prep country (adm0), state/province (adm1), and county (adm2) polygons for later use.
 
- Add GlobalTreeSearch country-level distribution data to taxa list and prep country (adm0), state/province (adm1), and county (adm2) polygons for later use (download, add centroids, save for later use)  
-
- INPUTS:
+ >INPUTS:
   - List of target taxa with synonyms (target_taxa_with_syn.csv)
   - GlobalTreeSearch country-level distribution data for each target species, downloaded from https://tools.bgci.org/global_tree_search.php
 
