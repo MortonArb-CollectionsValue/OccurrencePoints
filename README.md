@@ -5,7 +5,7 @@
 
  Sets the working environment based on the computer on which you're working.
 
- >INPUTS: Need to update based on your computer and setup
+ >INPUTS: User needs to update file paths based on specific computer and setup
 
 ## 1-0_get_taxonomic_info.R
 
@@ -22,9 +22,11 @@
  - ITIS
  - POW
 
- >INPUTS: List of target taxa (target_taxa.csv or create list by hand in script)
+ >INPUTS:
+ > * List of target taxa (target_taxa.csv, or create list by hand in script)
  >
- >OUTPUTS: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
+ >OUTPUTS:
+ > * List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
  >
  >NOTE: The functions in this script ('taxize' package) are slow and require manual input while running; therefore if your list is long, you may need to find synonyms a different way.
 
