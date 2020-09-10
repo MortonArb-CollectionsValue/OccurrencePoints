@@ -22,7 +22,8 @@
  - ITIS
  - POW
 
- >INPUTS: * List of target taxa (target_taxa.csv, or create list by hand in script) * test
+ >INPUTS:
+ > -- List of target taxa (target_taxa.csv, or create list by hand in script)
  >
  >OUTPUTS:
  > * List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv)
