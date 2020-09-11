@@ -4,24 +4,24 @@
 ### Authors: Shannon M. Still & Emily Beckman ### Date: 08/04/2020
 
 ### DESCRIPTION:
-  # Prepares polygon data
-  # Prepares tables of species distributions based upon taxa lists
+  # Adds GlobalTreeSearch (GTS) and IUCN Red List (RL) country-level
+  #   distribution data to target taxa list and preps country (adm0),
+  #   state/province (adm1), and county (adm2) polygons for later use.
 
 ### DATA IN:
-  # tabular data:
-  # - target_taxa_with_syn.csv
-  # - globaltreesearch_country_distribution.csv (download country distribution
-  #   data for each target genus here:
-  #   https://tools.bgci.org/global_tree_search.php)
+  # target_taxa_with_syn.csv
+  # globaltreesearch_country_distribution.csv (download country distribution
+  #   data for each target genus: https://tools.bgci.org/global_tree_search.php)
+  # U.S. county boundaries shapefile (USA_adm2.shp)
 
 ### DATA OUT:
-  # globaltreesearch_countries.xlsx
-  # IMLS_GIS_data.RData
-      # adm0.poly, adm1.poly, adm2.poly, taxon_list, gts_list, gts_all,
-      # adm0, adm1, adm2, adm0.spdf, adm1.spdf, adm2.spdf
-  # These 5 files are for looking/working over the data
-    # global_admin_areas.xlsx
-    # taxa_work.xlsx
+  # List of target taxa with native country distribution from GTS and IUCN RL
+  #   added (target_taxa_with_native_dist.csv); RL also has some introduced
+  #   country distribution data that is added
+  # RData file with country and state polygon data from 'rnaturalearthhires'
+  #   package and manually downloaded U.S. county polygon data
+  #   (admin_shapefiles.RData)
+  # Files for looking/working over the data
     # geo_work0.xlsx
     # geo_work1.xlsx
     # geo_work2.xlsx

@@ -17,6 +17,12 @@
   ## NOTE: Not all data from these sources are reliable. The aim of this
   #        script is to get all easily-downloadable occurrence data, which
   #        can then be sorted and vetted for the user's specific purposes.
+  ## NOTE: You can add other occurrence point data (e.g., expert comment,
+  #        NatureServe, floras, USDA PLANTS, BONAP, IUCN Red List, private
+  #        sources, etc.) by standardizing column names and formatting to match
+  #        the schema in the "Renaming Columns" tab:
+  #        https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing
+  #        then save as CSV and place in "inputs/compiled_occurrence" folder.
 
 ### DATA IN:
   # (optional) target_taxa_with_syn.csv

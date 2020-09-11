@@ -22,6 +22,11 @@
 ### DATA OUT:
   # folder (raw_split_by_sp) with CSV of raw occurrence data for each target
   #   species (e.g., Malus_angustifolia.csv)
+  # CSV of all occurrence points without lat-long but with locality description
+  #   (need_geolocation.csv)
+  # Summary table with one row for each target species, listing number of
+  #   points with valid a lat-long and number of points with locality
+  #   description only (occurrence_point_count_per_sp.csv)
 
 ################################################################################
 # Load libraries

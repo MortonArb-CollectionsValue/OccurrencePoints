@@ -4,8 +4,10 @@
 ### Authors: Shannon M. Still & Emily Beckman ### Date: 08/10/2020
 
 ### DESCRIPTION:
-  # This script is meant for massaging geographical data in both spatial
-  #   polygon and tabular formats.
+  # Flags suspect points by adding a column for each type of flag, where
+  #   FALSE = flagged. Most of the flagging is done through the
+  #   'CoordinateCleaner' package, which was created for "geographic cleaning
+  #   of coordinates from biologic collections."
 
 ### DATA IN:
   # output from 3_compile_raw_occurrence_points.R
@@ -16,8 +18,11 @@
   #
 
 ### DATA OUT:
-  # XXXXX.RData
-  # occurrence_point_count_per_species.csv
+  # spp_edited_points folder with CSV of occurrence points for each target
+  #   species (e.g., Quercus_lobata.csv)
+  # Summary table with one row for each target species, listing number of
+  #   points and number of flagged records in each flag column
+  #   (flag_summary_by_sp.csv)
 
 ################################################################################
 # Load libraries

@@ -11,17 +11,17 @@
     #   Information Service (ITIS), Kew’s Plants of the World (POW), and
     #   The Plant List (TPL)
     # - Synonyms from Tropicos, ITIS, and POW
-  # The output can either be used directly in 2-0_get_raw_occurrence_points.R
+  # The output can either be used directly in following scripts
   #   or can be reviewed and revised by hand (recommended)
 
 ### DATA IN:
-  # target_taxa.csv (list of target taxa)
+  # target_taxa.csv (list of target taxa) or create list by hand in script
     # one column: "taxon_name_acc" (genus, species, infra rank, and infra name,
     # all separated by one space each; hybrid symbol should be " x ", rather
     # than "_" or "✕", and go between genus and species)
 
 ### DATA OUT:
-  ### target_taxa_with_syn.csv
+  # target_taxa_with_syn.csv
 
 ################################################################################
 # Load libraries

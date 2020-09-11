@@ -1,5 +1,5 @@
 ################################################################################
-## THIS SCRIPT MAY NOT BE NECESSARY. MUCH WAS DISTRIBUTED TO OTHER SCRIPTS. 
+## THIS SCRIPT MAY NOT BE NECESSARY. MUCH WAS DISTRIBUTED TO OTHER SCRIPTS.
 ## MOST OF WHAT IS LEFT IS ACTUALLY IN OTHER SCRIPTS AS WELL.
 
 ################################################################################
@@ -49,34 +49,33 @@ source('scripts/0-1_set_workingdirectory.R')
 ################################################################################
 # Load functions
 ################################################################################
-
-source('scripts/0-2_load_IMLS_functions.R')
+#source('scripts/0-2_load_IMLS_functions.R')
 
 ################################################################################
 ## Read in/load data
 ################################################################################
 load(file.path(main_dir, "outputs", "working", "IMLS_data_workng.RData"))
 
-# 
+#
 # # taxon table
 # taxon_list <- read.csv(file.path(main_dir, "inputs", "taxa_list", "target_taxa_with_syn.csv"),
 #                        header = T, na.strings = c("","NA"), colClasses = "character")
-# 
+#
 # # GlobalTreeSearch country distribution file
 # gts_list <- read.csv(file.path(main_dir, "inputs", "known_distribution",
 #                                "globaltreesearch_country_distribution.csv"),
 #                      header = T, na.strings = c("","NA"), colClasses = "character")
-# 
+#
 # ################################################################################
 # # Split Global Tree Search countries by their delimiter (;) and create
 # #   separated country list for each taxon
 # ################################################################################
-# 
+#
 # gts_all <- gts_list %>%
 #   mutate(native_distribution=strsplit(as.character(native_distribution),"; ")) %>%
 #   unnest(native_distribution)
-# 
-# 
+#
+#
 ################################################################################
 # # TO DO:
 
