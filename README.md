@@ -1,5 +1,7 @@
 
 ## This workflow is meant for downloading and cleaning occurrence point data for target species. The following gives an overview of each script in the workflow.
+### Final output is a folder of "spp_edited_points" with CSV of occurrence points for each target species; a variety of standardized columns are included for sorting and filtering, based on specific project goals (see 3-1_refine_occurrence_points.R below).  
+### Interactive map (HTML) for each target species are located in "interactive_maps_split_by_sp" folder, which can be used for visualizing standard columns and flags [in development]
 
 ## 0-1_set_workingdirectory.R
 
@@ -113,6 +115,15 @@
  - **.gtsnative**: Flag records in countries outside the species native range as reported in GlobalTreeSearch
  - **.rlnative**: Flag records in countries outside the species native range as reported in the IUCN Red List
  - **.rlintroduced**: Flag records in countries reported in the IUCN Red List as part of the species "introduced" range
+
+ Other important columns for sorting and filtering include:
+ - **species_name_acc**: Your accepted species name, based on target taxa list and synonyms
+ - **database**: Record's source database (FIA; GBIF; US_Herbaria; iDigBio; BISON; BIEN; Ex_situ)
+ - **all_source_databases**: All databases containing the record before duplicates were removed (dups removed based on species name and lat-long rounded to 3 digits after decimal)
+ - **year**: Year of collection or observation  
+ - **basisOfRecord**: Type of record/how it was recorded (PRESERVED_SPECIMEN; MATERIAL_SAMPLE; OBSERVATION; HUMAN_OBSERVATION; MACHINE_OBSERVATION; LITERATURE; FOSSIL_SPECIMEN; LIVING_SPECIMEN; UNKNOWN)
+ - **establishmentMeans**: Nativity/management status (NATIVE; UNKNOWN; INTRODUCED; MANAGED; CUT; INVASIVE; DEAD)
+ - **coordinateUncertaintyInMeters**
 
  >INPUTS:<br>
  > ~ Compiled occurrence points from 3-0_compile_occurrence_points.R
