@@ -65,7 +65,38 @@ source('scripts/0-1_set_workingdirectory.R')
 ################################################################################
 # Load functions
 ################################################################################
-source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
+#source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
+
+# calculates percent of each data frame column that is not NA
+percent.filled <- function(df){
+  for(i in 1:ncol(df)){
+    print(paste(names(df)[i],": ",
+                round((nrow(df)-sum(is.na(df[,i])))/nrow(df),3)*100,"%",sep=""))
+  }
+}
+
+# function to extract target species data from each state CSV from FIA
+extract_tree_data <- function(file_name){
+  data <- data.frame()
+  # read in tree data, which lists all species and the plots in which they were
+  #   found; larger ones will take time to read in
+  state_df <- read.csv(file_name)
+  # cycle through vector of target species codes and extract those rows from
+  #   the state CSV
+  for (sp in 1:length(species_codes)){
+    target_sp <- state_df[which(state_df$SPCD==species_codes[[sp]]),]
+    data <- rbind(data, target_sp)
+  }
+
+  # remove state file to make space for reading in next one
+  rm(state_df)
+  # take a look at how much data were pulled
+  cat(file_path_sans_ext(basename(file_name)), ": ", nrow(data), " observations. ",
+        grep(file_name, file_list), " of ", length(file_list), ".")
+  # print(paste(nrow(data), basename(file_name)))
+  return(data)
+  rm(sp)
+}
 
 
 ################################################################################
@@ -98,31 +129,25 @@ taxon_names <- taxon_list$taxon_name
   ## for that data.frame
   ## this can be repeated for each new data source
   ## we may have to move some of these steps around
-
-# b.h <- read_excel('/Users/sstill/Box/Seed Menus Project/HerbariumRecords/HerbariumRecords_wHeaders/Burke_AllSpp_wHeaders.xlsx',
-#                    col_types = 'text')
-
-## this line sets the correct data.frame
-  # n.h <- 'burke'
-
-## this line selects the correct columns
-  # nms  <- nm.set %>% filter(!is.na(!!as.name(n.h))) %>%
-  #                    select(!!as.name(n.h)) %>% as.character()
-  # # nms1 <- nm.set %>% filter(!is.na(!!as.name(n.h))) %>%
-  #                      select(final_nm, !!as.name(n.h))
-
-# b.h <- b.h %>% select_(nms)
-
-## this line sets the correct column names
-  # names(b.h) <- nms1$final_nm
-
-## these lines add some data to fill in where missing
-  # b.h <- b.h %>% mutate(dataSource=paste0('burke', sprintf("%05d",
-  #   1:nrow(b.h))), id=as.character(id), coordinateSystem=NA_character_,
-  #   zone = NA_character_, x_coord = as.numeric(x_coord),
-  #   y_coord = as.numeric(y_coord),
-  #   coordinateUncertaintyMeters = as.numeric(coordinateUncertaintyMeters))
-  # rm(n.h, nms, nms1)
+  # b.h <- read_excel('/Users/sstill/Box/Seed Menus Project/HerbariumRecords/HerbariumRecords_wHeaders/Burke_AllSpp_wHeaders.xlsx',
+  #                    col_types = 'text')
+  ## this line sets the correct data.frame
+    # n.h <- 'burke'
+  ## this line selects the correct columns
+    # nms  <- nm.set %>% filter(!is.na(!!as.name(n.h))) %>%
+    #                    select(!!as.name(n.h)) %>% as.character()
+    # # nms1 <- nm.set %>% filter(!is.na(!!as.name(n.h))) %>%
+    #                      select(final_nm, !!as.name(n.h))
+  # b.h <- b.h %>% select_(nms)
+  ## this line sets the correct column names
+    # names(b.h) <- nms1$final_nm
+  ## these lines add some data to fill in where missing
+    # b.h <- b.h %>% mutate(dataSource=paste0('burke', sprintf("%05d",
+    #   1:nrow(b.h))), id=as.character(id), coordinateSystem=NA_character_,
+    #   zone = NA_character_, x_coord = as.numeric(x_coord),
+    #   y_coord = as.numeric(y_coord),
+    #   coordinateUncertaintyMeters = as.numeric(coordinateUncertaintyMeters))
+    # rm(n.h, nms, nms1)
   # b.h <- b.h %>% mutate(EPSG='undefined', data_type='herbarium voucher')
 
 ################################################################################
@@ -194,14 +219,14 @@ download_key <- gbif_download
 occ_download_wait(download_key, status_ping=10, quiet=TRUE)
 
 occ_download_get(key=download_key[1],path=file.path(main_dir,"inputs",
-  "raw_occurrence","gbif_raw"),overwrite=TRUE) #Download file size: 646.22 MB
+  "raw_occurrence","gbif_raw"),overwrite=TRUE) #Download file size: 684.49 MB
 unzip(zipfile=paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
   download_key[1]),".zip"), files="occurrence.txt",
   exdir=file.path(main_dir,"inputs","raw_occurrence","gbif_raw"))
   # read in data
 gbif_raw <- fread(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
   "occurrence.txt"), quote="", na.strings="")
-nrow(gbif_raw) #2513913
+nrow(gbif_raw) #2611797
 
 ### standardize column names
 
@@ -286,15 +311,12 @@ head(gbif_raw)
 # write file
 write.csv(gbif_raw, file.path(main_dir,"inputs","compiled_occurrence",
   "gbif.csv"),row.names=FALSE)
-
 #delete files no longer needed (large files)
-  unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
-            "occurrence.txt")))
+  #unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
+  #          "occurrence.txt")))
   # unlink(paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
   #           download_key[1]),".zip"))
-##remove objects that no longer need
-  rm(gbif_raw, spp, subsp, form, var, gbif_codes, keys, keys_nodup,
-            download_key, gbif_download, gbif_taxon_keys)
+rm(gbif_raw)
 
 ###############
 # B) Integrated Digitized Biocollections (iDigBio)
@@ -306,7 +328,7 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","idigbio_raw")))
   recursive=T)
 
 # Not sure the R interface actually gets all fields available; use manual
-#    method down below (line 328) if you want to be sure
+#    method down below (line 361) if you want to be sure
 
 # download iDigBio data for target taxa
   # we have to go taxon by taxon; function can only return 100,000
@@ -319,7 +341,7 @@ for(i in 1:length(taxon_names)){
   print(paste(round(i/length(taxon_names)*100,digits=1),"% complete",sep=""))
 }
   rm(output_new, i)
-nrow(idigbio_raw) #155359
+nrow(idigbio_raw) #159106
 # remove rows that are lists
 idigbio_raw <- idigbio_raw %>% dplyr::select(everything(),-commonnames,-flags,
   -mediarecords,-recordids)
@@ -338,8 +360,8 @@ write.csv(idigbio_raw,file.path(main_dir,"inputs","raw_occurrence",
   #   other genera
   # Your downloads will pop up in the "Downloads" section;
   #   "Click To Download" for each
-# Move all the zipped files you downloaded into the "idigbio_raw" folder
-# Unzip each file and pull the "occurrence.csv" file out into the
+# Move all the folders you downloaded into the "idigbio_raw" folder
+# Pull the "occurrence_raw.csv" file out into the
 #   "idigbio_raw" folder and rename with appropriate genus name
 # read in raw occurrence points
 #file_list <- list.files(path = file.path(main_dir,"inputs","raw_occurrence",
@@ -425,7 +447,7 @@ head(idigbio_raw)
 # write file
 write.csv(idigbio_raw, file.path(main_dir,"inputs","compiled_occurrence",
   "idigbio.csv"),row.names=FALSE)
-  rm(idigbio_raw)
+rm(idigbio_raw)
 
 ###############
 # C) U.S. Herbaria Consortia (SERNEC, SEINet, etc.)
@@ -436,7 +458,7 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","sernec_raw")))
   dir.create(file.path(main_dir,"inputs","raw_occurrence","sernec_raw"),
   recursive=T)
 
-# First, download raw data
+# FIRST, download raw data:
   # Go to http://sernecportal.org/portal/collections/harvestparams.php
   # Type your target genus name into the "scientific name" box and click
   #   "List Display"; or, alternatively, if you are just looking for a few
@@ -448,56 +470,22 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","sernec_raw")))
   #   select the "UTF-8 (unicode)" radio button
   #   leave other fields as-is
   # Click "Download Data"
-# If you have more than one target genus, repeat the above steps for the
-#   other genera
-# Move all the zipped files you downloaded into the "sernec_raw" folder
-# Unzip each file and pull the "occurrences.csv" file out into the
-#   "sernec_raw" folder and rename with appropriate genus name
+  # If you have more than one target genus, repeat the above steps for the
+  #   other genera
+  # Move all the zipped files you downloaded into the "sernec_raw" folder
 
-## this way you do not have to open zips and just extract
-# If you have more than one target genus, repeat the above steps for the
-#   other genera
-# Move all the zipped files you downloaded into the "sernec_raw" folder
-#   Unzip each file and pull the "occurrences.csv" file out into the
-  raw.dir <- "sernec_raw"
-  f.pth  <- file.path(main_dir, "inputs", "raw_occurrence", raw.dir)
-  f.zips <- list.files(file.path(f.pth, "zips_new"), pattern = ".zip",
-              full.names = T)
-
-  file_dfs <- lapply(f.zips, function(i){
-                    read.csv(unz(i, "occurrences.csv"), colClasses = "character",
-                     na.strings=c("", "NA"), strip.white=T, fileEncoding="latin1")
-                 }
-              )
-
+# unzips each file and pulls the "occurrences.csv" for compilation
+raw.dir <- "sernec_raw"
+f.pth  <- file.path(main_dir, "inputs", "raw_occurrence", raw.dir)
+f.zips <- list.files(f.pth, pattern = ".zip", full.names = T)
+file_dfs <- lapply(f.zips, function(i){
+  read.csv(unz(i, "occurrences.csv"), colClasses = "character",
+   na.strings=c("", "NA"), strip.white=T, fileEncoding="latin1")})
 sernec_raw <- data.frame()
   for(file in seq_along(file_dfs)){
     sernec_raw <- rbind(sernec_raw, file_dfs[[file]])
   }
-nrow(sernec_raw) #195655
-
-##################
-## If do the code above, do not need to unzip files yourself, and don't need
-  ##  the following block of code
-##################
-#
-# #   "sernec_raw" folder and rename with appropriate genus name
-# # download zips as above and put in "sernec_raw/zips_new" folder
-#
-#
-# # read in raw occurrence points
-# file_list <- list.files(path = file.path(main_dir,"inputs","raw_occurrence",
-#   "sernec_raw"), pattern = "occurrence", full.names = T)
-# file_dfs <- lapply(file_list, read.csv, colClasses = "character",
-#   na.strings=c("", "NA"), strip.white=T, fileEncoding="latin1")
-# length(file_dfs) #4
-# # stack datasets to create one dataframe
-# sernec_raw <- data.frame()
-# for(file in seq_along(file_dfs)){
-#   sernec_raw <- rbind(sernec_raw, file_dfs[[file]])
-# }
-# nrow(sernec_raw) #195655
-##################
+nrow(sernec_raw) #221363
 
 ### standardize column names
 
@@ -613,7 +601,7 @@ head(sernec_raw)
 # write file
 write.csv(sernec_raw, file.path(main_dir,"inputs","compiled_occurrence",
   "sernec.csv"),row.names=FALSE)
-rm(sernec_raw, form, spp, subsp, var, file_dfs, file, file_list)
+rm(sernec_raw)
 
 ###############
 # D) Botanical Information and Ecology Network (BIEN)
