@@ -22,9 +22,11 @@
  - ITIS
  - POW
 
- >INPUT: List of target taxa (target_taxa.csv; or create list by hand in script)
+ >INPUTS:<br>
+ > ~ List of target taxa (target_taxa.csv; or create list by hand in script)
  >
- >OUTPUT: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); see ["Taxonomic Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for table metadata
+ >OUTPUTS:<br>
+ > ~ List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); see ["Taxonomic Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for table metadata
  >
  >NOTE: The functions in this script ('taxize' package) are slow and require manual input while running; therefore if your list is long, you may need to find synonyms a different way.
 
@@ -34,11 +36,12 @@
 
  >INPUTS:<br>
  > ~ List of target taxa with synonyms (target_taxa_with_syn.csv)<br>
- > ~ [GlobalTreeSearch](https://tools.bgci.org/global_tree_search.php) country-level distribution data for target genera (globaltreesearch_country_distribution.csv)
+ > ~ [GlobalTreeSearch](https://tools.bgci.org/global_tree_search.php) country-level distribution data for target genera (globaltreesearch_country_distribution.csv)<br>
+ > ~ U.S. counties polygons (USA_adm2.shp)
  >
  >OUTPUTS:<br>
- > -- List of target taxa with native country distribution from GTS and IUCN RL added (target_taxa_with_native_dist.csv); RL also has some introduced country distribution data that is added<br>
- > -- RData file with country and state polygon data from 'rnaturalearthhires' package and manually downloaded U.S. county polygon data (admin_shapefiles.RData)
+ > ~ List of target taxa with native country distribution from GTS and IUCN RL added (target_taxa_with_native_dist.csv); RL also has some introduced country distribution data that is added<br>
+ > ~ RData file with country and state polygon data from 'rnaturalearthhires' package and manually downloaded U.S. county polygon data (admin_shapefiles.RData)
 
 ## 2-0_get_raw_occurrence_points.R
 
@@ -51,18 +54,19 @@
  - Botanical Information and Ecology Network (BIEN) [auto download with 'BIEN']
 
  National databases include:
- - Forest Inventory and Analysis (FIA) Program, USDA Forest Service [auto download with raw files pulled from internet]
+ - Forest Inventory and Analysis (FIA) Program, USDA Forest Service [auto download with raw files pulled from web]
  - Biodiversity Information Serving Our Nation (BISON), USGS [auto download with 'rbison']
 
  >INPUTS:<br>
- > -- List of target taxa and synonyms (target_taxa_with_syn.csv)<br>
- > -- FIA metadata tables (FIA_AppendixF_TreeSpeciesCodes_2016.csv; US_state_county_FIPS_codes.csv)
+ > ~ List of target taxa and synonyms (target_taxa_with_syn.csv)<br>
+ > ~ FIA metadata tables (FIA_AppendixF_TreeSpeciesCodes_2016.csv; US_state_county_FIPS_codes.csv)
  >
- >OUTPUT: Raw occurrence records for target taxa or genera (depending on how the database’s download works), one CSV for each database (e.g., gbif.csv); see ["Renaming Columns" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for schema used to rename columns and standardize data
+ >OUTPUTS:<br>
+ > ~ Raw occurrence records for target taxa or genera (depending on how the database’s download works), one CSV for each database (e.g., gbif.csv); see ["Renaming Columns" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for schema used to rename columns and standardize data
  >
  >NOTES:<br>
- > -- Not all data from these sources are reliable and many have duplicates from one or more datasets. The aim of this script is to get all easily-downloadable, public occurrence data, which can then be sorted and vetted for the user's specific purposes.<br>
- > -- You can add other occurrence point data (e.g., expert comment, NatureServe, floras, USDA PLANTS, BONAP, IUCN Red List, private sources, etc.) by standardizing column names and formatting to match the schema in the ["Renaming Columns" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing), then save as CSV and place in "inputs/compiled_occurrence" folder.
+ > ~ Not all data from these sources are reliable and many have duplicates from one or more datasets. The aim of this script is to get all easily-downloadable, public occurrence data, which can then be sorted and vetted for the user's specific purposes.<br>
+ > ~ You can add other occurrence point data (e.g., expert comment, NatureServe, floras, USDA PLANTS, BONAP, IUCN Red List, private sources, etc.) by standardizing column names and formatting to match the schema in the ["Renaming Columns" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing), then save as CSV and place in "inputs/compiled_occurrence" folder.
 
 ## 2-1_compile_exsitu_data.R
 
@@ -71,12 +75,11 @@
  Takes a folder of CSV files representing ex situ accessions data from different institutions, combines them into one dataset, and standardizes some important fields.
 
  >INPUTS:<br>
- > -- Folder of CSV files whose column names have be standardized by hand using the ["standardizing_accessions_data_fields"](https://docs.google.com/spreadsheets/d/1QLxxWu-bUIRcrjHiaWeSz9n1ms4EQB3yQ8P8PBBx3Zk/edit?usp=sharing) template <br>
- > -- List of target taxa and synonyms (target_taxa_with_syn.csv)
+ > ~ List of target taxa and synonyms (target_taxa_with_syn.csv)
+ > ~ Folder of CSV files whose column names have be standardized by hand using the ["standardizing_accessions_data_fields"](https://docs.google.com/spreadsheets/d/1QLxxWu-bUIRcrjHiaWeSz9n1ms4EQB3yQ8P8PBBx3Zk/edit?usp=sharing) template<br>
  >
- >OUTPUT: Ex situ accessions data compiled into one CSV (exsitu.csv), with some fields standardized: provenance type, number of individuals, latitude and longitude, collection/acquisition year (want to add some others eventually, like germplasm type)
-
-  ?? Fix neg/pos longitude error ??
+ >OUTPUTS:<br>
+ > ~ Ex situ accessions data compiled into one CSV (exsitu.csv), with some fields standardized: provenance type, number of individuals, latitude and longitude, collection/acquisition year (want to add some others eventually, like germplasm type)
 
 ## 3-0_compile_raw_occurrence_points.R
 
@@ -91,32 +94,33 @@
  - Write a separate CSV of lat-long points for each target species
 
  >INPUTS:<br>
- > -- Raw occurrence point data from 2-0_get_raw_occurrence_points.R and (optionally) 2-1_compile_exsitu_data.R<br>
- > -- List of target taxa and synonyms (target_taxa_with_syn.csv)
+ > ~ Raw occurrence point data from 2-0_get_raw_occurrence_points.R and (optionally) 2-1_compile_exsitu_data.R<br>
+ > ~ List of target taxa and synonyms (target_taxa_with_syn.csv)
  >
  >OUTPUTS:<br>
- > -- CSV of all occurrence points without lat-long but with locality description (need_geolocation.csv)<br>
- > -- CSV of occurrence points for each target species (e.g., Quercus_lobata.csv) in outputs/working/raw_split_by_sp<br>
- > -- Summary table with one row for each target species, listing number of points with valid a lat-long and number of points with locality description only (occurrence_point_count_per_sp.csv)
+ > ~ CSV of all occurrence points without lat-long but with locality description (need_geolocation.csv)<br>
+ > ~ raw_split_by_sp folder with CSV of occurrence points for each target species (e.g., Quercus_lobata.csv)<br>
+ > ~ Summary table with one row for each target species, listing number of points with valid a lat-long and number of points with locality description only (occurrence_point_count_per_sp.csv)
 
 ## 3-1_refine_occurrence_points.R
 
  Flags suspect points by adding a column for each type of flag, where FALSE = flagged. Most of the flagging is done through the 'CoordinateCleaner' package, which was created for "geographic cleaning of coordinates from biologic collections." Flag columns include:
- - .cen -> Flag records within 500m of country and province centroids
- - .urb -> Flag records inside urban areas (based on rnaturalearth ne_50m_urban_areas shapefile)
- - .inst -> Flag records within 100m of biodiversity institutions
- - .con -> Flag records outside their reported country
- - .outl -> Flag geographic outliers in species distribution (based on quantile method, with multiplier of the interquartile range = 5; must have at least 7 records to be tested)
- - .gtsnative -> Flag records in countries outside the species native range as reported in GlobalTreeSearch
- - .rlnative -> Flag records in countries outside the species native range as reported in the IUCN Red List
- - .rlintroduced -> Flag records in countries reported in the IUCN Red List as part of the species "introduced" range
+ - **.cen**: Flag records within 500m of country and province centroids
+ - **.urb**: Flag records inside urban areas (based on rnaturalearth ne_50m_urban_areas shapefile)
+ - .inst**: Flag records within 100m of biodiversity institutions
+ - .con**: Flag records outside their reported country
+ - .outl**: Flag geographic outliers in species distribution (based on quantile method, with multiplier of the interquartile range = 5; must have at least 7 records to be tested)
+ - .gtsnative**: Flag records in countries outside the species native range as reported in GlobalTreeSearch
+ - .rlnative**: Flag records in countries outside the species native range as reported in the IUCN Red List
+ - .rlintroduced**: Flag records in countries reported in the IUCN Red List as part of the species "introduced" range
 
  >INPUTS:<br>
- > -- Raw occurrence point data from 2-0_get_raw_occurrence_points.R and (optionally) 2-1_compile_exsitu_data.R<br>
+ > ~ Compiled occurrence points from 3-0_compile_occurrence_points.R
  >
  >OUTPUTS:<br>
- > -- CSV of occurrence points for each target species (e.g., Quercus_lobata.csv) in outputs/working/raw_split_by_sp; see ["Occurrence Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for full output metadata<br>
- > --
+ > ~ spp_edited_points folder with CSV of occurrence points for each target species (e.g., Quercus_lobata.csv); see ["Occurrence Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for full output metadata<br>
+ > ~ Summary table with one row for each target species, listing number of points and number of flagged records in each flag column (flag_summary_by_sp.csv)
+
 
 ## 5-0_plot_occurrence_raw_all.R
 
