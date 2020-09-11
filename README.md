@@ -107,12 +107,12 @@
  Flags suspect points by adding a column for each type of flag, where FALSE = flagged. Most of the flagging is done through the 'CoordinateCleaner' package, which was created for "geographic cleaning of coordinates from biologic collections." Flag columns include:
  - **.cen**: Flag records within 500m of country and province centroids
  - **.urb**: Flag records inside urban areas (based on rnaturalearth ne_50m_urban_areas shapefile)
- - .inst**: Flag records within 100m of biodiversity institutions
- - .con**: Flag records outside their reported country
- - .outl**: Flag geographic outliers in species distribution (based on quantile method, with multiplier of the interquartile range = 5; must have at least 7 records to be tested)
- - .gtsnative**: Flag records in countries outside the species native range as reported in GlobalTreeSearch
- - .rlnative**: Flag records in countries outside the species native range as reported in the IUCN Red List
- - .rlintroduced**: Flag records in countries reported in the IUCN Red List as part of the species "introduced" range
+ - **.inst**: Flag records within 100m of biodiversity institutions
+ - **.con**: Flag records outside their reported country
+ - **.outl**: Flag geographic outliers in species distribution (based on quantile method, with multiplier of the interquartile range = 5; must have at least 7 records to be tested)
+ - **.gtsnative**: Flag records in countries outside the species native range as reported in GlobalTreeSearch
+ - **.rlnative**: Flag records in countries outside the species native range as reported in the IUCN Red List
+ - **.rlintroduced**: Flag records in countries reported in the IUCN Red List as part of the species "introduced" range
 
  >INPUTS:<br>
  > ~ Compiled occurrence points from 3-0_compile_occurrence_points.R
