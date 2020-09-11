@@ -218,5 +218,5 @@ for (i in 1:length(spp_list)){
 }
 
 # write summary table
-write.csv(summary, file.path(main_dir,"outputs",
-  paste0("flag_summary_by_sp_", Sys.Date(), ".csv")),row.names = F)
+write.csv(summary_tbl, file.path(main_dir,"outputs",
+  paste0("summary_of_flagged_points_", Sys.Date(), ".csv")),row.names = F)
