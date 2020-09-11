@@ -1,6 +1,6 @@
 ################################################################################
 
-## 3-1_geo_refinement.R
+## 3-1_refine_occurrence_points.R
 ### Authors: Shannon M. Still & Emily Beckman ### Date: 08/10/2020
 
 ### DESCRIPTION:
@@ -47,7 +47,6 @@ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 ################################################################################
 # Load functions
 ################################################################################
-
 #source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
 

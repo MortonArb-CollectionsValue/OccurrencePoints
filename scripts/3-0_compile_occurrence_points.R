@@ -1,6 +1,6 @@
 ################################################################################
 
-## 3-0_compile_raw_occurrence_points.R
+## 3-0_compile_occurrence_points.R
 ### Authors: Emily Beckman & Shannon Still ### Date: 05/05/2020
 
 ### DESCRIPTION:
@@ -56,7 +56,6 @@ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 ################################################################################
 # Load functions
 ################################################################################
-
 #source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
 

@@ -1,6 +1,6 @@
 ################################################################################
 
-## 2-0_get_raw_occurrence_points.R
+## 2-0_get_occurrence_points.R
 ### Authors: Emily Beckman & Shannon Still ### Date: 02/05/2020
 
 ### DESCRIPTION:
