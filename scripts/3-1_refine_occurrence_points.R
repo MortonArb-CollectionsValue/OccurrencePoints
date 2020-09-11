@@ -107,8 +107,6 @@ for (i in 1:length(spp_list)){
     proj4string4poly <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
     eo.spdf <- SpatialPointsDataFrame(eo.df[,c("decimalLongitude",
       "decimalLatitude")], eo.df, proj4string = CRS(proj4string4poly))
-    # set a variable to flag occurrences that are suspect
-    #eo.spdf$occ_flag <- as.character(NA)
     ## add country polygon data to each point based on lat-long location
     eo.post <- point.in.poly(eo.spdf, adm0.poly, sp=TRUE)@data
 
@@ -121,11 +119,6 @@ for (i in 1:length(spp_list)){
     ## flag records where GTS country doesn't match record's coordinate location
     eo.post <- eo.post %>% mutate(.gtsnative=(ifelse(
       country.iso_a2 %in% s.nd.gts.l, TRUE, FALSE)))
-    #c.nms <- c(c.nms,".gtsnative")
-    #out.uid <- as.character(eo.post$UID[eo.post$ISO_match0 == FALSE &
-    #  !is.na(eo.post$ISO2)])
-    #eo.post$occ_flag[eo.post$UID %in% out.uid] <-
-    #  paste0("Given coordinates not in native country provided by GlobalTreeSearch")
     } else {
       eo.post$.gtsnative <- NA
     }
@@ -137,13 +130,6 @@ for (i in 1:length(spp_list)){
     ## flag records where RL country doesn't match record's coordinate location
     eo.post <- eo.post %>% mutate(.rlnative=(ifelse(
       country.iso_a2 %in% s.nd.rln.l, TRUE, FALSE)))
-    #c.nms <- c(c.nms,".rlnative")
-    #out.uid <- as.character(eo.post$UID[eo.post$ISO_match0 == FALSE &
-    #  !is.na(eo.post$ISO2)])
-    #eo.post$occ_flag[eo.post$UID %in% out.uid] <-
-    #  paste(eo.post$occ_flag[eo.post$UID %in% out.uid],
-    #    "Given coordinates not in native country provided by IUCN Red List",
-    #    sep="; ")
     } else {
       eo.post$.rlnative <- NA
     }
@@ -155,18 +141,9 @@ for (i in 1:length(spp_list)){
     ## flag records where RL introduced country does match record's coord location
     eo.post <- eo.post %>% mutate(.rlintroduced=(ifelse(
       country.iso_a2 %in% s.nd.rli.l, FALSE, TRUE)))
-    #c.nms <- c(c.nms,".rlintroduced")
-    #out.uid <- as.character(eo.post$UID[eo.post$ISO_match0 == FALSE &
-    #  !is.na(eo.post$ISO2)])
-    #eo.post$occ_flag[eo.post$UID %in% out.uid] <-
-    #  paste(eo.post$occ_flag[eo.post$UID %in% out.uid],
-    #    "Given coordinates are in introduced country provided by IUCN Red List",
-    #    sep="; ")
     } else {
       eo.post$.rlintroduced <- NA
     }
-
-    #if(nrow(eo.df) < 2) next
 
     ## SERIES OF VETTED TESTS FROM CoordinateCleaner PACKAGE
     # Geographic Cleaning of Coordinates from Biologic Collections
@@ -180,7 +157,6 @@ for (i in 1:length(spp_list)){
     # cc_urb -> Identify Records Inside Urban Areas
     ## other test not included but could add:
     # cc_iucn -> Identify Records Outside Natural Ranges
-    # cc_sea -> Identify Non-terrestrial Coordinates
     eo.post2 <- clean_coordinates(eo.post,
       lon = "decimalLongitude",
       lat = "decimalLatitude",
@@ -192,19 +168,19 @@ for (i in 1:length(spp_list)){
     # for some reason the "sea" flag isn't working in the above function...
     #    adding here separately
     # actually, found it flags a lot on islands, etc. might skip for now
-    #flag_sea <- cc_sea(eo.post,lon = "decimalLongitude",lat = "decimalLatitude",
-    #  value = "flagged")
-    #eo.post2$.sea <- flag_sea
-    # don't really want to flag country mismatch if due to missing country;
-    #   change those
-    #eo.post2[is.na(eo.post2$countryCode_standard),]$.con <- TRUE
+    #   flag_sea <- cc_sea(eo.post,lon = "decimalLongitude",lat = "decimalLatitude",
+    #      value = "flagged")
+    #   eo.post2$.sea <- flag_sea
+    # for some reason the outlier section won't work when part of
+    #   "clean_coordinates" function above so adding it here
     eo.post2 <- as.data.frame(eo.post2)
     flag_outl <- cc_outl(eo.post2,
         lon = "decimalLongitude",
         lat = "decimalLatitude",species = "species_name_acc",
         method = "quantile", mltpl = 5, value = "flagged")
     eo.post2$.outl <- flag_outl
-
+    # check if given country matches lat-long country (CoordinateCleaner
+    #   has something like this but also flags when NA? Didn't love that)
     eo.post2 <- eo.post2 %>% mutate(.con=(ifelse(
       (as.character(country.iso_a3) == as.character(countryCode_standard) &
       !is.na(country.iso_a3) & !is.na(countryCode_standard)) |
@@ -244,202 +220,3 @@ for (i in 1:length(spp_list)){
 # write summary table
 write.csv(summary, file.path(main_dir,"outputs",
   paste0("flag_summary_by_sp_", Sys.Date(), ".csv")),row.names = F)
-
-## can save data out to a file so don't have to rerun
-#save(all_data, taxon_list, s, geo_pts2, need_match,
-#  file=file.path(main_dir,"outputs","EO_data.RData"))
-#  rm(all_data_raw, file_dfs, geo_pts, locality_pts, matched, need_match,
-#  source_standard); head(all_data)
-
-
-
-
-  palette <- colorFactor(c("red","navy"), domain = c("FALSE","TRUE"))
-## CENTROIDS
-  eo.post3$.cen <- as.factor(eo.post3$.cen)
-  eo.post3 <- eo.post3 %>% arrange(desc(.cen))
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    addCircleMarkers(
-      data = eo.post3,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(.cen)) %>%
-    addControl(
-      paste0(eo.post3$species_name_acc[1],": Flagged points within 500 meters of country or state centroids"),
-      position = "topright")
-  map
-  htmlwidgets::saveWidget(map, file.path(main_dir,"outputs",
-    paste0(eo.post3$species_name_acc[1],
-      "_flagCENTROIDS","_leaflet_map.html")))
-## URBAN
-  eo.post3$.urb <- as.factor(eo.post3$.urb)
-  eo.post3 <- eo.post3 %>% arrange(desc(.urb))
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    addCircleMarkers(
-      data = eo.post3,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(.urb)) %>%
-    addControl(
-      paste0(eo.post3$species_name_acc[1],": Flagged points within urban areas (rnaturalearth layer)"),
-      position = "topright")
-  map
-  htmlwidgets::saveWidget(map, file.path(main_dir,"outputs",
-    paste0(eo.post3$species_name_acc[1],
-      "_flagURBAN","_leaflet_map.html")))
-## INSTITUTIONS
-  eo.post3$.inst <- as.factor(eo.post3$.inst)
-  eo.post3 <- eo.post3 %>% arrange(desc(.inst))
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    addCircleMarkers(
-      data = eo.post3,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(.inst)) %>%
-    addControl(
-      paste0(eo.post3$species_name_acc[1],": Flagged points within 100 meters of biodiversity institutions"),
-      position = "topright")
-  map
-  htmlwidgets::saveWidget(map, file.path(main_dir,"outputs",
-    paste0(eo.post3$species_name_acc[1],
-      "_flagINSTITUTIONS","_leaflet_map.html")))
-## MISMATCH COUNTRIES
-  eo.post3$.con <- as.factor(eo.post3$.con)
-  eo.post3 <- eo.post3 %>% arrange(desc(.con))
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    addCircleMarkers(
-      data = eo.post3,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(.con)) %>%
-    addControl(
-      paste0(eo.post3$species_name_acc[1],": Flagged points where given country doesn't match point country"),
-      position = "topright")
-  map
-  htmlwidgets::saveWidget(map, file.path(main_dir,"outputs",
-    paste0(eo.post3$species_name_acc[1],
-      "_flagCOUNTRY","_leaflet_map.html")))
-## OUTLIERS
-  eo.post3$.outl <- as.factor(eo.post3$.outl)
-  eo.post3 <- eo.post3 %>% arrange(desc(.outl))
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    addCircleMarkers(
-      data = eo.post3,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(.outl)) %>%
-    addControl(
-      paste0(eo.post3$species_name_acc[1],": Flagged points are outliers (CoordinateCleaner 'quantile' method)"),
-      position = "topright")
-  map
-  htmlwidgets::saveWidget(map, file.path(main_dir,"outputs",
-    paste0(eo.post3$species_name_acc[1],
-      "_flagOUTLIERS","_leaflet_map.html")))
-## GTS NATIVE
-  eo.post3$.gtsnative <- as.factor(eo.post3$.gtsnative)
-  eo.post3 <- eo.post3 %>% arrange(desc(.gtsnative))
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    addCircleMarkers(
-      data = eo.post3,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(.gtsnative)) %>%
-    addPolygons(data = x2,
-			color = "black",
-			weight = 2,
-			opacity = 0.6,
-			fillOpacity = 0) %>%
-    addControl(
-      paste0(eo.post3$species_name_acc[1],": Flagged points outside native countries (GlobalTreeSearch)"),
-      position = "topright")
-  map
-  htmlwidgets::saveWidget(map, file.path(main_dir,"outputs",
-    paste0(eo.post3$species_name_acc[1],
-      "_flagGTSNATIVE","_leaflet_map.html")))
-## RL NATIVE
-  eo.post3$.rlnative <- as.factor(eo.post3$.rlnative)
-  eo.post3 <- eo.post3 %>% arrange(desc(.rlnative))
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    addCircleMarkers(
-      data = eo.post3,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(.rlnative)) %>%
-    addControl(
-      paste0(eo.post3$species_name_acc[1],": Flagged points outside native countries (IUCN Red List)"),
-      position = "topright")
-  map
-  htmlwidgets::saveWidget(map, file.path(main_dir,"outputs",
-    paste0(eo.post3$species_name_acc[1],
-      "_flagRLNATIVE","_leaflet_map.html")))
-## RL INTRODUCED
-  eo.post3$.rlintroduced <- as.factor(eo.post3$.rlintroduced)
-  eo.post3 <- eo.post3 %>% arrange(desc(.rlintroduced))
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    addCircleMarkers(
-      data = eo.post3,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(.rlintroduced)) %>%
-    addControl(
-      paste0(eo.post3$species_name_acc[1],": Flagged points in introduced countries (IUCN Red List)"),
-      position = "topright")
-  map
-  htmlwidgets::saveWidget(map, file.path(main_dir,"outputs",
-    paste0(eo.post3$species_name_acc[1],
-      "_flagRLINTRODUCED","_leaflet_map.html")))
-
-eo.post_s <- eo.post3 %>%
-  filter(.cen == "TRUE") %>%
-  filter(.inst == "TRUE") %>%
-  filter(.urb == "TRUE") %>%
-  filter(.con == "TRUE") %>%
-  filter(.outl == "TRUE") #%>%
-  #filter(.gtsnative == "TRUE") %>%
-  #filter(.rlnative == "TRUE")
-  map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    addCircleMarkers(
-      data = eo.post_s,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = "navy") %>%
-    addControl(
-      paste0(eo.post_s$species_name_acc[1],": "),
-      position = "topright")
-  map
