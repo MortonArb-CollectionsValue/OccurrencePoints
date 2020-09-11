@@ -49,16 +49,34 @@ source('scripts/0-1_set_workingdirectory.R')
 ################################################################################
 # Load functions
 ################################################################################
+#source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
-source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
-
+# remove speices/taxa that did not have any synonyms (they create errors
+#   in next step), create data frame of synonyms, and add column stating
+#   which database it came from
+synonyms.compiled <- function(syn_output,db_name){
+  found <- NA
+  for(i in 1:length(syn_output)){
+    if(length(syn_output[[i]])>1){
+      if(syn_output[[i]][1,3]!="no syns found"){
+        found <- c(found,i)
+        syn_output[[i]]$taxon_name <- rep(names(syn_output[i]),
+                                          nrow(syn_output[[i]]))
+      }
+    }
+  }
+  found <- found[-1]
+  syn_output_df <- Reduce(rbind.fill, syn_output[found])
+  syn_output_df$database <- db_name
+  return(syn_output_df)
+}
 
 ################################################################################
 ################################################################################
 # 1. Load/create target taxa list
 ################################################################################
 
-# CHANGE THIS LIST BASED ON TAXA YOURE LOOKING FOR:
+# CHANGE THIS LIST OF FAMILIES BASED ON TAXA YOURE LOOKING FOR:
 #tpl_families() # list of families in database
 families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
 #families <- "Sapindaceae"
@@ -496,8 +514,8 @@ all_data$list <- "synonym"
 all_data[which(all_data$taxon_name_acc == all_data$taxon_name_match),]$list <-
   "desiderata"
 # write file
-write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
-  "target_taxa_with_syn_all.csv"),row.names=F)
+#write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
+#  "target_taxa_with_syn_all.csv"),row.names=F)
 
 # IF DESIRED:
   ## remove forms
