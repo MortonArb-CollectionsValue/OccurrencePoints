@@ -36,25 +36,6 @@ synonyms.compiled <- function(syn_output,db_name){
 
 ################################################################################
 ################################################################################
-## fxn: remove.empty.col
-# searches for data frame columns with only NAs and removes them
-################################################################################
-remove.empty.col <- function(df){
-  remove <- vector(mode = "character")
-  for(i in 1:ncol(df)){
-    if(sum(is.na(df[,i])) == nrow(df)){
-      remove <- c(remove,names(df)[i])
-      print(names(df)[i])
-    }
-  }
-  if(length(remove)>0){
-    df <-  df[,-which(names(df) %in% remove)]
-  }
-  return(df)
-}
-
-################################################################################
-################################################################################
 ## fxn: percent.filled
 # calculates percent of each data frame column that is not NA
 ################################################################################
@@ -65,27 +46,6 @@ percent.filled <- function(df){
   }
 }
 
-################################################################################
-################################################################################
-## fxn: children.compiled
-# # remove speices/taxa that did not have any children (they create errors
-# in next step), create data frame of children, and add column stating
-# which database it came from
-################################################################################
-children.compiled <- function(child_output,db_name,greater_than){
-  found <- NA
-  for(i in 1:length(child_output)){
-    if(length(child_output[[i]])>greater_than){
-      found <- c(found,i)
-      child_output[[i]]$taxon_name_acc <- rep(names(child_output[i]),
-                                              nrow(child_output[[i]]))
-    }
-  }
-  found <- found[-1]
-  child_output_df <- Reduce(rbind.fill, child_output[found])
-  child_output_df$database <- db_name
-  return(child_output_df)
-}
 
 ################################################################################
 ################################################################################
