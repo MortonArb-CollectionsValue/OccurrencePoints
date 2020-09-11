@@ -179,9 +179,9 @@
       - occurrence_point_count_per_species_[[YYYY-MM-DD]].csv
       - raw_split_by_sp
         - [[genus_species]].csv
-      - flag_summary_by_sp_[[YYYY-MM-DD]].csv
+      - summary_of_flagged_points_[[YYYY-MM-DD]].csv
       - spp_edited_points
-        - [[genus_species}}.csv
+        - [[genus_species]].csv
       - spp_interactive_maps
         - [[genus_species]]_leaflet_map.html
       - spp_basic_maps
