@@ -24,7 +24,7 @@ Synonyms from:
 
 >INPUTS: List of target taxa (target_taxa.csv, or create list by hand in script)
 >
->OUTPUTS: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); see "Taxonomy Output" tab for table metadata: https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing
+>OUTPUTS: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); see ["Taxonomy Output"](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) tab for table metadata
 >
 >NOTE: The functions in this script ('taxize' package) are slow and require manual input while running; therefore if your list is long, you may need to find synonyms a different way.
 
@@ -32,12 +32,12 @@ Synonyms from:
 
 Adds GlobalTreeSearch (GTS) and IUCN Red List (RL) country-level distribution data to target taxa list and preps country (adm0), state/province (adm1), and county (adm2) polygons for later use.
 
->INPUTS:
->-- List of target taxa with synonyms (target_taxa_with_syn.csv)
+>INPUTS:<br>
+>-- List of target taxa with synonyms (target_taxa_with_syn.csv)<br>
 >-- GlobalTreeSearch country-level distribution data for target genera, downloaded from https://tools.bgci.org/global_tree_search.php (globaltreesearch_country_distribution.csv)
 >
->OUTPUTS:
->-- List of target taxa with native country distribution from GTS and IUCN RL added (target_taxa_with_native_dist.csv); RL also has some introduced country distribution data that is added
+>OUTPUTS:<br>
+>-- List of target taxa with native country distribution from GTS and IUCN RL added (target_taxa_with_native_dist.csv); RL also has some introduced country distribution data that is added<br>
 >-- RData file with polygon data (admin_shapefiles.RData) from 'rnaturalearthhires' package, including: countries shapefile (adm0.poly),  state-level shapefile (adm1.poly), and county-level shapefile (adm2.poly)
 
 ## 2-0_get_raw_occurrence_points.R
