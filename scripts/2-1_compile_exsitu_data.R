@@ -46,8 +46,36 @@ source('scripts/0-1_set_workingdirectory.R')
 ################################################################################
 # Load functions
 ################################################################################
+#source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
-source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
+# function to read in ex situ files from different folders/years and stack
+read.exsitu.csv <- function(path,submission_year){
+  # create list of paths to ex situ accessions CSV files in folder
+  file_list <- list.files(path=path,pattern=".csv",full.names=TRUE)
+  # read in each csv in path list to create list of dataframes
+  file_dfs <- lapply(file_list,read.csv,header=TRUE,fileEncoding="LATIN1",
+    strip.white=TRUE,colClasses="character",na.strings=c("","NA"))
+  print(length(file_dfs))
+    #sapply(file_dfs, nrow) # can look at number of rows in each csv
+  for(file in seq_along(file_dfs)){
+    # add file name as column, to record home institution for each record
+    file_dfs[[file]]$filename <- rep(file_list[file],
+      nrow(file_dfs[[file]]))
+    # remove file path portion
+    file_dfs[[file]]$filename <- mgsub(
+      file_dfs[[file]]$filename,c(paste0(path,"/"),".csv"),"")
+    # add year of submission
+    file_dfs[[file]]$submission_year <- submission_year
+  }
+  print(head(file_dfs[[1]]))
+  # stack all datasets using rbind.fill, which keeps non-matching columns
+  #   and fills with NA; 'Reduce' iterates through and merges with previous
+  # this may take a few minutes if you have lots of data
+  all_data6 <- Reduce(rbind.fill, file_dfs)
+    print(nrow(all_data6))
+    print(ncol(all_data6))
+  return(all_data6)
+}
 
 
 ################################################################################
