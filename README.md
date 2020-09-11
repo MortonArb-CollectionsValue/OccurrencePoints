@@ -3,42 +3,42 @@
 
 ## 0-1_set_workingdirectory.R
 
- Sets the working environment based on the computer on which you're working.
+Sets the working environment based on the computer on which you're working.
 
- >INPUTS: User needs to update file paths based on specific computer and setup
+>INPUTS: User needs to update file paths based on specific computer and setup
 
 ## 1-0_get_taxonomic_info.R
 
- Takes a list of taxa and uses the 'taxize' package to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually (recommended). Information pulled includes:
+Takes a list of taxa and uses the 'taxize' package to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually (recommended). Information pulled includes:
 
- Acceptance status and authors from:
- - Tropicos
- - Integrated Taxonomic Information Service (ITIS)
- - Kew’s Plants of the World (POW)
- - The Plant List (TPL)
+Acceptance status and authors from:
+- Tropicos
+- Integrated Taxonomic Information Service (ITIS)
+- Kew’s Plants of the World (POW)
+- The Plant List (TPL)
 
- Synonyms from:
- - Tropicos
- - ITIS
- - POW
+Synonyms from:
+- Tropicos
+- ITIS
+- POW
 
- >INPUTS: List of target taxa (target_taxa.csv, or create list by hand in script)
- >
- >OUTPUTS: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); see "Taxonomy Output" tab for table metadata: https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing
- >
- >NOTE: The functions in this script ('taxize' package) are slow and require manual input while running; therefore if your list is long, you may need to find synonyms a different way.
+>INPUTS: List of target taxa (target_taxa.csv, or create list by hand in script)
+>
+>OUTPUTS: List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); see "Taxonomy Output" tab for table metadata: https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing
+>
+>NOTE: The functions in this script ('taxize' package) are slow and require manual input while running; therefore if your list is long, you may need to find synonyms a different way.
 
 ## 1-1_prepare_gis_data.R
 
- Adds GlobalTreeSearch (GTS) and IUCN Red List (RL) country-level distribution data to target taxa list and preps country (adm0), state/province (adm1), and county (adm2) polygons for later use.
+Adds GlobalTreeSearch (GTS) and IUCN Red List (RL) country-level distribution data to target taxa list and preps country (adm0), state/province (adm1), and county (adm2) polygons for later use.
 
- >INPUTS:
- > -- List of target taxa with synonyms (target_taxa_with_syn.csv)
- > -- GlobalTreeSearch country-level distribution data for target genera, downloaded from https://tools.bgci.org/global_tree_search.php (globaltreesearch_country_distribution.csv)
- >
- >OUTPUTS:
- > -- List of target taxa with native country distribution from GTS and IUCN RL added (target_taxa_with_native_dist.csv); RL also has some introduced country distribution data that is added
- > -- RData file with polygon data (admin_shapefiles.RData) from 'rnaturalearthhires' package, including: countries shapefile (adm0.poly),  state-level shapefile (adm1.poly), and county-level shapefile (adm2.poly)
+>INPUTS:
+>-- List of target taxa with synonyms (target_taxa_with_syn.csv)
+>-- GlobalTreeSearch country-level distribution data for target genera, downloaded from https://tools.bgci.org/global_tree_search.php (globaltreesearch_country_distribution.csv)
+>
+>OUTPUTS:
+>-- List of target taxa with native country distribution from GTS and IUCN RL added (target_taxa_with_native_dist.csv); RL also has some introduced country distribution data that is added
+>-- RData file with polygon data (admin_shapefiles.RData) from 'rnaturalearthhires' package, including: countries shapefile (adm0.poly),  state-level shapefile (adm1.poly), and county-level shapefile (adm2.poly)
 
 ## 2-0_get_raw_occurrence_points.R
 
@@ -128,7 +128,7 @@
 
 # file structure
 
-  **Folders/files that must be manually created/downloaded are bolded**
+  **Folders/files that must be manually created or downloaded are bolded**
 
   - **occurrence_points**
     - **inputs**
@@ -140,7 +140,7 @@
         - target_taxa_with_native_dist.csv
       - **gis_data**
         - **USA_adm**
-          - **USA_adm2.shp** etc.
+          - **USA_adm2.shp**, and associated files
         - geo_work0.xlsx
         - geo_work1.xlsx
         - geo_work2.xlsx
@@ -153,7 +153,7 @@
         - gbif_raw
         - idigbio_raw
         - sernec_raw
-          - **<<zipped download for each target genus>>**
+          - **[[zipped download for each target genus]]**
         - bien_raw
         - fia_raw
         - bison_raw
@@ -167,14 +167,14 @@
         - sernec.csv
         - exsitu.csv
     - outputs
-      - need_geolocation_<<YYYY-MM-DD>>.csv
-      - occurrence_point_count_per_species_<<YYYY-MM-DD>>.csv
+      - need_geolocation_[[YYYY-MM-DD]].csv
+      - occurrence_point_count_per_species_[[YYYY-MM-DD]].csv
       - raw_split_by_sp
-        - <<genus_species>>.csv
-      - flag_summary_by_sp_<<YYYY-MM-DD>>.csv
+        - [[genus_species]].csv
+      - flag_summary_by_sp_[[YYYY-MM-DD]].csv
       - spp_edited_points
-        - <<genus_species>>.csv
+        - [[genus_species}}.csv
       - spp_interactive_maps
-        - <<genus_species>>_leaflet_map.html
+        - [[genus_species]]_leaflet_map.html
       - spp_basic_maps
-        - <<genus_species>>_raw.png
+        - [[genus_species]]_raw.png
