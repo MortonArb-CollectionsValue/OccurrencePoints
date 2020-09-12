@@ -69,7 +69,7 @@ if(dir.exists(file.path(main_dir, "outputs", out.fld.nm)))
 ################################################################################
 
 # list of species files to iterate
-all.spp.files <- list.files(path=file.path(main_dir, "outputs", "working",
+all.spp.files <- list.files(path=file.path(main_dir, "outputs",
   "raw_split_by_sp"), ignore.case=FALSE, full.names=FALSE, recursive=TRUE)
 #all.spp.files <- all.spp.files[1:5]
 spp_list <- file_path_sans_ext(all.spp.files)
@@ -100,11 +100,17 @@ for (i in 1:length(spp_list)){
   f.nm <- spp_list[i]
 
   # bring in records
-  eo.df <- read.csv(file.path(main_dir, "outputs", "working", "raw_split_by_sp",
+  eo.df <- read.csv(file.path(main_dir, "outputs", "raw_split_by_sp",
     paste0(f.nm, ".csv")))
 
+  # skip if less than 2 rows (code doesn't work)
   if(nrow(eo.df)<2){
     cat("Skipping ", f.nm, ", ", i, " of ", length(spp_list), ", because less than 2 rows.\n\n", sep="")
+    summary_add <- data.frame(
+      species_name_acc = spp_list[i], total_pts = nrow(eo.df),
+      .cen = NA,.urb = NA,.inst = NA,.con = NA,.outl = NA,.gtsnative = NA,
+      .rlnative = NA, .rlintroduced = NA, stringsAsFactors=F)
+    summary_tbl[i,] <- summary_add
   } else {
 
     # create SpatialPointsDataFrame for species

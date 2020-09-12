@@ -1,7 +1,7 @@
 ################################################################################
 
-## 3-1_geo_refinement.R
-### Authors: Shannon M. Still & Emily Beckman ### Date: 08/10/2020
+## 4-0_plot_occurrence_points.R
+### Authors: Emily Beckman & Christy Rollinson ### Date: 09/11/2020
 
 ### DESCRIPTION:
 
@@ -34,129 +34,110 @@ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
 ################################################################################
-# 1. Read in data
-################################################################################
-
-imls.output <- file.path(main_dir, "outputs")
-path.pts <- file.path(imls.output, "spp_edited_points")
-path.figs <- file.path(imls.output, "basic_maps_split_by_sp")
-
-if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
-
-map.world <- map_data("world")
-# ------------------------------------------------------------------------------
-# ---------------------------------------
-# spp.test <- c("Quercus georgiana", "Quercus imbricaria", "Quercus arkansana", "Quercus falcata", "Quercus stellata", "Quercus acutissima")
-spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
-
-################################################################################
-# 1. Load file paths and data
-################################################################################
-# spp.v <- spp.test
-spp.v <- spp.all
-
-for(i in 1:length(spp.v)){
-  spp.now <- spp.v[i]
-  # spp.now <- gsub(spp.n)
-  cat("Starting ", spp.now, ", ", i, " of ", length(spp.v), ".\n", sep="")
-
-  dat.now <- read.csv(file.path(path.pts, paste0(spp.v[i], ".csv")))
-  dat.now$decimalLatitude <- as.numeric(dat.now$decimalLatitude)
-  dat.now$decimalLongitude <- as.numeric(dat.now$decimalLongitude)
-  # summary(dat.now[dat.now$decimalLatitude<0,])
-  summary(dat.now)
-
-  if(nrow(dat.now[!is.na(dat.now$decimalLatitude),])==0) next
-
-  png(file.path(path.figs, paste0(spp.now, "_raw.png")), height=6, width=10, units="in", res=180)
-  print(
-    ggplot() +
-      coord_equal() +
-      ggtitle(sub("_", " ", spp.now)) +
-      geom_path(data=map.world, aes(x=long, y=lat, group=group)) +
-      geom_point(data=dat.now, aes(x=decimalLongitude, y=decimalLatitude), color="red", size=2) +
-      scale_x_continuous(expand=c(0,0)) +
-      scale_y_continuous(expand=c(0,0)) +
-      theme_minimal()
-  )
-  dev.off()
-
-    cat("\tEnding ", spp.now, ", ", i, " of ", length(spp.v), ".\n\n", sep="")
-}
-# ---------------------------------------
-rm(data.now)
-
-################################################################################
 # Use leaflet package to create interactive maps to explore (html)
 ################################################################################
 
-# list of test species
-# spp.test <- c("Quercus_boyntonii","Quercus_dalechampii","Quercus_georgiana",
-#               "Quercus_imbricaria","Quercus_arkansana","Quercus_falcata","Quercus_stellata",
-#               "Quercus_acutissima","Quercus_palmeri")
+# set up file paths
+imls.output <- file.path(main_dir, "outputs")
+path.pts <- file.path(imls.output, "spp_edited_points")
+spp.test <- c("Quercus_boyntonii","Quercus_dalechampii","Quercus_georgiana",
+              "Quercus_imbricaria","Quercus_arkansana","Quercus_falcata",
+              "Quercus_stellata","Quercus_acutissima","Quercus_palmeri")
+spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
 
-# spp.v <- spp.test
-# spp.v <- spp.all
+# create folder for maps, if not yet created
+if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
 
-# function for mapping points
-map.pts <- function(pts){
+# cycle through each species file and create map
+for(i in 1:length(spp.test)){
+
+  # read in records
+  spp.now <- read.csv(file.path(main_dir,"outputs","spp_edited_points",
+    paste0(spp.test[4], ".csv")))
+
+  # set database as factor and order appropriately
+  spp.now$database <- factor(spp.now$database,
+    levels = c("Ex_situ","FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN"))
+  spp.now <- spp.now %>% arrange(desc(database))
+  # create color palette... used http://medialab.github.io/iwanthue/
+  colors <- c("#B88F4F","#B5AF3C","#83B53C","#33A874","#259699","#2F74B0","#8B59BD")
+  database.pal <- colorFactor(palette=colors, levels=unique(spp.now$database))
+
+  # create map
   map <- leaflet() %>%
-    addProviderTiles("CartoDB.PositronNoLabels") %>%
-    ## addPolygon() -- country level distibution from GTS
-    addCircleMarkers(
-      data = pts,
-      lng = ~decimalLongitude,
-      lat = ~decimalLatitude,
+    # Base layer groups
+      addProviderTiles(providers$CartoDB.PositronNoLabels, group = "CartoDB.PositronNoLabels") %>%
+      #addProviderTiles(providers$CartoDB.Positron, group = "CartoDB.Positron") %>%
+      #addProviderTiles(providers$Esri.WorldTopoMap, group = "Esri.WorldTopoMap") %>%
+      #addProviderTiles(providers$Stamen.Watercolor, group = "Stamen.Watercolor") %>%
+    addControl(spp.test[4], position = "topright") %>%
+    # Color by database
+    addCircleMarkers(data = spp.now, ~decimalLongitude, ~decimalLatitude,
       popup = ~paste(
-        "Species name:",taxon_name_full,"(",list,")","<br/>",
+        "Taxon name:",taxon_name_full,"(",list,")","<br/>",
         "Database:",database,"<br/>",
         "Dataset name:",datasetName,"<br/>",
-        #"All source databases:",source_databases,"<br/>",
+        "All source databases:",all_source_databases,"<br/>",
         "Year:",year,"<br/>",
         "Basis of record:",basisOfRecord,"<br/>",
         "Establishment means:",establishmentMeans,"<br/>",
         "Coordinate uncertainty:",coordinateUncertaintyInMeters,"<br/>",
         "ID:",UID),
-      radius = 5,
-      fillOpacity = 0.6,
-      stroke = F,
-      color = ~palette(database)) %>%
-    addControl(
-      pts$species_name_acc[1],
-      position = "topright") %>%
-    addLegend(
-      pal = palette,
-      values = unique(dat.now$database),
-      title = "Source database",
-      position = "bottomright",
-      opacity = 0.6)
-  return(map)
-}
-
-## run through species and save maps
-for(i in 1:length(spp.v)){
-    cat("Starting ", spp.v[i], ", ", i, " of ", length(spp.v), ".\n", sep="")
-
-  # read file
-  dat.now <- read.csv(file.path(path.pts,
-                                paste0(spp.v[i], ".csv")), colClasses = "character")
-                                # paste0(spp.all[1], ".csv")), colClasses = "character")
-  # lat and long to numeric
-  dat.now$decimalLatitude <- as.numeric(dat.now$decimalLatitude)
-  dat.now$decimalLongitude <- as.numeric(dat.now$decimalLongitude)
-  # set database as factor and order appropriately
-  dat.now$database <- factor(dat.now$database,
-                             levels = c("FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN"))
-  dat.now <- dat.now %>% arrange(desc(database))
-  # create color palette
-  colors <- c("#f00e99","#d91818","#cc671b","#bf9c1f","#28a822","#238b99",
-              "#234691","#622180")
-  palette <- colorFactor(palette=colors, levels=unique(dat.now$database))
-  # create map
-  map_final <- map.pts(dat.now); map_final
+      color = ~database.pal(database),radius = 5,fillOpacity = 0.6,stroke = F) %>%
+    # Overlay groups (can toggle)
+    addCircleMarkers(data = spp.now %>% filter(!.cen), ~decimalLongitude, ~decimalLatitude,
+      radius = 5, fillOpacity = 0.8, stroke = F, color = "red",
+      group = "Within 500m of country/state centroid (.cen)") %>%
+    addCircleMarkers(data = spp.now %>% filter(!.urb), ~decimalLongitude, ~decimalLatitude,
+      radius = 5, fillOpacity = 0.8, stroke = F, color = "red",
+      group = "In urban area (.urb)") %>%
+    addCircleMarkers(data = spp.now %>% filter(!.inst), ~decimalLongitude, ~decimalLatitude,
+      radius = 5, fillOpacity = 0.8, stroke = F, color = "red",
+      group = "Within 100m of biodiversity institution (.inst)") %>%
+    addCircleMarkers(data = spp.now %>% filter(!.con), ~decimalLongitude, ~decimalLatitude,
+      radius = 5, fillOpacity = 0.8, stroke = F, color = "red",
+      group = "Not in reported country (.con)") %>%
+    addCircleMarkers(data = spp.now %>% filter(!.outl), ~decimalLongitude, ~decimalLatitude,
+      radius = 5, fillOpacity = 0.8, stroke = F, color = "red",
+      group = "Geographic outlier (.outl)") %>%
+    addCircleMarkers(data = spp.now %>% filter(!.gtsnative), ~decimalLongitude, ~decimalLatitude,
+      radius = 5, fillOpacity = 0.8, stroke = F, color = "red",
+      group = "Outside GTS native country (.gtsnative)") %>%
+    addCircleMarkers(data = spp.now %>% filter(!.rlnative), ~decimalLongitude, ~decimalLatitude,
+      radius = 5, fillOpacity = 0.8, stroke = F, color = "red",
+      group = "Outside IUCN RL native country (.rlnative)") %>%
+    addCircleMarkers(data = spp.now %>% filter(!.rlintroduced), ~decimalLongitude, ~decimalLatitude,
+      radius = 5, fillOpacity = 0.8, stroke = F, color = "red",
+      group = "In IUCN RL introduced country (.rlintroduced)") %>%
+    # Layers control
+    addLayersControl(
+      #baseGroups = c("CartoDB.PositronNoLabels",
+      #               "CartoDB.Positron",
+      #               "Esri.WorldTopoMap",
+      #               "Stamen.Watercolor"),
+      overlayGroups = c("Within 500m of country/state centroid (.cen)",
+                        "In urban area (.urb)",
+                        "Within 100m of biodiversity institution (.inst)",
+                        "Not in reported country (.con)",
+                        "Geographic outlier (.outl)",
+                        "Outside GTS native country (.gtsnative)",
+                        "Outside IUCN RL native country (.rlnative)",
+                        "In IUCN RL introduced country (.rlintroduced)"),
+      options = layersControlOptions(collapsed = FALSE)) %>%
+    #hideGroup("Within 500m of country/state centroid (.cen)") %>%
+    #hideGroup("In urban area (.urb)") %>%
+    #hideGroup("Within 100m of biodiversity institution (.inst)") %>%
+    #hideGroup("Not in reported country (.con)") %>%
+    #hideGroup("Geographic outlier (.outl)") %>%
+    #hideGroup("Outside GTS native country (.gtsnative)") %>%
+    #hideGroup("Outside IUCN RL native country (.rlnative)") %>%
+    #hideGroup("In IUCN RL introduced country (.rlintroduced)") %>%
+    addLegend(pal = database.pal, values = unique(spp.now$database),
+      title = "Source database", position = "bottomright", opacity = 0.6)
+  map
   # save map
-  htmlwidgets::saveWidget(map_final, file.path(imls.output,
-                                               "interactive_maps_split_by_sp", paste0(spp.v[i], "_leaflet_map.html")))
+  htmlwidgets::saveWidget(map, file.path(main_dir,"outputs",
+    "interactive_maps_split_by_sp", paste0(spp.v[i], "_leaflet_map.html")))
 
       cat("\tEnding ", spp.v[i], ", ", i, " of ", length(spp.v), ".\n\n", sep="")
 
@@ -358,3 +339,60 @@ eo.post_s <- eo.post3 %>%
       paste0(eo.post_s$species_name_acc[1],": "),
       position = "topright")
   map
+
+
+
+
+
+################################################################################
+# 1. Read in data
+################################################################################
+
+imls.output <- file.path(main_dir, "outputs")
+path.pts <- file.path(imls.output, "spp_edited_points")
+path.figs <- file.path(imls.output, "basic_maps_split_by_sp")
+
+if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
+
+map.world <- map_data("world")
+# ------------------------------------------------------------------------------
+# ---------------------------------------
+# spp.test <- c("Quercus georgiana", "Quercus imbricaria", "Quercus arkansana", "Quercus falcata", "Quercus stellata", "Quercus acutissima")
+spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
+
+################################################################################
+# 1. Load file paths and data
+################################################################################
+# spp.v <- spp.test
+spp.v <- spp.all
+
+for(i in 1:length(spp.v)){
+  spp.now <- spp.v[i]
+  # spp.now <- gsub(spp.n)
+  cat("Starting ", spp.now, ", ", i, " of ", length(spp.v), ".\n", sep="")
+
+  dat.now <- read.csv(file.path(path.pts, paste0(spp.v[i], ".csv")))
+  dat.now$decimalLatitude <- as.numeric(dat.now$decimalLatitude)
+  dat.now$decimalLongitude <- as.numeric(dat.now$decimalLongitude)
+  # summary(dat.now[dat.now$decimalLatitude<0,])
+  summary(dat.now)
+
+  if(nrow(dat.now[!is.na(dat.now$decimalLatitude),])==0) next
+
+  png(file.path(path.figs, paste0(spp.now, "_raw.png")), height=6, width=10, units="in", res=180)
+  print(
+    ggplot() +
+      coord_equal() +
+      ggtitle(sub("_", " ", spp.now)) +
+      geom_path(data=map.world, aes(x=long, y=lat, group=group)) +
+      geom_point(data=dat.now, aes(x=decimalLongitude, y=decimalLatitude), color="red", size=2) +
+      scale_x_continuous(expand=c(0,0)) +
+      scale_y_continuous(expand=c(0,0)) +
+      theme_minimal()
+  )
+  dev.off()
+
+    cat("\tEnding ", spp.now, ", ", i, " of ", length(spp.v), ".\n\n", sep="")
+}
+# ---------------------------------------
+rm(data.now)

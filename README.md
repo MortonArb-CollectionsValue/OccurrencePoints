@@ -111,8 +111,8 @@
  - **.inst**: Flag records within 100m of biodiversity institutions
  - **.con**: Flag records outside their reported country
  - **.outl**: Flag geographic outliers in species distribution (based on quantile method, with multiplier of the interquartile range = 5; must have at least 7 records to be tested)
- - **.gtsnative**: Flag records in countries outside the species native range as reported in GlobalTreeSearch
- - **.rlnative**: Flag records in countries outside the species native range as reported in the IUCN Red List
+ - **.gtsnative**: Flag records in countries outside the species native range as reported in GlobalTreeSearch (note that sometimes points on islands or near water are flagged because slight coarseness of global polygons)
+ - **.rlnative**: Flag records in countries outside the species native range as reported in the IUCN Red List (note that sometimes points on islands or near water are flagged because slight coarseness of global polygons)
  - **.rlintroduced**: Flag records in countries reported in the IUCN Red List as part of the species "introduced" range
 
  Other important columns for sorting and filtering include:
@@ -132,7 +132,7 @@
  > ~ Summary table with one row for each target species, listing number of points and number of flagged records in each flag column (flag_summary_by_sp.csv)
 
 
-## 5-0_plot_occurrence_raw_all.R
+## 4-0_plot_occurrence_raw_all.R
 
  ! STILL IN DEVELOPMENT !
 
