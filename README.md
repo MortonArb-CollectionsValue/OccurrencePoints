@@ -100,12 +100,12 @@
  >
  >OUTPUTS:<br>
  > ~ CSV of all occurrence points without lat-long but with locality description (need_geolocation.csv)<br>
- > ~ raw_split_by_sp folder with CSV of occurrence points for each target species (e.g., Quercus_lobata.csv)<br>
+ > ~ spp_raw_points folder with CSV of occurrence points for each target species (e.g., Quercus_lobata.csv)<br>
  > ~ Summary table with one row for each target species, listing number of points with valid a lat-long and number of points with locality description only (occurrence_point_count_per_sp.csv)
 
 ## 3-1_refine_occurrence_points.R
 
- Flags suspect points by adding a column for each type of flag, where FALSE = flagged. Most of the flagging is done through the 'CoordinateCleaner' package, which was created for "geographic cleaning of coordinates from biologic collections." Flag columns include:
+ Flags suspect points by adding a column for each type of flag, where FALSE = flagged. Most of the flagging is done through the 'CoordinateCleaner' package, which was created for "geographic cleaning of coordinates from biologic collections," but GTS and RL flags are original. Flag columns include:
  - **.cen**: Flag records within 500m of country and province centroids
  - **.urb**: Flag records inside urban areas (based on rnaturalearth ne_50m_urban_areas shapefile)
  - **.inst**: Flag records within 100m of biodiversity institutions
@@ -134,9 +134,14 @@
 
 ## 4-0_plot_occurrence_raw_all.R
 
- ! STILL IN DEVELOPMENT !
+ Creates interactive (HTML) occurrence point map for each target species, for exploring. Includes toggles that show points flagged in 3-1_refine_occurrence_points.R<br>
+ Also creates two fixed basic (PNG) maps for each target species: one with all valid occurrence points (output from 3-0_compile_occurrence_points.R) and another with all flagged points removed (output from 3-1_refine_occurrence_points.R).
 
- Creates occurrence point map for each species, for exploring
+ >INPUTS:<br>
+ > ~ Occurrence points from 3-1_refine_occurrence_points.R (spp_edited_points)
+ > OUTPUTS:<br>
+ > ~ spp_interactive_maps folder with HTML map for each target species (e.g., Quercus_lobata_leafet_map.html), which can be downloaded and opened in your browser for exploring
+ > ~ spp_basic_maps folder with PNG maps for each target species, one with all valid points (e.g., Quercus_lobata_raw.png) and one with unflagged points only (e.g., Quercus_lobata_filtered.png)
 
 ## X-0_Run_Point_Data.R
 
@@ -187,7 +192,7 @@
     - outputs
       - need_geolocation_[[YYYY-MM-DD]].csv
       - occurrence_point_count_per_species_[[YYYY-MM-DD]].csv
-      - raw_split_by_sp
+      - spp_raw_points
         - [[genus_species]].csv
       - summary_of_flagged_points_[[YYYY-MM-DD]].csv
       - spp_edited_points

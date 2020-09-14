@@ -20,7 +20,7 @@
       # 3+ (optional) other data you want to keep with taxa info
 
 ### DATA OUT:
-  # folder (raw_split_by_sp) with CSV of raw occurrence data for each target
+  # folder (spp_raw_points) with CSV of raw occurrence data for each target
   #   species (e.g., Malus_angustifolia.csv)
   # CSV of all occurrence points without lat-long but with locality description
   #   (need_geolocation.csv)
@@ -403,10 +403,10 @@ sp_split <- split(geo_pts2, as.factor(geo_pts2$species_name_acc))
 names(sp_split) <- gsub(" ","_",names(sp_split))
 
 # write files
-if(!dir.exists(file.path(main_dir,"outputs","raw_split_by_sp")))
-  dir.create(file.path(main_dir,"outputs","raw_split_by_sp"), recursive=T)
+if(!dir.exists(file.path(main_dir,"outputs","spp_raw_points")))
+  dir.create(file.path(main_dir,"outputs","spp_raw_points"), recursive=T)
 lapply(seq_along(sp_split), function(i) write.csv(sp_split[[i]],
-  file.path(main_dir,"outputs","raw_split_by_sp",
+  file.path(main_dir,"outputs","spp_raw_points",
   paste0(names(sp_split)[[i]], ".csv")),row.names = F))
 
 #unlink("all_data_to_clean.RData")

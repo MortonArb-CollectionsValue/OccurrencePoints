@@ -70,7 +70,7 @@ if(dir.exists(file.path(main_dir, "outputs", out.fld.nm)))
 
 # list of species files to iterate
 all.spp.files <- list.files(path=file.path(main_dir, "outputs",
-  "raw_split_by_sp"), ignore.case=FALSE, full.names=FALSE, recursive=TRUE)
+  "spp_raw_points"), ignore.case=FALSE, full.names=FALSE, recursive=TRUE)
 #all.spp.files <- all.spp.files[1:5]
 spp_list <- file_path_sans_ext(all.spp.files)
 
@@ -100,7 +100,7 @@ for (i in 1:length(spp_list)){
   f.nm <- spp_list[i]
 
   # bring in records
-  eo.df <- read.csv(file.path(main_dir, "outputs", "raw_split_by_sp",
+  eo.df <- read.csv(file.path(main_dir, "outputs", "spp_raw_points",
     paste0(f.nm, ".csv")))
 
   # skip if less than 2 rows (code doesn't work)
