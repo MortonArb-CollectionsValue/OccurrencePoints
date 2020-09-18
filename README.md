@@ -1,6 +1,6 @@
 
 ## This workflow is meant for downloading and cleaning occurrence point data for target species. The following outline gives an overview of each script.
-### Final output is a folder of "spp_edited_points" with CSV of occurrence points for each target species; a variety of standardized columns are included for sorting and filtering, based on specific project goals (see 3-1_refine_occurrence_points.R below for details). An interactive map (HTML) for each target species is located in "spp_interactive_maps" folder, and can be used for visualizing standard columns and flags.
+### Final output is a folder of "spp_edited_points" with CSV of occurrence points for each target species; a variety of standardized columns are included for sorting and filtering, based on specific project goals (see 3-1 below for details). An interactive map (HTML) for each target species is located in "spp_interactive_maps" folder, and can be used for visualizing standard columns and flags.
 
 ## 0-1_set_workingdirectory.R
 
@@ -85,7 +85,7 @@
 ## 3-0_compile_raw_occurrence_points.R
 
  Compiles raw occurrence point data previously downloaded. Note that this script and all following work on a species level, not by taxon (original taxon name is retained for reference but all grouping is by accepted species name). Steps include:
- - Stack all data from 2-0_get_raw_occurrence_points.R, and, if utilizing, 2-1_compile_exsitu_data.R
+ - Stack all data from 2-0, and, if utilizing, 2-1
  - Filter by target taxa (necessary because some databases were downloaded by genus) and match to list of target taxa and synonyms (adds accepted species name column)
  - Standardize some key columns (year, basisOfRecord, establishmentMeans)
  - Check validity of latitude and longitude (can be plotted; not both equal to zero; not further than 0.01 decimal degree from land)
