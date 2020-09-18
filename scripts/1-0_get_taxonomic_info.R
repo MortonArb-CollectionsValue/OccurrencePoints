@@ -51,9 +51,8 @@ source('scripts/0-1_set_workingdirectory.R')
 ################################################################################
 #source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
-# remove speices/taxa that did not have any synonyms (they create errors
-#   in next step), create data frame of synonyms, and add column stating
-#   which database it came from
+# remove speices/taxa that did not have any synonyms, create data frame of
+#   synonyms, and add column stating which database it came from
 synonyms.compiled <- function(syn_output,db_name){
   found <- NA
   for(i in 1:length(syn_output)){
