@@ -170,7 +170,7 @@ native_dist <- taxon_list %>%
 
 # write taxon list with GTS and RL distribution information
 write.csv(native_dist, file.path(main_dir,"inputs","known_distribution",
-    "target_taxa_with_native_dist.csv"))
+    "target_taxa_with_native_dist.csv"),row.names=F)
 
 ################################################################################
 # 2. Download polygon data for countries, states, counties
@@ -227,13 +227,18 @@ write_xlsx(adm1.poly@data, path=file.path(main_dir,"inputs","gis_data",
 #plot(adm1.poly)
 
 # U.S. COUNTIES
-  # read in
-adm2.poly <- readOGR(dsn=file.path(main_dir,"inputs","gis_data","usa",
-  "USA_adm"), "USA_adm2")
-  # select only necessary columns and rename with qualifier at beginning
-adm2.poly <- adm2.poly[,3:7]
-names(adm2.poly@data) <- c("county.NAME_0","county.ID_1","county.NAME_1",
-  "county.ID_2","county.NAME_2")
+  # download
+download.file("https://www2.census.gov/geo/tiger/GENZ2018/shp/cb_2018_us_county_5m.zip",
+  destfile=file.path(main_dir,"inputs","gis_data","USA_adm2.zip"))
+unzip(zipfile=file.path(main_dir,"inputs","gis_data","USA_adm2.zip"),
+  exdir=file.path(main_dir,"inputs","gis_data","USA_adm2"))
+  # delete unzipped folder
+unlink(paste0(file.path(main_dir,"inputs","gis_data","USA_adm2.zip")))
+  # read in file
+adm2.poly <- readOGR(dsn=file.path(main_dir,"inputs","gis_data","USA_adm2"),
+  "cb_2018_us_county_5m")
+  # select only necessary columns
+adm2.poly <- adm2.poly[,c(1:3,6)]
   # write file
 write_xlsx(adm2.poly@data, path=file.path(main_dir,"inputs","gis_data",
   "geo_work2.xlsx"))
@@ -290,7 +295,7 @@ write_xlsx(adm2.poly@data, path=file.path(main_dir,"inputs","gis_data",
 ################################################################################
 
 ## save these objects for later use
-save(adm0.poly, adm1.poly, adm2.poly, native_dist,
+save(adm0.poly, adm1.poly, adm2.poly, #native_dist,
      #taxon_list, gts_list, rl_native, rl_introduced,
      #adm0, adm1, adm2, adm0.spdf, adm1.spdf, adm2.spdf,
      file=file.path(main_dir, "inputs", "gis_data", "admin_shapefiles.RData"))
