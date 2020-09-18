@@ -80,7 +80,7 @@
  > ~ Folder of CSV files whose column names have be standardized by hand using the ["standardizing_accessions_data_fields"](https://docs.google.com/spreadsheets/d/1QLxxWu-bUIRcrjHiaWeSz9n1ms4EQB3yQ8P8PBBx3Zk/edit?usp=sharing) template<br>
  >
  >OUTPUTS:<br>
- > ~ Ex situ accessions data compiled into one CSV (exsitu.csv), with some fields standardized: provenance type, number of individuals, latitude and longitude of wild collecting location, collection/acquisition year (want to add some others eventually, like germplasm type). Depending on the institutions submitting data and your target species, most records will not have wild lat-long data; these data are often only available if the institution has a focus on wild collecting or conservation.
+ > ~ Ex situ accessions data compiled into one CSV (exsitu.csv), with some fields standardized: provenance type, number of individuals (zero if dead), latitude and longitude of wild collecting location, collection/acquisition year (want to add some others eventually, like germplasm type). Depending on the institutions submitting data and your target species, most records will not have wild lat-long data; these data are often only available if the institution has a focus on wild collecting or conservation.
 
 ## 3-0_compile_raw_occurrence_points.R
 
