@@ -55,8 +55,13 @@ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 # 1. Read in data
 ################################################################################
 
-# bring in data (load from saved .RData file)
+# bring in polygon (load from saved .RData file)
 load(file.path(main_dir, "inputs", "gis_data", "admin_shapefiles.RData"))
+
+# read in country-level native distribution data
+native_dist <- read.csv(file.path(main_dir,"inputs","known_distribution",
+  "target_taxa_with_native_dist.csv"), header = T, na.strings = c("","NA"),
+  colClasses = "character")
 
 # create new folder for revised points, if not already existing
 out.fld.nm <- "spp_edited_points"
