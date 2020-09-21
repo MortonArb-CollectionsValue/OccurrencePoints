@@ -176,6 +176,10 @@ write.csv(native_dist, file.path(main_dir,"inputs","known_distribution",
 # 2. Download polygon data for countries, states, counties
 ################################################################################
 
+# create folder for gis data
+if(!dir.exists(file.path(main_dir,"inputs","gis_data")))
+  dir.create(file.path(main_dir,"inputs","gis_data"), recursive=T)
+
 ## bring in polygons for world regions and US (down to county level);
 ##  could use maps::county() function instead
 ##  but will use the rnaturalearthhires package for polygons at adm0/adm1 levels
