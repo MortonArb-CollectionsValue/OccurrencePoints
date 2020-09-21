@@ -85,7 +85,7 @@
 ## 3-0_compile_raw_occurrence_points.R
 
  Compiles raw occurrence point data previously downloaded. Note that this script and all following work on a species level, not by taxon (original taxon name is retained for reference but all grouping is by accepted species name). Steps include:
- - Stack all data from 2-0, and, if utilizing, 2-1
+ - Stack all occurrence point data from 2-0, and, if utilizing, ex situ data from 2-1
  - Filter by target taxa (necessary because some databases were downloaded by genus) and match to list of target taxa and synonyms (adds accepted species name column)
  - Standardize some key columns (year, basisOfRecord, establishmentMeans)
  - Check validity of latitude and longitude (can be plotted; not both equal to zero; not further than 0.01 decimal degree from land)
@@ -138,9 +138,10 @@
  Also creates two fixed basic (PNG) maps for each target species: one with all valid occurrence points (output from 3-0_compile_occurrence_points.R) and another with all flagged points removed (output from 3-1_refine_occurrence_points.R).
 
  >INPUTS:<br>
- > ~ Occurrence points from 3-1_refine_occurrence_points.R (spp_edited_points)
+ > ~ Occurrence points from 3-1_refine_occurrence_points.R (spp_edited_points)<br>
+ >
  > OUTPUTS:<br>
- > ~ spp_interactive_maps folder with HTML map for each target species (e.g., Quercus_lobata_leafet_map.html), which can be downloaded and opened in your browser for exploring
+ > ~ spp_interactive_maps folder with HTML map for each target species (e.g., Quercus_lobata_leafet_map.html), which can be downloaded and opened in your browser for exploring<br>
  > ~ spp_basic_maps folder with PNG maps for each target species, one with all valid points (e.g., Quercus_lobata_raw.png) and one with unflagged points only (e.g., Quercus_lobata_filtered.png)
 
 ## X-0_Run_Point_Data.R
@@ -151,7 +152,7 @@
 
 # file structure
 
-  **Folders/files that must be manually created or downloaded are bolded; unbolded folders/files are created or downloaded within the scripts**
+##**Folders/files that must be manually created or downloaded are bolded; unbolded folders/files are created or downloaded within the scripts**
 
   - **occurrence_points**
     - **inputs**
@@ -161,17 +162,17 @@
       - **known_distribution**
         - **globaltreesearch_country_distribution.csv**
         - target_taxa_with_native_dist.csv
-      - **gis_data**
-        - **USA_adm**
-          - **USA_adm2.shp**, and associated files
-        - geo_work0.xlsx
-        - geo_work1.xlsx
-        - geo_work2.xlsx
-        - admin_shapefiles.RData
       - **fia_tables**
         - **FIA_AppendixF_TreeSpeciesCodes_2016.csv**
         - **US_state_county_FIPS_codes.csv**
         - PLOT.csv
+      - gis_data
+        - USA_adm
+          - cb_2018_us_county_5m.shp and associated files
+        - geo_work0.xlsx
+        - geo_work1.xlsx
+        - geo_work2.xlsx
+        - admin_shapefiles.RData      
       - raw_occurrence
         - gbif_raw
         - idigbio_raw
