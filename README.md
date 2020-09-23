@@ -30,7 +30,7 @@
  >OUTPUTS:<br>
  > ~ List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); synonyms are added as additional rows; see ["Taxonomic Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for table metadata
  >
- >NOTE: The functions in this script ('taxize' package) are slow and require manual input while running; therefore if your list is more than a few hundred, you may need to find synonyms a different way.
+ >NOTE: The functions in this script ('taxize' package) are slow and require manual input while running; therefore if your list is more than a few hundred, maximum, you may need to find synonyms a different way.
 
 ## 1-1_prepare_gis_data.R
 
@@ -95,7 +95,7 @@
  - Write a separate CSV of lat-long points for each target species
 
  >INPUTS:<br>
- > ~ Raw occurrence point data from 2-0_get_raw_occurrence_points.R and (optionally) 2-1_compile_exsitu_data.R<br>
+ > ~ Raw occurrence point data from 2-0 and (optionally) 2-1<br>
  > ~ List of target taxa and synonyms (target_taxa_with_syn.csv)
  >
  >OUTPUTS:<br>
@@ -125,7 +125,7 @@
  - **coordinateUncertaintyInMeters**
 
  >INPUTS:<br>
- > ~ Compiled occurrence points from 3-0_compile_occurrence_points.R
+ > ~ Compiled occurrence points from 3-0
  >
  >OUTPUTS:<br>
  > ~ spp_edited_points folder with CSV of occurrence points for each target species (e.g., Quercus_lobata.csv); see ["Occurrence Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for full output metadata<br>
@@ -134,11 +134,11 @@
 
 ## 4-0_plot_occurrence_raw_all.R
 
- Creates interactive (HTML) occurrence point map for each target species, for exploring. Includes toggles that show points flagged in 3-1_refine_occurrence_points.R<br>
- Also creates two fixed basic (PNG) maps for each target species: one with all valid occurrence points (output from 3-0_compile_occurrence_points.R) and another with all flagged points removed (output from 3-1_refine_occurrence_points.R).
+ Creates interactive (HTML) occurrence point map for each target species, for exploring. Includes toggles that show points flagged in 3-1<br>
+ Also creates two fixed basic (PNG) maps for each target species: one with all valid occurrence points (output from 3-0) and another with all flagged points removed (output from 3-1).
 
  >INPUTS:<br>
- > ~ Occurrence points from 3-1_refine_occurrence_points.R (spp_edited_points)<br>
+ > ~ Occurrence points from 3-1 (spp_edited_points)<br>
  >
  > OUTPUTS:<br>
  > ~ spp_interactive_maps folder with HTML map for each target species (e.g., Quercus_lobata_leafet_map.html), which can be downloaded and opened in your browser for exploring<br>

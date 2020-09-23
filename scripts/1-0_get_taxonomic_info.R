@@ -29,7 +29,7 @@
 
 # rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'rgbif', 'data.table', 'taxize',
-  'anchors', 'batchtools', 'textclean', 'stringi', "devtools")
+  'anchors', 'batchtools', 'textclean', 'stringi', 'devtools')
 # install.packages (my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
 rm(my.packages)
@@ -44,6 +44,7 @@ rm(my.packages)
 
 # or use 0-1_set_workingdirectory.R script:
 # source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+# source("./Documents/GitHub/IMLS_Beckman/scripts/GA2_set_workingdirectory.R")
 source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
@@ -79,8 +80,7 @@ synonyms.compiled <- function(syn_output,db_name){
 #tpl_families() # list of families in database
 families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
 #families <- "Sapindaceae"
-#families <- c("Juglandaceae","Fagaceae","Leguminosae","Lauraceae","Pinaceae",
-#  "Taxaceae")
+#families <- c("Juglandaceae","Fagaceae","Leguminosae","Lauraceae","Pinaceae","Taxaceae")
 
 # read in taxa list
 taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
@@ -185,12 +185,12 @@ tp_names_noDup$acceptance <- str_to_lower(tp_names_noDup$acceptance)
 
 ## GET SYNONYMS
 
-if(exists("tpkey")){
-  tp_syn <- synonyms(species_names, db="tropicos", key=tpkey)
-} else {
+#if(exists("tpkey")){
+#  tp_syn <- synonyms(species_names, db="tropicos", key=tpkey)
+#} else {
   tp_syn <- synonyms(species_names, db="tropicos")
-}
-rm(tpkey)
+#}
+#rm(tpkey)
 
 # !! STOP BEFORE RUNNING NEXT SECTION -- YOU MAY HAVE TO ANSWER SOME PROMPTS
 
@@ -441,12 +441,68 @@ tpl_all <- tpl_names_noDup %>% filter(tpl_names_noDup$taxon_name_acc %in%
   taxa_names)
 head(tpl_all)
 
+###############
+### E) Global Biodiversity Information Facility (GBIF)
+### https://www.gbif.org/species/search
+###############
+
+## GET SYNONYMS
+
+gbif_names <- data.frame()
+for(i in 1:length(taxa_names)){
+  output_new <- name_lookup(query=taxa_names[i],
+    status = c("synonym","homotypic_synonym"))$data
+  output_new$taxon_name_acc <- taxa_names[i]
+  output_new$database <- "gbif"
+  gbif_names <- rbind.fill(gbif_names,output_new)
+}
+# keep only necessary columns and rename for joining later
+gbif_names <- gbif_names %>%
+  filter(rank == "SPECIES" | rank == "VARIETY" | is.na(rank) |
+    rank == "INFRASPECIFIC_NAME" | rank == "SUBSPECIES") %>%
+  dplyr::select(taxon_name_acc,database,scientificName,key,taxonomicStatus) %>%
+  rename(match_id = key,
+         acceptance = taxonomicStatus,
+         match_name_with_authors = scientificName) %>%
+  separate("match_name_with_authors",
+    c("genus_new","species_new","infra_rank","infra_name","extra"),sep=" ",
+    remove=F,fill="right")
+gbif_names$acceptance <- str_to_lower(gbif_names$acceptance)
+head(gbif_names)
+# create standard taxon name column
+gbif_names$taxon_name_match <- NA
+for(i in 1:nrow(gbif_names)){
+  if(!is.na(gbif_names$infra_rank[i]) &
+    (gbif_names$infra_rank[i] == "var." | gbif_names$infra_rank[i] == "subsp.")){
+    gbif_names$taxon_name_match[i] <- paste(gbif_names$genus_new[i],
+      gbif_names$species_new[i],gbif_names$infra_rank[i],
+      gbif_names$infra_name[i],sep = " ")
+  } else if(!is.na(gbif_names$infra_rank[i]) & gbif_names$infra_rank[i] == "x"){
+    gbif_names$taxon_name_match[i] <- NA
+    #gbif_names$taxon_name_match[i] <- paste(gbif_names$genus_new[i],
+    #  gbif_names$species_new[i],gbif_names$infra_rank[i],
+    #  gbif_names$infra_name[i],gbif_names$extra[i],sep = " ")
+  } else {
+    gbif_names$taxon_name_match[i] <- paste(gbif_names$genus_new[i],
+      gbif_names$species_new[i],sep = " ")
+  }
+}
+unique(gbif_names$taxon_name_match)
+# remove duplicates and extra columns
+gbif_all <- gbif_names %>%
+  filter(!is.na(taxon_name_match)) %>%
+  filter(taxon_name_acc != taxon_name_match) %>%
+  distinct(taxon_name_match,taxon_name_acc,.keep_all=T) %>%
+  dplyr::select(taxon_name_acc,database,match_name_with_authors,match_id,
+    acceptance,taxon_name_match)
+head(gbif_all)
+
 ################################################################################
 # 3. Bind all taxonomic status info and synonyms together
 ################################################################################
 
-# create dataframe of all synonyms found
-datasets <- list(tp_all,itis_all,pow_all,tpl_all)
+# create dataframe of all data found
+datasets <- list(tp_all,itis_all,pow_all,tpl_all,gbif_all)
 all_data_raw <- Reduce(rbind.fill,datasets)
 all_data <- all_data_raw
   names(all_data)
@@ -522,11 +578,6 @@ nrow(all_data)
 all_data <- all_data[which(is.na(all_data$infra_rank) |
   all_data$infra_rank != "f."),]
 nrow(all_data)
-  ## remove synonyms with less than two sources
-all_data <- all_data[which(all_data$database_count > 1 |
-  grepl("homotypic",all_data$acceptance) |
-  grepl("accepted",all_data$acceptance)),]
-nrow(all_data)
   ## remove records where same syn match name matches more than 1 taxon_name_acc
 all_data$dup <- c(duplicated(all_data$taxon_name_match,fromLast=T)
   | duplicated(all_data$taxon_name_match))
@@ -534,20 +585,40 @@ all_data <- setdiff(all_data,all_data[which(
   all_data$list == "synonym" & all_data$dup == T),])
 nrow(all_data)
   ## remove var. and subsp. synonyms when species is already represented
+  ## (skip if you want children!)
 all_data <- setdiff(all_data,all_data[which(
   all_data$genus_species_acc == all_data$genus_species_match &
   grepl("\\.",all_data$taxon_name_match)),])
+all_data$syn_pair <- paste(all_data$genus_species_acc,
+  all_data$genus_species_match,sep=";")
+all_data$syn_pair2 <- paste(all_data$genus_species_acc,
+  all_data$taxon_name_match,sep=";")
+all_data <- setdiff(all_data,all_data[which(
+  all_data$syn_pair %in% all_data$syn_pair2 &
+  grepl("\\.",all_data$taxon_name_match)),])
 nrow(all_data)
+  ## remove hybrids (naming format is too variable to be useful)
+  ##  and other strange names
+all_data <- all_data[which(!grepl(" x | unranked | group | subg\\.",
+  all_data$taxon_name_match)),]
+nrow(all_data)
+head(all_data,n=50)
+  ## remove synonyms with less than two sources
+  ## CUTS DOWN SIGNIFICANTLY BUT MAY REMOVE IMPORTANT SYNONYMS!
+#all_data <- all_data[which(all_data$database_count > 1 |
+#  grepl("homotypic",all_data$acceptance) |
+#  grepl("accepted",all_data$acceptance)),]
+#nrow(all_data)
 
 # final ordering of names and column selection
-all_data <- all_data %>%
-  dplyr::arrange(taxon_name_acc) %>%
-  dplyr::select(taxon_name_acc,taxon_name_match,genus_species_acc,genus,species,
+all_data_final <- all_data %>%
+  dplyr::arrange(taxon_name_acc,database_count) %>%
+  dplyr::select(taxon_name_acc,taxon_name_match,genus,species,
     infra_rank,infra_name,list,database,acceptance,database_count,
-    match_name_with_authors)
-setnames(all_data,
-  old = c("taxon_name_match","genus_species_acc"),
-  new = c("taxon_name","species_name_acc"))
+    match_name_with_authors,genus_species_acc) %>%
+  rename(species_name_acc = genus_species_acc,
+         taxon_name = taxon_name_match)
+head(all_data_final)
 # write file
-write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
+write.csv(all_data_final,file.path(main_dir,"inputs","taxa_list",
   "target_taxa_with_syn.csv"),row.names=F)
