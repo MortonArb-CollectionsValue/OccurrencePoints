@@ -45,7 +45,7 @@ rm(my.packages)
 # or use 0-1_set_workingdirectory.R script:
 # source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 # source("./Documents/GitHub/IMLS_Beckman/scripts/GA2_set_workingdirectory.R")
-source('scripts/0-1_set_workingdirectory.R')
+ source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions
@@ -487,7 +487,6 @@ for(i in 1:nrow(gbif_names)){
       gbif_names$species_new[i],sep = " ")
   }
 }
-unique(gbif_names$taxon_name_match)
 # remove duplicates and extra columns
 gbif_all <- gbif_names %>%
   filter(!is.na(taxon_name_match)) %>%
@@ -602,7 +601,6 @@ nrow(all_data)
 all_data <- all_data[which(!grepl(" x | unranked | group | subg\\.",
   all_data$taxon_name_match)),]
 nrow(all_data)
-head(all_data,n=50)
   ## remove synonyms with less than two sources
   ## CUTS DOWN SIGNIFICANTLY BUT MAY REMOVE IMPORTANT SYNONYMS!
 #all_data <- all_data[which(all_data$database_count > 1 |
@@ -613,9 +611,9 @@ head(all_data,n=50)
 # final ordering of names and column selection
 all_data_final <- all_data %>%
   dplyr::arrange(taxon_name_acc,database_count) %>%
-  dplyr::select(taxon_name_acc,taxon_name_match,genus,species,
-    infra_rank,infra_name,list,database,acceptance,database_count,
-    match_name_with_authors,genus_species_acc) %>%
+  dplyr::select(taxon_name_match,genus,species,
+    infra_rank,infra_name,list,taxon_name_acc,genus_species_acc,database,
+    acceptance,database_count,match_name_with_authors) %>%
   rename(species_name_acc = genus_species_acc,
          taxon_name = taxon_name_match)
 head(all_data_final)

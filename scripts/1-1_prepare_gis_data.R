@@ -10,16 +10,16 @@
 
 ### DATA IN:
   # target_taxa_with_syn.csv
-  # globaltreesearch_country_distribution.csv (download country distribution
-  #   data for each target genus: https://tools.bgci.org/global_tree_search.php)
-  # U.S. county boundaries shapefile (USA_adm2.shp)
+  # CSV of country-level distribution for each target genus, downloaded
+  #   from GlobalTreeSearch (https://tools.bgci.org/global_tree_search.php)
+  #   and placed in "inputs/known_distribution" folder
 
 ### DATA OUT:
   # List of target taxa with native country distribution from GTS and IUCN RL
   #   added (target_taxa_with_native_dist.csv); RL also has some introduced
   #   country distribution data that is added
   # RData file with country and state polygon data from 'rnaturalearthhires'
-  #   package and manually downloaded U.S. county polygon data
+  #   package and U.S. county polygon data from census.gov
   #   (admin_shapefiles.RData)
   # Files for looking/working over the data
     # geo_work0.xlsx
@@ -48,8 +48,9 @@ lapply(my.packages, require, character.only=TRUE)
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-#source("scripts/0-1_set_workingdirectory.R")
+# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+# source("./Documents/GitHub/IMLS_Beckman/scripts/GA2_set_workingdirectory.R")
+ source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
 # Load functions
@@ -73,15 +74,27 @@ taxon_list <- taxon_list %>% filter(!is.na(species_name_acc))
 
 ### GlobalTreeSearch (GTS)
 
-# read in GlobalTreeSearch data
-gts_list <- read.csv(file.path(main_dir,"inputs","known_distribution",
-  "globaltreesearch_country_distribution.csv"), header = T,
-  na.strings=c("","NA"), colClasses="character")
-# gadm <- read_xlsx(file.path(main_dir,"inputs", "gis_data",
-#   "global_admin_areas.xlsx"), sheet = "Sheet1")
-
-# split countries by delimiter
+# First, download raw data
+  # Go to https://tools.bgci.org/global_tree_search.php
+  # Type your target genus name into the "Genus" box
+  # Click "Search Plants" then scroll to the bottom and click "download as CSV
+  #   file"
+  # If you have more than one target genus, repeat the above steps for the
+  #   other genera
+  # Move all downloads to "occurrence_points/inputs/known_distribution" folder
+# read in and compile GlobalTreeSearch data
+file_list <- list.files(path = file.path(main_dir,"inputs","known_distribution"),
+  pattern = "globaltreesearch_results", full.names = T)
+file_dfs <- lapply(file_list, read.csv, colClasses = "character",
+  na.strings=c("","NA"),strip.white=T)
+gts_list <- data.frame()
+  for(file in seq_along(file_dfs)){
+    gts_list <- rbind(gts_list, file_dfs[[file]])
+  }
+head(gts_list)
+  # split countries by delimiter
 gts_all <- gts_list %>%
+  rename(taxon_name = taxon) %>%
   mutate(native_distribution =
     strsplit(as.character(native_distribution), "; ")) %>%
   unnest(native_distribution) %>% mutate(native_distribution =
@@ -104,11 +117,13 @@ country_set <- as.data.frame(sort(unique(gts_all$native_distribution))) %>%
       origin="country.name", destination="fips"))
 names(country_set)[1] <- "country_name"
 # add country codes to GTS native distribution data
-names(gts_list)[4] <- "gts_native_dist"
+names(gts_list)[5] <- "gts_native_dist"
 gts_list$gts_native_dist_iso2c <- gts_list$gts_native_dist
 gts_list$gts_native_dist_iso2c <- mgsub(gts_list$gts_native_dist_iso2c,
   array(as.character(country_set$country_name)),
   array(as.character(country_set$iso2c)))
+gts_list <- gts_list %>% dplyr::select(-comment)
+head(gts_list)
 # save the country codes for ISO2, ISO3, and numeric and character
 #   codes, FIPS code
 #  write_xlsx(country_set, path=file.path(main_dir,"inputs","gis_data",
@@ -122,7 +137,7 @@ taxon_list <- left_join(taxon_list, gts_list[,c(2,4,5)],
 ### IUCN Red List (RL)
 
 # use rredlist package to get taxon names and country-level spp. dist.
-# can a little while if lots of species
+# can take a little while if lots of species
 countries <- data.frame()
 target_taxa <- taxon_list[,1]
 for(i in 1:length(target_taxa)){
@@ -167,6 +182,10 @@ native_dist <- taxon_list %>%
   distinct(species_name_acc,gts_native_dist,
   gts_native_dist_iso2c,rl_native_dist,rl_native_dist_iso2c,
   rl_introduced_dist,rl_introduced_dist_iso2c)
+
+# see which target species are missing GTS or RL data
+native_dist[is.na(native_dist$gts_native_dist),]$species_name_acc
+native_dist[is.na(native_dist$rl_native_dist),]$species_name_acc
 
 # write taxon list with GTS and RL distribution information
 write.csv(native_dist, file.path(main_dir,"inputs","known_distribution",

@@ -10,7 +10,7 @@
 
 ## 1-0_get_taxonomic_info.R
 
- Takes a list of taxa and uses the 'taxize' package to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually based on expert knowledge of the taxa (not all synonyms pulled are agreeable, depending on your taxonomic viewpoint). Taxonomic information can also be added manually to the final list, for taxa with no match in the databases searched. Information pulled includes:
+ Takes a list of taxa and uses the "taxize" package to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually based on expert knowledge of the taxa (not all synonyms pulled are agreeable, depending on your taxonomic viewpoint). Taxonomic information can also be added manually to the final list. Information pulled includes:
 
  Acceptance status and authors from:
  - Tropicos
@@ -22,6 +22,7 @@
  - Tropicos
  - ITIS
  - POW
+ - Global Biodiversity Information Facility (GBIF)
 
  >INPUTS:<br>
  > ~ List of target taxa (target_taxa.csv with one column containing target taxa tames; or create list by hand in script)
@@ -30,7 +31,7 @@
  >OUTPUTS:<br>
  > ~ List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); synonyms are added as additional rows; see ["Taxonomic Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for table metadata
  >
- >NOTE: The functions in this script ('taxize' package) are slow and require manual input while running; therefore if your list is more than a few hundred, maximum, you may need to find synonyms a different way.
+ >NOTE: Some of the functions in this script (from "taxize" package) are slow and require manual input while running; therefore if your list is more than a few hundred names, maximum, you may need to find synonyms a different way (e.g., based on one backbone suited to your target taxa).
 
 ## 1-1_prepare_gis_data.R
 
@@ -38,25 +39,25 @@
 
  >INPUTS:<br>
  > ~ List of target taxa with synonyms (target_taxa_with_syn.csv)<br>
- > ~ [GlobalTreeSearch](https://tools.bgci.org/global_tree_search.php) country-level distribution data for target genera (globaltreesearch_country_distribution.csv); must download data for each genus then compile manually<br>
+ > ~ [GlobalTreeSearch](https://tools.bgci.org/global_tree_search.php) country-level distribution data for target genera; must download data for each genus individually and place files in "inputs/known_distribution" folder<br>
  >
  >OUTPUTS:<br>
  > ~ List of target taxa with native country distribution from GTS and IUCN RL added (target_taxa_with_native_dist.csv); RL also has some introduced country distribution data that is added<br>
- > ~ RData file with country and state polygon data from 'rnaturalearthhires' package and U.S. county polygon data from census.gov (admin_shapefiles.RData)
+ > ~ RData file with country and state polygon data from "rnaturalearthhires" package and U.S. county polygon data from census.gov (admin_shapefiles.RData)
 
 ## 2-0_get_raw_occurrence_points.R
 
  Provides manual instructions and code chunks for downloading and standardizing occurrence points from a variety of online databases. Standardization includes column selection and header names, taxon name format, and values in priority columns (database, basisOfRecord, establishmentMeans, year). Data from all sources can be pulled, or specific sources can be chosen individually.
 
  Global databases include:
- - Global Biodiversity Information Facility (GBIF) [auto download with 'rgbif']
- - Integrated Digitized Biocollections (iDigBio) [auto download with 'ridigbio', or manual download to make sure all fields are captured]
+ - Global Biodiversity Information Facility (GBIF) [auto download with "rgbif"]
+ - Integrated Digitized Biocollections (iDigBio) [auto download with "ridigbio", or manual download to make sure all fields are captured]
  - U.S. Herbarium Consortia (SERNEC, SEINet, etc.) [manual download; instructions provided in script]
- - Botanical Information and Ecology Network (BIEN) [auto download with 'BIEN']
+ - Botanical Information and Ecology Network (BIEN) [auto download with "BIEN"]
 
  National databases include:
  - Forest Inventory and Analysis (FIA) Program, USDA Forest Service [auto download with raw files pulled from web]
- - Biodiversity Information Serving Our Nation (BISON), USGS [auto download with 'rbison']
+ - Biodiversity Information Serving Our Nation (BISON), USGS [auto download with "rbison"]
 
  >INPUTS:<br>
  > ~ List of target taxa and synonyms (target_taxa_with_syn.csv); all target names (included synonyms) are searched<br>
@@ -105,7 +106,7 @@
 
 ## 3-1_refine_occurrence_points.R
 
- Flags suspect points by adding a column for each type of flag, where FALSE = flagged. Most of the flagging is done through the 'CoordinateCleaner' package, which was created for "geographic cleaning of coordinates from biologic collections," but GTS and RL flags are original. Flag columns include:
+ Flags suspect points by adding a column for each type of flag, where FALSE = flagged. Most of the flagging is done through the ["CoordinateCleaner"](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13152) package, which was created for "geographic cleaning of coordinates from biologic collections," but GTS and RL flags are original. Flag columns include:
  - **.cen**: Flag records within 500m of country and province centroids (default is 1000m, but found it was flagging good points in small states; can test and find best value for your work)
  - **.urb**: Flag records inside urban areas (based on rnaturalearth ne_50m_urban_areas shapefile)
  - **.inst**: Flag records within 100m of biodiversity institutions
