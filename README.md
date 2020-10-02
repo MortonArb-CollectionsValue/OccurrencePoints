@@ -110,7 +110,7 @@
  - **.cen**: Flag records within 500m of country and province centroids (default is 1000m, but found it was flagging good points in small states; can test and find best value for your work)
  - **.urb**: Flag records inside urban areas (based on rnaturalearth ne_50m_urban_areas shapefile)
  - **.inst**: Flag records within 100m of biodiversity institutions
- - **.con**: Flag records outside their reported country
+ - **.con**: Flag records outside their reported country (NA is left unflagged)
  - **.outl**: Flag geographic outliers in species distribution (based on quantile method, with multiplier of the interquartile range = 5; must have at least 7 records to be tested)
  - **.gtsnative**: Flag records in countries outside the species native range as reported in GlobalTreeSearch (note that sometimes points on islands or near water are flagged because slight coarseness of global polygons)
  - **.rlnative**: Flag records in countries outside the species native range as reported in the IUCN Red List (note that sometimes points on islands or near water are flagged because slight coarseness of global polygons)
@@ -154,7 +154,7 @@
 
 # file structure
 
-##**Folders/files that must be manually created or downloaded are bolded; unbolded folders/files are created or downloaded within the scripts**
+## **Folders/files that must be manually created or downloaded are bolded; unbolded folders/files are created or downloaded within the scripts**
 
   - **occurrence_points**
     - **inputs**
