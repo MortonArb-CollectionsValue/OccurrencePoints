@@ -83,7 +83,7 @@ spp_list <- file_path_sans_ext(all.spp.files)
 summary_tbl <- data.frame(species_name_acc = "start", total_pts = "start",
   .cen = "start", .urb = "start", .inst = "start", .con = "start",
   .outl = "start", .gtsnative = "start", .rlnative = "start",
-  .rl_introduced = "start", stringsAsFactors=F)
+  .rlintroduced = "start", .yr1950 = "start", stringsAsFactors=F)
 
   # header/column name order and selection
   c.nms <- c("species_name_acc", "taxon_name", "scientificName",
@@ -95,7 +95,7 @@ summary_tbl <- data.frame(species_name_acc = "start", total_pts = "start",
     "informationWithheld", "issue", "taxon_name_full", "list", "UID",
     "country.name", "country.iso_a2", "country.iso_a3", "country.continent",
     ".cen",".urb",".inst",".con",".outl",".gtsnative",".rlnative",
-    ".rlintroduced")
+    ".rlintroduced",".yr1950")
 
 # iterate through each species file to flag suspect points
 cat("Starting ", "target ", "taxa (", length(spp_list), " total)", ".\n\n",
@@ -178,7 +178,8 @@ for (i in 1:length(spp_list)){
       species = "species_name_acc",
       centroids_rad = 500, # radius around capital coords (meters); default=1000
       inst_rad = 100, # radius around biodiversity institutions coord (meters)
-      tests = c("centroids","institutions","urban")#"outliers","countries"
+      tests = c("centroids","institutions","urban"),#"outliers","countries"
+      urban_ref = urban.poly
     )
     # for some reason the "sea" flag isn't working in the above function...
     #    adding here separately
@@ -194,12 +195,18 @@ for (i in 1:length(spp_list)){
         lat = "decimalLatitude",species = "species_name_acc",
         method = "quantile", mltpl = 5, value = "flagged")
     eo.post2$.outl <- flag_outl
+
+    ## OTHER CHECKS
+    ## Given country vs. lat-long country
     # check if given country matches lat-long country (CoordinateCleaner
     #   has something like this but also flags when NA? Didn't love that)
     eo.post2 <- eo.post2 %>% mutate(.con=(ifelse(
       (as.character(country.iso_a3) == as.character(countryCode_standard) &
       !is.na(country.iso_a3) & !is.na(countryCode_standard)) |
       is.na(country.iso_a3) | is.na(countryCode_standard), TRUE, FALSE)))
+    ## Year
+    eo.post2 <- eo.post2 %>% mutate(.yr1950=(ifelse(
+      (as.numeric(year)>1950 | is.na(year)), TRUE, FALSE)))
 
     # set column order and remove a few unnecessary columns
     eo.post3 <- eo.post2 %>% dplyr::select(all_of(c.nms))
@@ -220,6 +227,7 @@ for (i in 1:length(spp_list)){
       .gtsnative = sum(!eo.post3$.gtsnative),
       .rlnative = sum(!eo.post3$.rlnative),
       .rlintroduced = sum(!eo.post3$.rlintroduced),
+      .yr1950 = sum(!eo.post3$.yr1950),
       stringsAsFactors=F)
     summary_tbl[i,] <- summary_add
 

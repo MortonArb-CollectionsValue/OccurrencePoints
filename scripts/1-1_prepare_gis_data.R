@@ -49,8 +49,7 @@ lapply(my.packages, require, character.only=TRUE)
 
 # or use 0-1_set_workingdirectory.R script:
 # source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-# source("./Documents/GitHub/IMLS_Beckman/scripts/GA2_set_workingdirectory.R")
- source("scripts/0-1_set_workingdirectory.R")
+source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
 # Load functions
@@ -71,6 +70,11 @@ taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
 # keep only taxa with accepted species name
 taxon_list <- taxon_list %>% filter(!is.na(species_name_acc))
   nrow(taxon_list) #636
+
+# create new folder if not already present
+if(!dir.exists(file.path(main_dir,"inputs","known_distribution")))
+  dir.create(file.path(main_dir,"inputs","known_distribution"),
+  recursive=T)
 
 ### GlobalTreeSearch (GTS)
 
@@ -268,7 +272,17 @@ write_xlsx(adm2.poly@data, path=file.path(main_dir,"inputs","gis_data",
 #plot(adm2.poly)
 
 ################################################################################
-# 3. Add centroids (skipping for now)
+# 3. Download polygon data for urban areas
+################################################################################
+
+# URBAN AREAS
+  # download; "large" takes longer to process data later but is more exact?
+  #   choose "medium" if you want processing to go faster
+urban.poly <- rnaturalearth::ne_download(scale = "large", type = "urban_areas")
+#urban.poly <- rnaturalearth::ne_download(scale = "medium", type = "urban_areas")
+
+################################################################################
+# 4. Add centroids (skipping for now)
 ################################################################################
 
 ## calculate centroid of each polygon
@@ -314,11 +328,11 @@ write_xlsx(adm2.poly@data, path=file.path(main_dir,"inputs","gis_data",
 #        adm2,proj4string = CRS(proj4string4poly))
 
 ################################################################################
-# 4. Save for later use
+# 5. Save for later use
 ################################################################################
 
 ## save these objects for later use
-save(adm0.poly, adm1.poly, adm2.poly, #native_dist,
+save(adm0.poly, adm1.poly, adm2.poly, urban.poly, #native_dist,
      #taxon_list, gts_list, rl_native, rl_introduced,
      #adm0, adm1, adm2, adm0.spdf, adm1.spdf, adm2.spdf,
      file=file.path(main_dir, "inputs", "gis_data", "admin_shapefiles.RData"))

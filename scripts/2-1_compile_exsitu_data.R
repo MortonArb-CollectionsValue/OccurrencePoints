@@ -67,7 +67,7 @@ read.exsitu.csv <- function(path,submission_year){
     # add year of submission
     file_dfs[[file]]$submission_year <- submission_year
   }
-  print(head(file_dfs[[1]]))
+  #print(head(file_dfs[[1]]))
   # stack all datasets using rbind.fill, which keeps non-matching columns
   #   and fills with NA; 'Reduce' iterates through and merges with previous
   # this may take a few minutes if you have lots of data
@@ -88,15 +88,28 @@ read.exsitu.csv <- function(path,submission_year){
 #   https://docs.google.com/spreadsheets/d/1QLxxWu-bUIRcrjHiaWeSz9n1ms4EQB3yQ8P8PBBx3Zk/edit?usp=sharing
 
 # ## READ IN FROM MULTIPLE FOLDERS FOR DIFFERENT YEARS/SURVEYS:
-#  # read in data from 2017 and 2019 and stack
+#  # read in data from multiple surveys and stack
+  raw_2020 <- read.exsitu.csv(file.path(main_dir,"inputs",
+    "raw_occurrence","exsitu_standard_column_names","data_2020"), "2020")
+    names(raw_2020)
+    raw_2020 <- raw_2020 %>% dplyr::select(-Other.standard.names.to.use.if.futher.fields.are.provided....)
   raw_2019 <- read.exsitu.csv(file.path(main_dir,"inputs",
     "raw_occurrence","exsitu_standard_column_names","data_2019"), "2019")
+    names(raw_2019)
+    raw_2019 <- raw_2019[, -grep("^X", names(raw_2019))]
   raw_2017 <- read.exsitu.csv(file.path(main_dir,"inputs",
-    "raw_occurrence","exsitu_standard_column_names","data_2017"), "2017")
+    "raw_occurrence","exsitu_standard_column_names","data_2017_OakGapAnalysis"), "2017")
+    names(raw_2017)
+    raw_2017 <- raw_2017 %>% dplyr::select(-common_name,-plant_age,-plant_ht,
+      -plant_ht_units,-author,-species_distrib,-garden_lat,-garden_long,
+      -altitude,-altitude_units,-plant_dbh,-plant_dbh_units,-spatial_proj,
+      -X,-X.1,-syn,-id_year,-voucher)
   # if genus is blank in 2017 data, make it "Quercus"
   raw_2017[which(is.na(raw_2017$genus)),]$genus <- "Quercus"
   # stack all data
-  all_data_raw <- rbind.fill(raw_2019,raw_2017)
+  to_stack <- list(raw_2020,raw_2019,raw_2017)
+  all_data_raw <- Reduce(rbind.fill,to_stack)
+  head(all_data_raw)
 
 # ## OR READ IN FROM ONE FOLDER ONLY:
 #  # create list of paths to ex situ accessions CSV files in folder
@@ -128,14 +141,14 @@ read.exsitu.csv <- function(path,submission_year){
 #  nrow(all_data_raw)
 #  ncol(all_data_raw)
 
-# new version before big changes, so can easily go back to original
+# create new version before big changes, so can easily go back to original
 all_data <- all_data_raw
 # check out column names
 sort(colnames(all_data))
 # IF NEEDED: remove extra columns (can be created through Excel to CSV issues)
-  all_data <- all_data[, -grep("^X", names(all_data))]
+  #all_data <- all_data[, -grep("^X", names(all_data))]
   # check schema to see if problems still exist (there should be 36 columns)
-  str(all_data); sort(colnames(all_data)); ncol(all_data)
+  #str(all_data); sort(colnames(all_data)); ncol(all_data)
 # IF NEEDED: separate column into multiple
 all_data <- all_data %>% separate("specific",
   c("infra_rank_add","infra_name_add"),sep=" ",remove=T,fill="right")
@@ -144,7 +157,7 @@ all_data <- all_data %>% separate("specific",
   #unique(all_data$filename[all_data$ï..taxon_full_name!=""])
 # IF NEEDED: merge similar columns (you may not need to do this if no schema
 #   mistakes were made when manually editing column names).
-#   Can do this step with lots of unites (see below) or from table ?????
+# Can do this step with lots of unites (see below) or from table ?????
 # NOT WORKING:
 #col_align <- read.csv(file.path(imls.meta,"GA2_exsitu_column_headers.csv"),
 #  header=TRUE,strip.white=TRUE,colClasses="character",na.strings=c("","NA"))
@@ -183,7 +196,8 @@ all_data <- all_data %>% separate("specific",
     sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"habitat", c("habitat","site_notes"),
     sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"notes", c("notes","orig_notes"),
+  all_data <- tidyr::unite(all_data,"notes", c("notes","Notes","orig_notes",
+    "coord_det"),
     sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"taxon_full_name", c("taxon_full_name",
     "sp_full_name","ï..sp_full_name","ï..taxon_full_name"),
@@ -206,18 +220,17 @@ all_data <- all_data %>% separate("specific",
     sep=";",remove=T,na.rm=T)
     sort(colnames(all_data)); ncol(all_data)
 # IF NEEDED: remove unused columns or rename columns
-  all_data <- all_data[ , -which(names(all_data) %in% c("altitude",
-    "altitude_units","author","common_name","coord_det","coord_precision",
-    "garden_lat","garden_long","id_year","plant_age","plant_dbh",
-    "plant_dbh_units","plant_ht","plant_ht_units","spatial_proj",
-    "species_distrib","syn","voucher"))]
+  #all_data <- all_data[ , -which(names(all_data) %in% c("col","col2"))]
   #colnames(all_data)[colnames(all_data)=="elevation"] <- "altitude"
-    sort(colnames(all_data)); ncol(all_data) # There should be max of 36...
-  # acc_num,assoc_sp,coll_name,coll_num,coll_year,condition,country,county,
-  # cultivar,dataset_year,filename,garden_loc,genus,germ_type,habitat,hybrid,
-  # infra_name,infra_rank,inst_short,lin_num,locality,municipality,name_determ,
-  # notes,num_indiv,orig_lat,orig_long,orig_source,private,prov_type,rec_as,
-  # species,state,submission_year,taxon_full_name,trade_name
+# CHECK THINGS OUT
+sort(colnames(all_data)); ncol(all_data)
+  # There should be max of 37, including no more than:
+  # acc_num,assoc_sp,coll_name,coll_num,coll_year,condition,coord_precision,
+  # country,county,cultivar,dataset_year,filename,garden_loc,genus,germ_type,
+  # habitat,hybrid,infra_name,infra_rank,inst_short,lin_num,locality,
+  # municipality,name_determ,notes,num_indiv,orig_lat,orig_long,orig_source,
+  # private,prov_type,rec_as,species,state,submission_year,taxon_full_name,
+  # trade_name
 
 # fill in inst_short column with filename if none provided
 all_data$inst_short[all_data$inst_short==""] <-
@@ -238,15 +251,16 @@ all_data[all_data == ""] <- NA
 nrow(all_data) #111581
   # Magnolia
 magnolia_remove <- c("GreenBayBG","JCRaulstonArb","QuarryhillBG",
-  "UBritishColumbiaBG")
+  "UBritishColumbiaBG","MortonArb")
 all_data <- all_data[!(all_data$filename=="PCNMagnolia" &
   all_data$inst_short %in% magnolia_remove),]
   # Acer
-acer_remove <- c("QuarryhillBG","UBritishColumbiaBG","USNatlArb")
+acer_remove <- c("QuarryhillBG","UBritishColumbiaBG","USNatlArb","MortonArb")
 all_data <- all_data[!(all_data$filename=="PCNAcer" &
   all_data$inst_short %in% acer_remove),]
   # Quercus
-quercus_remove <- c("MissouriBG","RanchoSantaAnaBG","StarhillForestArb")
+quercus_remove <- c("MissouriBG","RanchoSantaAnaBG","StarhillForestArb",
+  "MortonArb")
 all_data <- all_data[!(all_data$filename=="PCNQuercus" &
   all_data$inst_short %in% quercus_remove),]
 nrow(all_data) #108722

@@ -81,29 +81,6 @@ percent.filled <- function(df){
   }
 }
 
-# function to extract target species data from each state CSV from FIA
-extract_tree_data <- function(file_name){
-  data <- data.frame()
-  # read in tree data, which lists all species and the plots in which they were
-  #   found; larger ones will take time to read in
-  state_df <- read.csv(file_name)
-  # cycle through vector of target species codes and extract those rows from
-  #   the state CSV
-  for (sp in 1:length(species_codes)){
-    target_sp <- state_df[which(state_df$SPCD==species_codes[[sp]]),]
-    data <- rbind(data, target_sp)
-  }
-
-  # remove state file to make space for reading in next one
-  rm(state_df)
-  # take a look at how much data were pulled
-  cat(file_path_sans_ext(basename(file_name)), ": ", nrow(data), " observations. ",
-        grep(file_name, file_list), " of ", length(file_list), ".")
-  # print(paste(nrow(data), basename(file_name)))
-  return(data)
-  rm(sp)
-}
-
 
 ################################################################################
 ################################################################################
@@ -472,21 +449,20 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","sernec_raw")))
   # Click the Download Specimen Data button (arrow pointing down into a box),
   #   in the top right corner
   # In the pop-up window, select the "Darwin Core" radio button,
-  #   uncheck everything in the "Data Extensions:" section, and
+  #   uncheck everything in the "Data Extensions" section, and
   #   select the "UTF-8 (unicode)" radio button
   #   leave other fields as-is
   # Click "Download Data"
   # If you have more than one target genus, repeat the above steps for the
   #   other genera
-  # Move all the zipped files you downloaded into the "sernec_raw" folder
+  # Move all the folders you downloaded into the "sernec_raw" folder
 
-# unzips each file and pulls the "occurrences.csv" for compilation
-raw.dir <- "sernec_raw"
-f.pth  <- file.path(main_dir, "inputs", "raw_occurrence", raw.dir)
-f.zips <- list.files(f.pth, pattern = ".zip", full.names = T)
-file_dfs <- lapply(f.zips, function(i){
-  read.csv(unz(i, "occurrences.csv"), colClasses = "character",
-   na.strings=c("", "NA"), strip.white=T, fileEncoding="latin1")})
+# pulls the "occurrences.csv" from each genus folder, for compilation
+file_list <- list.files(file.path(main_dir,"inputs","raw_occurrence","sernec_raw"),
+  pattern = "SymbOutput", full.names = T)
+file_dfs <- lapply(file_list, function(i){
+  read.csv(file.path(i,"occurrences.csv"), colClasses = "character",
+   na.strings=c("", "NA"), strip.white=T, fileEncoding="UTF-8")})
 sernec_raw <- data.frame()
   for(file in seq_along(file_dfs)){
     sernec_raw <- rbind(sernec_raw, file_dfs[[file]])
@@ -738,20 +714,23 @@ rm(bien_raw)
 # E) USDA Forest Service, Forest Inventory and Analysis (FIA)
 ###############
 
-# create new folder if not already present
+# create new folders if not already present
 if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","fia_raw")))
   dir.create(file.path(main_dir,"inputs","raw_occurrence","fia_raw"),
   recursive=T)
+if(!dir.exists(file.path(main_dir,"inputs","fia_tables")))
+  dir.create(file.path(main_dir,"inputs","fia_tables"),
+  recursive=T)
 
-# download/read in supplemental tables
-  # download and read in plot data (has lat-long information)
+# download and read in supplemental tables
+  # plot data (has lat-long information)
 download.file("https://apps.fs.usda.gov/fia/datamart/CSV/PLOT.csv",
   file.path(main_dir,"inputs","fia_tables","PLOT.csv"))
 fia_plots <- read.csv(file.path(main_dir,"inputs","fia_tables","PLOT.csv"))
-  # remove unnecessary columns from plot data
+    # remove unnecessary columns from plot data
 fia_plots <- fia_plots[,c("INVYR","STATECD","UNITCD","COUNTYCD","PLOT",
   "LAT","LON")]
-  # read in state and county codes and names
+  # state and county codes and names
 county_codes <- read.csv(file.path(main_dir,"inputs","fia_tables",
   "US_state_county_FIPS_codes.csv"), header = T, na.strings=c("","NA"),
   colClasses="character")
@@ -770,15 +749,12 @@ sort(unique(taxon_fia$taxon_name[which(
   !is.na(taxon_fia$SPCD))]))
 length(species_codes) #56
 
-# You can either download a CSV file for each state or download all data in
-#   one file (~10 GB); you need lots of memory to pull out data from the one
-#   big file, so the script below uses the state files and cycles through each
+# You can either read in a CSV file for each state or download all data in
+#   one file ("https://apps.fs.usda.gov/fia/datamart/CSV/TREE.csv"; ~10 GB);
+#   you need lots of memory to pull out data from the one big file,
+#   so the script below uses the state files and cycles through each
 
-# download one file with data for all states
-#download.file("https://apps.fs.usda.gov/fia/datamart/CSV/TREE.csv",
-#  file.path(main_dir,"inputs","raw_occurrence","fia_raw","TREE.csv"))
-# OR: download raw data CSVs, one for each state
-  # list of states and territories
+# list of states and territories to cycle through
 state_abb <- c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID",
   "IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE",
   "NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN",
@@ -786,21 +762,36 @@ state_abb <- c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID",
     # turn these off if you don't want territories:
   ,"AS","FM","GU","MP","PW","PR","VI"
 )
-  # download each file; this can take a while
-for(i in 1:length(state_abb)){
-  download.file(
-    paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",state_abb[[i]],
-      "_TREE.csv"),
-    file.path(main_dir,"inputs","raw_occurrence","fia_raw",paste0(
-      state_abb[[i]],"_TREE.csv")))
+# function to extract target species data from each state CSV from FIA
+extract_tree_data <- function(state_abb){
+  data <- data.frame()
+  # read in tree data, which lists all species and the plots they're in; larger
+  #   ones will take time to read in
+  state_df <- read.csv(url(paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",
+    state_abb,"_TREE.csv")))
+  # cycle through vector of target species codes and extract those rows from
+  #   the state CSV
+  for (sp in 1:length(species_codes)){
+    target_sp <- state_df[which(state_df$SPCD==species_codes[[sp]]),]
+    data <- rbind(data, target_sp)
+  }
+  # remove state file to make space for reading in next one
+  rm(state_df)
+  # take a look at how much data were pulled
+  cat(state_abb,": ",nrow(data)," observations. ")#,
+  #      grep(file_name, file_list), " of ", length(file_list), ".")
+  # print(paste(nrow(data), basename(file_name)))
+  return(data)
+  rm(sp)
 }
-rm(i)
 # create list of state files to cycle through
-file_list <- list.files(file.path(main_dir,"inputs","raw_occurrence","fia_raw"),
-  pattern = "TREE", full.names = T)
+#file_list <- list.files(file.path(main_dir,"inputs","raw_occurrence","fia_raw"),
+#  pattern = "TREE", full.names = T)
+
 # loop through states and pull data
-fia_outputs <- lapply(file_list, extract_tree_data)
+fia_outputs <- lapply(state_abb, extract_tree_data)
   length(fia_outputs) #57
+
 # stack state-by-state data extracted to create one dataframe
 fia_raw <- data.frame()
 for(file in seq_along(fia_outputs)){
@@ -809,21 +800,11 @@ for(file in seq_along(fia_outputs)){
 nrow(fia_raw) #3414521
 # save(fia_raw, file=file.path(main_dir, "inputs", ""))
 
+# write file of raw data
+write.csv(fia_raw,file.path(main_dir,"inputs","raw_occurrence",
+  "fia_raw","fia_extracted_raw.csv"),row.names=FALSE)
+
 ### standardize column names
-# read in supplemental FIA tables:
-#  - list of species tracked and their codes (read in above)
-#  - state and county codes and names
-#  - plot level data (has lat-long)
-county_codes <- read.csv(file.path(main_dir, "inputs",
-  "fia_tables/US_state_county_FIPS_codes.csv"),header = T,na.strings=c("","NA"),
-  colClasses="character")
-# download plot data
-download.file("https://apps.fs.usda.gov/fia/datamart/CSV/PLOT.csv",
-  file.path(main_dir,"inputs","fia_tables","PLOT.csv"))
-fia_plots <- read.csv(file.path(main_dir, "inputs","fia_tables/PLOT.csv"))
-  # remove unnecessary columns from plot data
-fia_plots <- fia_plots[,c("INVYR","STATECD","UNITCD","COUNTYCD","PLOT",
-  "LAT","LON")]
 # join FIA data to supplemental tables
 fia_raw <- join(fia_raw,fia_codes)
 fia_raw <- join(fia_raw,county_codes)

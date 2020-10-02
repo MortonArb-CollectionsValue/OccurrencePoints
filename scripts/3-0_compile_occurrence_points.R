@@ -50,8 +50,8 @@ lapply(my.packages, require, character.only=TRUE)
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-#source('scripts/0-1_set_workingdirectory.R')
+#source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions
@@ -84,7 +84,7 @@ all_data_raw <- Reduce(rbind.fill, file_dfs)
 
 ##add unique identifier
   nms <- names(all_data_raw)
-all_data_raw <- all_data_raw %>% mutate(UID=paste0('imls', sprintf("%08d",
+all_data_raw <- all_data_raw %>% mutate(UID=paste0('id', sprintf("%08d",
   1:nrow(all_data_raw)))) %>% select(c('UID', all_of(nms)))
 #rm(nms, file_dfs, file_list)
 # all_data$UID <- seq.int(nrow(all_data))
@@ -101,6 +101,8 @@ all_data_raw <- all_data_raw %>% mutate(UID=paste0('imls', sprintf("%08d",
 taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
   "target_taxa_with_syn.csv"), header = T, na.strings = c("","NA"),
   colClasses = "character")
+taxon_list <- taxon_list %>% select(taxon_name,genus,species,infra_rank,
+  infra_name,list,taxon_name_acc,species_name_acc)
 
 # full join to taxon list
 all_data_raw <- left_join(all_data_raw,taxon_list)
@@ -252,10 +254,11 @@ table(geo_pts$database)
 geo_pts$country <- mgsub(geo_pts$country,
     c("áustria","brasil","England","hungria","méxico","México","MÉXICO",
       "Republic of Kosovo","u.s.s.r.","U.S.S.R.","estados unidos","EE. UU.",
-      "repubblica italiana","Repubblica Italiana"),
+      "repubblica italiana","Repubblica Italiana","America","canadá",
+      "United Statese"),
     c("Austria","Brazil","United Kingdom","Hungary","Mexico","Mexico","Mexico",
       "Serbia","Russia","Russia","United States","United States",
-      "Italy","Italy"))
+      "Italy","Italy","United States","Canada","United States"))
 country_set <- as.data.frame(sort(unique(geo_pts$country))) %>%
   add_column(iso3c = countrycode(sort(unique(geo_pts$country)),
       origin="country.name", destination="iso3c"))

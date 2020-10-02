@@ -44,8 +44,7 @@ rm(my.packages)
 
 # or use 0-1_set_workingdirectory.R script:
 # source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-# source("./Documents/GitHub/IMLS_Beckman/scripts/GA2_set_workingdirectory.R")
- source('scripts/0-1_set_workingdirectory.R')
+source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions

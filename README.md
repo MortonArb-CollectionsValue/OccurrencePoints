@@ -35,7 +35,7 @@
 
 ## 1-1_prepare_gis_data.R
 
- Adds GlobalTreeSearch (GTS) and IUCN Red List (RL) country-level distribution data to target taxa list and preps country (adm0), state/province (adm1), and county (adm2) polygons for later use.
+ Adds GlobalTreeSearch (GTS) and IUCN Red List (RL) country-level distribution data to target taxa list, and preps country (adm0), state/province (adm1), county (adm2), and urban areas polygons for later use
 
  >INPUTS:<br>
  > ~ List of target taxa with synonyms (target_taxa_with_syn.csv)<br>
@@ -56,15 +56,15 @@
  - Botanical Information and Ecology Network (BIEN) [auto download with "BIEN"]
 
  National databases include:
- - Forest Inventory and Analysis (FIA) Program, USDA Forest Service [auto download with raw files pulled from web]
+ - Forest Inventory and Analysis (FIA) Program, USDA Forest Service [references raw web files to look for target taxa; does not download because very large]
  - Biodiversity Information Serving Our Nation (BISON), USGS [auto download with "rbison"]
 
  >INPUTS:<br>
- > ~ List of target taxa and synonyms (target_taxa_with_syn.csv); all target names (included synonyms) are searched<br>
+ > ~ List of target taxa and synonyms (target_taxa_with_syn.csv); all target names (including synonyms) are searched<br>
  > ~ FIA metadata tables (FIA_AppendixF_TreeSpeciesCodes_2016.csv; US_state_county_FIPS_codes.csv); available in repository's "data" folder
  >
  >OUTPUTS:<br>
- > ~ Raw occurrence records for target taxa or target genera, depending on how the data were downloaded (e.g., SERNEC data are downloaded for each target genus while GBIF query is by taxon name), one CSV for each database (e.g., gbif.csv); see ["Renaming Columns" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for schema used to rename columns and standardize data
+ > ~ Raw occurrence records for target taxa or target genera, depending on how the data were downloaded (e.g., SERNEC data are downloaded for each target genus while GBIF query is by taxon name), one CSV for each database (e.g., gbif.csv); see ["Renaming Columns" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for schema used to rename columns and standardize data<br>
  >
  >NOTES:<br>
  > ~ Not all data from these sources can be interpreted in the same way (e.g., vouchers or observations of wild individuals, records from botanical gardens, urban/suburban plantings, etc.), sometimes records have conflicting information or have not used the column's standards correctly (e.g., wild locality fields are filled with data referencing the museum the specimen is held in, etc.), and many have duplicates from one or more datasets. The aim of this script is to get all easily-downloadable, public occurrence data, which can then be sorted and vetted for the user's specific purposes.<br>
@@ -106,7 +106,7 @@
 
 ## 3-1_refine_occurrence_points.R
 
- Flags suspect points by adding a column for each type of flag, where FALSE = flagged. Most of the flagging is done through the ["CoordinateCleaner"](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13152) package, which was created for "geographic cleaning of coordinates from biologic collections," but GTS and RL flags are original. Flag columns include:
+ Flags suspect points by adding a column for each type of flag, where FALSE = flagged. Most of the flagging is done through the ["CoordinateCleaner"](https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.13152) package, which was created for "geographic cleaning of coordinates from biologic collections," but GTS, RL, and year flags are original. Flag columns include:
  - **.cen**: Flag records within 500m of country and province centroids (default is 1000m, but found it was flagging good points in small states; can test and find best value for your work)
  - **.urb**: Flag records inside urban areas (based on rnaturalearth ne_50m_urban_areas shapefile)
  - **.inst**: Flag records within 100m of biodiversity institutions
@@ -115,6 +115,7 @@
  - **.gtsnative**: Flag records in countries outside the species native range as reported in GlobalTreeSearch (note that sometimes points on islands or near water are flagged because slight coarseness of global polygons)
  - **.rlnative**: Flag records in countries outside the species native range as reported in the IUCN Red List (note that sometimes points on islands or near water are flagged because slight coarseness of global polygons)
  - **.rlintroduced**: Flag records in countries reported in the IUCN Red List as part of the species "introduced" range
+ - **.yr1950**: Flag records recorded before 1950 (NA is left unflagged)
 
  Other important columns for sorting and filtering include:
  - **species_name_acc**: Your accepted species name, based on target taxa list and synonyms
@@ -160,29 +161,39 @@
       - **taxa_list**
         - **target_taxa.csv**
         - target_taxa_with_syn.csv
-      - **known_distribution**
-        - **globaltreesearch_country_distribution.csv**
+      - known_distribution
+        - **[[GlobalTreeSearch CSV downloaded for each target genus]]**
         - target_taxa_with_native_dist.csv
-      - **fia_tables**
-        - **FIA_AppendixF_TreeSpeciesCodes_2016.csv**
-        - **US_state_county_FIPS_codes.csv**
-        - PLOT.csv
       - gis_data
         - USA_adm
-          - cb_2018_us_county_5m.shp and associated files
+          - cb_2018_us_county_5m.shp [[and associated files]]
         - geo_work0.xlsx
         - geo_work1.xlsx
         - geo_work2.xlsx
-        - admin_shapefiles.RData      
+        - admin_shapefiles.RData
+          - adm0.poly
+          - adm1.poly
+          - adm2.poly
+          - urban.poly
+      - fia_tables
+        - **FIA_AppendixF_TreeSpeciesCodes_2016.csv**
+        - **US_state_county_FIPS_codes.csv**
+        - PLOT.csv
       - raw_occurrence
         - gbif_raw
+          - occurrence.txt
         - idigbio_raw
+          - idigbio_R_download.csv
         - sernec_raw
-          - **[[zipped download for each target genus]]**
+          - **[[folder downloaded for each target genus]]**
         - bien_raw
+          - bien_R_download.csv
         - fia_raw
+          - fia_extracted_raw.csv
         - bison_raw
+          - bison_R_download.csv
         - exsitu_standard_column_names
+          - **[[CSV from each institution, with headers standardized]]**
       - compiled_occurrence
         - bien.csv
         - bison.csv
@@ -194,9 +205,9 @@
     - outputs
       - need_geolocation_[[YYYY-MM-DD]].csv
       - occurrence_point_count_per_species_[[YYYY-MM-DD]].csv
+      - summary_of_flagged_points_[[YYYY-MM-DD]].csv
       - spp_raw_points
         - [[genus_species]].csv
-      - summary_of_flagged_points_[[YYYY-MM-DD]].csv
       - spp_edited_points
         - [[genus_species]].csv
       - spp_interactive_maps

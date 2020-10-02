@@ -55,19 +55,19 @@ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 imls.output <- file.path(main_dir, "outputs")
 path.pts <- file.path(imls.output, "spp_edited_points")
 path.figs <- file.path(imls.output, "spp_interactive_maps")
-spp.test <- c("Quercus_boyntonii","Quercus_dalechampii","Quercus_georgiana",
+spp.all <- c("Quercus_boyntonii","Quercus_dalechampii","Quercus_georgiana",
               "Quercus_imbricaria","Quercus_arkansana","Quercus_falcata",
               "Quercus_stellata","Quercus_acutissima","Quercus_palmeri")
-spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
+#spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
 
 # create folder for maps, if not yet created
 if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
 
 # cycle through each species file and create map
-for(i in 1:length(spp.test)){
+for(i in 1:length(spp.all)){
 
   # read in records
-  spp.now <- read.csv(file.path(path.pts, paste0(spp.test[i], ".csv")))
+  spp.now <- read.csv(file.path(path.pts, paste0(spp.all[i], ".csv")))
 
   ## palette based on database
   # set database as factor and order appropriately
@@ -77,18 +77,19 @@ for(i in 1:length(spp.test)){
   # create color palette
   colors <- c("#cf8d5f","#d4a93d","#c1c46c","#73ad2b","#0aa3a6","#2e46c9",
     "#a86abd")
-  database.pal <- colorFactor(palette=colors, levels=unique(spp.now$database))
+  database.pal <- colorFactor(palette=colors,
+    levels=c("Ex_situ","FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN"))
 
   # create map
     map <- leaflet() %>%
     # Base layer groups
-    addProviderTiles(providers$CartoDB.PositronNoLabels,
-      group = "CartoDB.PositronNoLabels") %>%
-    #addProviderTiles(providers$CartoDB.Positron,
-    #  group = "CartoDB.Positron") %>%
-    addControl(paste0("<b>",spp.test[i]), position = "topright") %>%
+    #addProviderTiles(providers$CartoDB.PositronNoLabels,
+    #  group = "CartoDB.PositronNoLabels") %>%
+    addProviderTiles(providers$CartoDB.Positron,
+      group = "CartoDB.Positron") %>%
+    addControl(paste0("<b>",spp.all[i]), position = "topright") %>%
     addControl(
-      "Toggle below checkboxes on/off to view flagged points (colored red) in each category.</br>
+      "Toggle the checkboxes below on/off to view flagged points (colored red) in each category.</br>
       If no points turn red when box is checked, there are no points flagged in that category.</br>
       Click each point for more information about the record.",
       position = "topright") %>%
@@ -263,6 +264,21 @@ for(i in 1:length(spp.test)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "INTRODUCED, MANAGED, or INVASIVE (establishmentMeans)") %>%
+    addCircleMarkers(data = spp.now %>% filter(!.yr1950),
+      ~decimalLongitude, ~decimalLatitude,
+      popup = ~paste0(
+        "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
+        "<b>Verbatim taxon name:</b> ",taxon_name_full,"<br/>",
+        "<b>Source database:</b> ",database,"<br/>",
+        "<b>All databases with duplicate record:</b> ",all_source_databases,"<br/>",
+        "<b>Year:</b> ",year,"<br/>",
+        "<b>Basis of record:</b> ",basisOfRecord,"<br/>",
+        "<b>Dataset name:</b> ",datasetName,"<br/>",
+        "<b>Establishment means:</b> ",establishmentMeans,"<br/>",
+        "<b>Coordinate uncertainty:</b> ",coordinateUncertaintyInMeters,"<br/>",
+        "<b>ID:</b> ",UID),
+      radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
+      group = "Recorded prior to 1950 (.yr1950)") %>%
     # Layers control
     addLayersControl(
       #baseGroups = c("CartoDB.PositronNoLabels",
@@ -278,7 +294,8 @@ for(i in 1:length(spp.test)){
                         "Outside IUCN RL native country (.rlnative)",
                         "In IUCN RL introduced country (.rlintroduced)",
                         "FOSSIL_SPECIMEN or LIVING_SPECIMEN (basisOfRecord)",
-                        "INTRODUCED, MANAGED, or INVASIVE (establishmentMeans)"),
+                        "INTRODUCED, MANAGED, or INVASIVE (establishmentMeans)",
+                        "Recorded prior to 1950 (.yr1950)"),
       options = layersControlOptions(collapsed = FALSE)) %>%
     #hideGroup("Within 500m of country/state centroid (.cen)") %>%
     hideGroup("In urban area (.urb)") %>%
@@ -290,6 +307,7 @@ for(i in 1:length(spp.test)){
     hideGroup("In IUCN RL introduced country (.rlintroduced)") %>%
     hideGroup("FOSSIL_SPECIMEN or LIVING_SPECIMEN (basisOfRecord)") %>%
     hideGroup("INTRODUCED, MANAGED, or INVASIVE (establishmentMeans)") %>%
+    hideGroup("Recorded prior to 1950 (.yr1950)") %>%
     addLegend(pal = database.pal, values = unique(spp.now$database),
       title = "Source database", position = "bottomright", opacity = 0.6) %>%
     addControl(
@@ -299,9 +317,9 @@ for(i in 1:length(spp.test)){
   map
   # save map
   htmlwidgets::saveWidget(map, file.path(path.figs,
-    paste0(spp.test[i], "_leaflet_map.html")))
+    paste0(spp.all[i], "_leaflet_map.html")))
 
-  cat("\tEnding ", spp.test[i], ", ", i, " of ", length(spp.test), ".\n\n", sep="")
+  cat("\tEnding ", spp.all[i], ", ", i, " of ", length(spp.all), ".\n\n", sep="")
 
 }
 
@@ -310,6 +328,7 @@ for(i in 1:length(spp.test)){
 ################################################################################
 
 path.figs <- file.path(imls.output, "spp_basic_maps")
+spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
 
 if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
 
@@ -347,6 +366,7 @@ for(i in 1:length(spp.all)){
       (.gtsnative | is.na(.gtsnative)) &
       (.rlnative  | is.na(.rlnative)) &
       (.rlintroduced | is.na(.rlintroduced)) &
+      (.yr1950 | is.na(.yr1950)) &
       basisOfRecord != "FOSSIL_SPECIMEN" & basisOfRecord != "LIVING_SPECIMEN" &
       establishmentMeans != "INTRODUCED" & establishmentMeans != "MANAGED" &
       establishmentMeans != "INVASIVE")
