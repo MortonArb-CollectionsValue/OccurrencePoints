@@ -154,7 +154,7 @@
 
 # file structure
 
-## **Folders/files that must be manually created or downloaded are bolded; unbolded folders/files are created or downloaded within the scripts**
+### **Folders/files that must be manually created or downloaded are bolded; unbolded folders/files are created or downloaded within the scripts**
 
   - **occurrence_points**
     - **inputs**
