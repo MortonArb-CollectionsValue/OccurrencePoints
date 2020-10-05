@@ -789,6 +789,7 @@ extract_tree_data <- function(state_abb){
 #  pattern = "TREE", full.names = T)
 
 # loop through states and pull data
+# NOTE: you need a good internet connection for this
 fia_outputs <- lapply(state_abb, extract_tree_data)
   length(fia_outputs) #57
 

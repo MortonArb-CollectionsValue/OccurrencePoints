@@ -315,12 +315,12 @@ for(i in 1:length(spp.all)){
       for information about data sources and flagging methodology.",
       position = "bottomleft")
   map
+
   # save map
   htmlwidgets::saveWidget(map, file.path(path.figs,
     paste0(spp.all[i], "_leaflet_map.html")))
 
   cat("\tEnding ", spp.all[i], ", ", i, " of ", length(spp.all), ".\n\n", sep="")
-
 }
 
 ################################################################################
@@ -362,11 +362,10 @@ for(i in 1:length(spp.all)){
 
   # map with all flagged points removed
   dat.now2 <- dat.now %>%
-    filter(.cen & .urb & .inst & .con & .outl &
+    filter(.cen & .urb & .inst & .con & .outl & .yr1950 &
       (.gtsnative | is.na(.gtsnative)) &
       (.rlnative  | is.na(.rlnative)) &
       (.rlintroduced | is.na(.rlintroduced)) &
-      (.yr1950 | is.na(.yr1950)) &
       basisOfRecord != "FOSSIL_SPECIMEN" & basisOfRecord != "LIVING_SPECIMEN" &
       establishmentMeans != "INTRODUCED" & establishmentMeans != "MANAGED" &
       establishmentMeans != "INVASIVE")

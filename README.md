@@ -131,13 +131,13 @@
  >
  >OUTPUTS:<br>
  > ~ spp_edited_points folder with CSV of occurrence points for each target species (e.g., Quercus_lobata.csv); see ["Occurrence Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for full output metadata<br>
- > ~ Summary table with one row for each target species, listing number of points and number of flagged records in each flag column (flag_summary_by_sp.csv)
+ > ~ Summary table with one row for each target species, listing number of points and number of flagged records in each flag column (summary_of_flagged_points.csv)
 
 
 ## 4-0_plot_occurrence_raw_all.R
 
  Creates interactive (HTML) occurrence point map for each target species, for exploring. Includes toggles that show points flagged in 3-1<br>
- Also creates two fixed basic (PNG) maps for each target species: one with all valid occurrence points (output from 3-0) and another with all flagged points removed (output from 3-1).
+ Also creates two fixed basic (PNG) maps for each target species: one with all occurrence points (output from 3-0) and another with all flagged points removed (output from 3-1).
 
  >INPUTS:<br>
  > ~ Occurrence points from 3-1 (spp_edited_points)<br>
