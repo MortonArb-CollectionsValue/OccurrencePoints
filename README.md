@@ -22,7 +22,7 @@
  - Tropicos
  - ITIS
  - POW
- - Global Biodiversity Information Facility (GBIF)
+ - [NOT USING CURRENTLY] Global Biodiversity Information Facility (GBIF)
 
  >INPUTS:<br>
  > ~ List of target taxa (target_taxa.csv with one column containing target taxa tames; or create list by hand in script)
@@ -116,6 +116,7 @@
  - **.rlnative**: Flag records in countries outside the species native range as reported in the IUCN Red List (note that sometimes points on islands or near water are flagged because slight coarseness of global polygons)
  - **.rlintroduced**: Flag records in countries reported in the IUCN Red List as part of the species "introduced" range
  - **.yr1950**: Flag records recorded before 1950 (NA is left unflagged)
+ - **.yr1980**: Flag records recorded before 1980 (NA is left unflagged)
 
  Other important columns for sorting and filtering include:
  - **species_name_acc**: Your accepted species name, based on target taxa list and synonyms
