@@ -445,55 +445,58 @@ head(tpl_all)
 ### https://www.gbif.org/species/search
 ###############
 
+## commenting this section out for now; pulled a lot of synonyms that were
+#   completely off (multiple insects...!?)
+
 ## GET SYNONYMS
 
-gbif_names <- data.frame()
-for(i in 1:length(taxa_names)){
-  output_new <- name_lookup(query=taxa_names[i],
-    status = c("synonym","homotypic_synonym"))$data
-  output_new$taxon_name_acc <- taxa_names[i]
-  output_new$database <- "gbif"
-  gbif_names <- rbind.fill(gbif_names,output_new)
-}
+#gbif_names <- data.frame()
+#for(i in 1:length(taxa_names)){
+#  output_new <- name_lookup(query=taxa_names[i],
+#    status = c("synonym","homotypic_synonym"))$data
+#  output_new$taxon_name_acc <- taxa_names[i]
+#  output_new$database <- "gbif"
+#  gbif_names <- rbind.fill(gbif_names,output_new)
+#}
 # keep only necessary columns and rename for joining later
-gbif_names <- gbif_names %>%
-  filter(rank == "SPECIES" | rank == "VARIETY" | is.na(rank) |
-    rank == "INFRASPECIFIC_NAME" | rank == "SUBSPECIES") %>%
-  dplyr::select(taxon_name_acc,database,scientificName,key,taxonomicStatus) %>%
-  rename(match_id = key,
-         acceptance = taxonomicStatus,
-         match_name_with_authors = scientificName) %>%
-  separate("match_name_with_authors",
-    c("genus_new","species_new","infra_rank","infra_name","extra"),sep=" ",
-    remove=F,fill="right")
-gbif_names$acceptance <- str_to_lower(gbif_names$acceptance)
-head(gbif_names)
+#gbif_names <- gbif_names %>%
+#  filter(rank == "SPECIES" | rank == "VARIETY" | is.na(rank) |
+#    rank == "INFRASPECIFIC_NAME" | rank == "SUBSPECIES") %>%
+#  dplyr::select(taxon_name_acc,database,scientificName,key,taxonomicStatus) %>%
+#  rename(match_id = key,
+#         acceptance = taxonomicStatus,
+#         match_name_with_authors = scientificName) %>%
+#  separate("match_name_with_authors",
+#    c("genus_new","species_new","infra_rank","infra_name","extra"),sep=" ",
+#    remove=F,fill="right")
+#gbif_names$acceptance <- str_to_lower(gbif_names$acceptance)
+#head(gbif_names)
 # create standard taxon name column
-gbif_names$taxon_name_match <- NA
-for(i in 1:nrow(gbif_names)){
-  if(!is.na(gbif_names$infra_rank[i]) &
-    (gbif_names$infra_rank[i] == "var." | gbif_names$infra_rank[i] == "subsp.")){
-    gbif_names$taxon_name_match[i] <- paste(gbif_names$genus_new[i],
-      gbif_names$species_new[i],gbif_names$infra_rank[i],
-      gbif_names$infra_name[i],sep = " ")
-  } else if(!is.na(gbif_names$infra_rank[i]) & gbif_names$infra_rank[i] == "x"){
-    gbif_names$taxon_name_match[i] <- NA
-    #gbif_names$taxon_name_match[i] <- paste(gbif_names$genus_new[i],
-    #  gbif_names$species_new[i],gbif_names$infra_rank[i],
-    #  gbif_names$infra_name[i],gbif_names$extra[i],sep = " ")
-  } else {
-    gbif_names$taxon_name_match[i] <- paste(gbif_names$genus_new[i],
-      gbif_names$species_new[i],sep = " ")
-  }
-}
+#gbif_names$taxon_name_match <- NA
+#for(i in 1:nrow(gbif_names)){
+#  if(!is.na(gbif_names$infra_rank[i]) &
+#    (gbif_names$infra_rank[i] == "var." | gbif_names$infra_rank[i] == "subsp.")){
+#    gbif_names$taxon_name_match[i] <- paste(gbif_names$genus_new[i],
+#      gbif_names$species_new[i],gbif_names$infra_rank[i],
+#      gbif_names$infra_name[i],sep = " ")
+#  } else if(!is.na(gbif_names$infra_rank[i]) & gbif_names$infra_rank[i] == "x"){
+#    gbif_names$taxon_name_match[i] <- NA
+#    #gbif_names$taxon_name_match[i] <- paste(gbif_names$genus_new[i],
+#    #  gbif_names$species_new[i],gbif_names$infra_rank[i],
+#    #  gbif_names$infra_name[i],gbif_names$extra[i],sep = " ")
+#  } else {
+#    gbif_names$taxon_name_match[i] <- paste(gbif_names$genus_new[i],
+#      gbif_names$species_new[i],sep = " ")
+#  }
+#}
 # remove duplicates and extra columns
-gbif_all <- gbif_names %>%
-  filter(!is.na(taxon_name_match)) %>%
-  filter(taxon_name_acc != taxon_name_match) %>%
-  distinct(taxon_name_match,taxon_name_acc,.keep_all=T) %>%
-  dplyr::select(taxon_name_acc,database,match_name_with_authors,match_id,
-    acceptance,taxon_name_match)
-head(gbif_all)
+#gbif_all <- gbif_names %>%
+#  filter(!is.na(taxon_name_match)) %>%
+#  filter(taxon_name_acc != taxon_name_match) %>%
+#  distinct(taxon_name_match,taxon_name_acc,.keep_all=T) %>%
+#  dplyr::select(taxon_name_acc,database,match_name_with_authors,match_id,
+#    acceptance,taxon_name_match)
+#head(gbif_all)
 
 ################################################################################
 # 3. Bind all taxonomic status info and synonyms together
