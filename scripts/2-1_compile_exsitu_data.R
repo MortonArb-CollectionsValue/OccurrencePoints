@@ -45,7 +45,7 @@ rm(my.packages)
 # source('scripts/0-1_set_workingdirectory.R')
 
 # set target genus/genera name (for file reading and writing)
-target_genus <- "Acer"
+target_genus <- "Magnolia"
 
 ################################################################################
 # Load functions
@@ -952,8 +952,8 @@ all_data13 <- all_data12 %>% dplyr::select(
 str(all_data13)
 
 # write file
-write.csv(all_data13, file.path(main_dir,"Compiled ex situ data",
-  paste0(target_genus,"_exsitu_compiled_standardized.csv")),row.names = F)
+#write.csv(all_data13, file.path(main_dir,"Compiled ex situ data",
+#  paste0(target_genus,"_exsitu_compiled_standardized.csv")),row.names = F)
 
 ##
 ## RENAME FOR GEOLOCATE AND SPLIT BY SPECIES
@@ -1061,19 +1061,24 @@ for(i in 1:length(sp_split)){
 # bind geolocated CSVs together
 post_geo <- Reduce(rbind.fill, file_dfs)
 # fix a few inconsistencies
-  # provenance type column
+  ## provenance type column
 unique(post_geo$prov_type)
-post_geo[which(post_geo$prov_type == "N"),]
-post_geo[which(post_geo$prov_type == "N"),]$prov_type <- "W"
-  # gps determination column
+    # check "H?" rows to see if should be "W" and
+    # if all are "X" gps_det, change prov_type to "H"
+post_geo[which(post_geo$prov_type == "H?"),]
+post_geo[which(post_geo$prov_type == "H?"),]$prov_type <- "H"
+    # check prov_type for rows with coordinates
+unique(post_geo[which(!is.na(post_geo$latitude)),]$prov_type)
+#post_geo[which(!is.na(post_geo$latitude) & post_geo$prov_type == "U"),]
+  ## gps determination column
 unique(post_geo$gps_det)
-post_geo[which(is.na(post_geo$gps_det)),]
+post_geo[which(is.na(post_geo$gps_det)),]$latitude
 post_geo[which(is.na(post_geo$gps_det)),]$gps_det <- "X"
-  # uncertainty column
+  ## uncertainty column
 post_geo$uncertainty <- gsub(" m","",post_geo$uncertainty)
 post_geo[which(post_geo$uncertainty == "0"),]$uncertainty <- NA
 post_geo$uncertainty <- as.numeric(post_geo$uncertainty)
-  # lat and long
+  ## lat and long
 sort(unique(post_geo$latitude))
 sort(unique(post_geo$longitude))
 
@@ -1103,30 +1108,32 @@ yes_geo <- all_data13 %>% filter(UID %in% geolocated2$UID)
   # should be character(0)
 setdiff(geolocated2$UID,yes_geo$UID)
 # add gelocated rows to data
-yes_geo <- yes_geo %>% dplyr::select(-prov_type,-gps_det,-flag,-lat_dd,
+yes_geo <- yes_geo %>% dplyr::select(-prov_type,-gps_det,-lat_dd,
   -long_dd,-county,-state,-country,-coord_precision)
 yes_geo <- full_join(yes_geo,geolocated2)
 # bind all data together (geolocated and garden origin)
-no_geo <- all_data13 %>% filter(!(UID %in% geolocated2$UID)) %>%
-  dplyr::select(-flag)
+no_geo <- all_data13 %>% filter(!(UID %in% geolocated2$UID))
 no_geo$precision <- NA
 all_data15 <- rbind(yes_geo,no_geo)
 
-# make gps_det "X" if NA
-all_data15[which(is.na(all_data15$gps_det)),]$gps_det <- "X"
+# make gps_det "X" if NA -- not doing this now to distinquish records
+#   that have been checked to see if can geolocate versus those that haven't
+#all_data15[which(is.na(all_data15$gps_det)),]$gps_det <- "X"
 unique(all_data15$gps_det)
 
 # arrange columns
 all_data15 <- all_data15 %>%
   arrange(species_name_acc,UID) %>%
+  rename(gps_notes = flag) %>%
   dplyr::select(
     # key data
     UID,inst_short,submission_year,species_name_acc,target_species,
-    prov_type,gps_det,lat_dd,long_dd,coord_precision,all_locality,
+    prov_type,gps_det,lat_dd,long_dd,coord_precision,precision,gps_notes,
+    all_locality,
     # locality
-    locality,municipality,county,state,country,orig_lat,orig_long,
-    orig_source,notes,assoc_sp,habitat,num_indiv,acc_num,precision,
-    latlong_country,
+    locality,municipality,county,state,country,latlong_country,
+    orig_lat,orig_long,
+    orig_source,notes,assoc_sp,habitat,num_indiv,acc_num,
     # source
     lin_num,coll_num,coll_name,coll_year,
     # material info
@@ -1138,6 +1145,7 @@ all_data15 <- all_data15 %>%
     taxon_full_name_orig,taxon_full_name_concat,cultivar,trade_name,
     # institution metadata
     inst_name,inst_country,inst_lat,inst_long)
+all_data15[which(all_data15$gps_notes == ""),]$gps_notes <- NA
 str(all_data15)
 
 # write file
