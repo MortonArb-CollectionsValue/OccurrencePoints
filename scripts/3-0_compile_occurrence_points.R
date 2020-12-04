@@ -80,7 +80,8 @@ length(file_dfs) #7
 # this may take a few minutes if you have lots of data
 all_data_raw <- Reduce(rbind.fill, file_dfs)
   nrow(all_data_raw) #6437517
-  ncol(all_data_raw) #27
+  names(all_data_raw) #28
+  table(all_data_raw$database)
 
 ##add unique identifier
   nms <- names(all_data_raw)
@@ -162,6 +163,7 @@ all_data$localityDescription <- gsub("| | | | | | | |", NA,
 head(unique(all_data$localityDescription))
 
 # check year column
+all_data$year <- as.numeric(all_data$year)
 sort(unique(all_data$year))
 
 # check basis of record column
@@ -216,10 +218,10 @@ geo_pts <- all_data %>%
   #dplyr::select(-localityDescription)
     nrow(geo_pts) #5838416
 
-# check if points are in water, mark, and separate out as other file
+# check if points are in water, mark, and separate out
 world_polygons <- ne_countries(type = 'countries', scale = 'medium')
 # add buffer; 0.01 dd = ~ 0.4 to 1 km depending on location
-world_buff <- buffer(world_polygons, width=0.01, dissolve=F)
+world_buff <- buffer(world_polygons, width=0.04, dissolve=F)
   ## another option is data(buffland)
 # check if in water and mark, then separate out
 geo_pts[is.na(map.where(world_buff, geo_pts$decimalLongitude,
@@ -255,10 +257,12 @@ geo_pts$country <- mgsub(geo_pts$country,
     c("áustria","brasil","England","hungria","méxico","México","MÉXICO",
       "Republic of Kosovo","u.s.s.r.","U.S.S.R.","estados unidos","EE. UU.",
       "repubblica italiana","Repubblica Italiana","America","canadá",
-      "United Statese"),
+      "United Statese",
+      "^CAN$","MÃ?â?°XICO","^CA$","^CAN$","^MX$"),
     c("Austria","Brazil","United Kingdom","Hungary","Mexico","Mexico","Mexico",
       "Serbia","Russia","Russia","United States","United States",
-      "Italy","Italy","United States","Canada","United States"))
+      "Italy","Italy","United States","Canada","United States",
+      "Canada","Mexico","Canada","Canada","Mexico"))
 country_set <- as.data.frame(sort(unique(geo_pts$country))) %>%
   add_column(iso3c = countrycode(sort(unique(geo_pts$country)),
       origin="country.name", destination="iso3c"))
@@ -300,6 +304,11 @@ geo_pts$countryCode_standard[which(geo_pts$countryCode_standard == "")] <- NA
 ##    and longitude. This is a simple fix that doesn't involved spatial data
 ##    or complex spatial calculations.
 
+# create rounded latitude and longitude columns for removing duplicates
+#   number of digits can be changed based on how dense you want data
+geo_pts$lat_round <- round(geo_pts$decimalLatitude,digits=1)
+geo_pts$long_round <- round(geo_pts$decimalLongitude,digits=1)
+
 # create subset of all ex situ points, to add back in at end, if desired
 ex_situ <- geo_pts[which(geo_pts$database=="Ex_situ"),]
 
@@ -325,30 +334,33 @@ geo_pts$database <- factor(geo_pts$database,
   levels = c("FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN","Ex_situ"))
 geo_pts <- geo_pts %>% arrange(database)
 
-# create rounded latitude and longitude columns for removing duplicates
-#   number of digits can be changed based on how dense you want data
-geo_pts$lat_round <- round(geo_pts$decimalLatitude,digits=3)
-geo_pts$long_round <- round(geo_pts$decimalLongitude,digits=3)
-
 # remove duplicates
 # can create "all_source_databases" column, to capture
 #    databases from which duplicates were removed
 # can take a while to remove duplicates if there are lots a rows
 geo_pts2 <- geo_pts %>%
   group_by(species_name_acc,lat_round,long_round) %>%
-  mutate(all_source_databases = paste(database,collapse = ',')) %>%
+  mutate(all_source_databases = paste(unique(database), collapse = ',')) %>%
   distinct(species_name_acc,lat_round,long_round,.keep_all=T) %>%
   ungroup() %>%
   dplyr::select(-flag)
-  # remove duplicates in all_source_databases column
-parts <- lapply(geo_pts2$all_source_databases, function(x)
-  unlist(strsplit(x,split=",")))
-source_standard <- as.data.frame(unlist(lapply(parts,function(x)
-  paste(sort(unique(x)),collapse=','))))
-names(source_standard)[1] <- "all_source_databases"
+
+# add ex situ data back in
 geo_pts2 <- geo_pts2 %>%
-  dplyr::select(-all_source_databases) %>%
-  cbind(source_standard)
+  filter(!grepl("Ex_situ",all_source_databases))
+ex_situ$all_source_databases <- "Ex_situ"
+ex_situ_add <- ex_situ %>% arrange(UID) %>%
+  select(basisOfRecord,establishmentMeans)
+dups <- unique(geo_pts2$UID)
+ex_situ <- ex_situ %>%
+  dplyr::select(-flag) %>%
+  filter(!(UID %in% dups))
+geo_pts2 <- rbind(geo_pts2,ex_situ)
+geo_pts2 <- geo_pts2 %>% arrange(UID)
+geo_pts2$basisOfRecord <- as.character(geo_pts2$basisOfRecord)
+geo_pts2$establishmentMeans <- as.character(geo_pts2$establishmentMeans)
+geo_pts2[which(grepl("Ex_situ",geo_pts2$all_source_databases)),8:9] <-
+  ex_situ_add
 
 ## set header/column name order
 h.nms2 <- c("species_name_acc", "taxon_name", "scientificName",
@@ -388,6 +400,7 @@ head(summary)
   # write file
 write.csv(summary, file.path(main_dir,"outputs",
   paste0("occurrence_point_count_per_sp_", Sys.Date(), ".csv")),row.names = F)
+as.data.frame(summary)
 
 ## can save data out to a file so don't have to rerun
 #save(all_data, taxon_list, s, geo_pts2, need_match,
