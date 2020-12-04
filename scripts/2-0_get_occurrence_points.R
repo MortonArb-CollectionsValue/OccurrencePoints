@@ -767,8 +767,12 @@ extract_tree_data <- function(state_abb){
   data <- data.frame()
   # read in tree data, which lists all species and the plots they're in; larger
   #   ones will take time to read in
-  state_df <- read.csv(url(paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",
-    state_abb,"_TREE.csv")))
+      ## read from online
+  #state_df <- read.csv(url(paste0("https://apps.fs.usda.gov/fia/datamart/CSV/",
+  #  state_abb,"_TREE.csv")))
+      ## read from folder
+  state_df <- read.csv(file.path(main_dir,"inputs","raw_occurrence","fia_raw",
+    "state_data_files",paste0(state_abb,"_TREE.csv")))
   # cycle through vector of target species codes and extract those rows from
   #   the state CSV
   for (sp in 1:length(species_codes)){
@@ -779,9 +783,12 @@ extract_tree_data <- function(state_abb){
   rm(state_df)
   # take a look at how much data were pulled
   cat(state_abb,": ",nrow(data)," observations. ")#,
-  #      grep(file_name, file_list), " of ", length(file_list), ".")
-  # print(paste(nrow(data), basename(file_name)))
-  return(data)
+        #grep(file_name, file_list), " of ", length(file_list), ".")
+   #print(paste(nrow(data), basename(file_name)))
+  # keep only necessary data columns
+  data_sm <- data %>% dplyr::select(
+    "SPCD","INVYR","UNITCD","COUNTYCD","PLOT","STATECD","STATUSCD")
+  return(data_sm)
   rm(sp)
 }
 # create list of state files to cycle through
@@ -790,13 +797,13 @@ extract_tree_data <- function(state_abb){
 
 # loop through states and pull data
 # NOTE: you need a good internet connection for this
-fia_outputs <- lapply(state_abb, extract_tree_data)
-  length(fia_outputs) #57
+  fia_outputs <- lapply(state_abb, extract_tree_data)
+    length(fia_outputs) #57
 
 # stack state-by-state data extracted to create one dataframe
 fia_raw <- data.frame()
 for(file in seq_along(fia_outputs)){
-  fia_raw  <- rbind(fia_raw, fia_outputs[[file]])
+  fia_raw <- rbind(fia_raw, fia_outputs[[file]])
 }
 nrow(fia_raw) #3414521
 # save(fia_raw, file=file.path(main_dir, "inputs", ""))
@@ -813,13 +820,6 @@ fia_raw <- join(fia_raw,fia_plots)
 # create ID column
 fia_raw <- fia_raw %>% unite("fiaPlotID",
   c("INVYR","UNITCD","COUNTYCD","PLOT","STATECD"),remove=F,sep="-")
-
-# keep only necessary columns
-fia_raw <- fia_raw %>% dplyr::select(
-  "taxon_name",
-  "LAT","LON",
-  "INVYR","fiaPlotID",
-  "STATUSCD")
 
 # rename columns
 setnames(fia_raw,
@@ -852,6 +852,12 @@ fia_raw <- fia_raw %>% dplyr::select(-isAlive)
 fia_raw$basisOfRecord <- "OBSERVATION"
   # year
 fia_raw$year[which(fia_raw$year == 9999)] <- NA
+
+# remove extra columns
+fia_raw <- fia_raw %>%
+  dplyr::select(nativeDatabaseID,year,taxon_name,county,stateProvince,
+    decimalLatitude,decimalLongitude,database,species_name,establishmentMeans,
+    basisOfRecord)
 
 # check data
 #percent.filled(fia_raw)
