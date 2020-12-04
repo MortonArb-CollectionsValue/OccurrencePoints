@@ -75,6 +75,18 @@ read.exsitu.csv <- function(path,submission_year){
       print(df$filename[1])
       df <- df[, -grep("^X", names(df))]
     }
+    # add accession number if there isn't one
+    if("acc_num" %in% names(df) & nrow(df[which(is.na(df$acc_num)),]) > 0){
+      df[which(is.na(df$acc_num)),]$acc_num <- paste0("added",
+        sprintf("%08d", 1:nrow(df[which(is.na(df$acc_num)),])))
+    } else if ("acc_no" %in% names(df) & nrow(df[which(is.na(df$acc_no)),]) > 0){
+      df[which(is.na(df$acc_no)),]$acc_no <- paste0("added",
+        sprintf("%08d", 1:nrow(df[which(is.na(df$acc_no)),])))
+    } else if (!("acc_num" %in% names(df)) & !("acc_no" %in% names(df))){
+      df$acc_num <- paste0("added", sprintf("%08d", 1:nrow(df)))
+    } else {
+      #print(paste("NO ACC NUM EDITS:",df$filename[1]))
+    }
     # replace old df with new df
     file_dfs[[file]] <- df
     #print(head(file_dfs[[file]],n=2))
@@ -165,8 +177,7 @@ all_data <- as.data.frame(lapply(all_data,replace_non_ascii),stringsAsFactors=F)
 # IF NEEDED: merge similar columns (you may not need to do this if no schema
 #   mistakes were made when manually editing column names).
 ## IMLS ##
-  all_data <- tidyr::unite(all_data,"acc_num", c("acc_num","acc_no",
-    "ï..acc_num"),
+  all_data <- tidyr::unite(all_data,"acc_num", c("acc_num","acc_no"),
     sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"lin_num", c("lin_num","lin_no"),
     sep=";",remove=T,na.rm=T)
@@ -246,7 +257,7 @@ all_data <- all_data[which(all_data$inst_short!=""),]
 #     data separately
 nrow(all_data) #159435
   # Magnolia
-magnolia_remove <- c("GreenBayBG","JCRaulstonArb","QuarryhillBG",
+magnolia_remove <- c("JCRaulstonArb","QuarryhillBG",
   "UBritishColumbiaBG","MortonArb")
 all_data <- all_data[!(all_data$filename=="PCNMagnolia" &
   all_data$inst_short %in% magnolia_remove),]
@@ -265,11 +276,6 @@ nrow(all_data) #156362
 
 ### CHECK ALL INSTITUTIONS ARE HERE ###
 sort(unique(all_data$inst_short))
-
-# add unique ID column
-nms <- names(all_data)
-all_data <- all_data %>% mutate(UID=paste0('id', sprintf("%08d",
-  1:nrow(all_data)))) %>% dplyr::select(c('UID', all_of(nms)))
 
 # remove leading, trailing, and middle (e.g., double space) whitespace,
 #   to prevent future errors
@@ -304,7 +310,6 @@ all_data2[is.na(all_data2$taxon_full_name),]$taxon_full_name <-
 ##
 ## B) Standardize taxon_full_name column then split into parts;
 ##      remove hybrids and cultivars without species name
-##
 
 ### REPLACE ANYTHING IN HYBRID COLUMN THAT MARKS IT AS A NON-HYBRID ###
 sort(unique(all_data2$hybrid))
@@ -337,7 +342,7 @@ all_data2$taxon_full_name <- mgsub(all_data2$taxon_full_name,
   c("_taki","_vihov","_ko","Xhinckleyi"), c("taki","vihov","ko","X hinckleyi"))
 # replace hybrid symbols with "x" in taxon_full_name
 all_data2$taxon_full_name <- mgsub(all_data2$taxon_full_name,
-  c(" _"," hybrid "," X ","*","xx","xxx")," x ") #"×"
+  c(" _"," hybrid "," X ","*","xx","xxx"," A")," x ") #"×"
 
 # remove hybrids based on "x" in taxon_full_name
 all_data3 <- all_data2 %>% filter(!grepl(" x ",taxon_full_name))
@@ -561,7 +566,7 @@ nrow(all_data10[which(!is.na(all_data10$list)),]) #39217 ; 45533 with gloabl oak
   # columns to keep
 all_data10 <- all_data10 %>% dplyr::select(
   # key data
-  UID,inst_short,submission_year,species_name_acc,target_species,
+  inst_short,submission_year,species_name_acc,target_species,
   prov_type,num_indiv,acc_num,
   # locality
   orig_lat,orig_long,locality,municipality,county,state,country,
@@ -582,6 +587,9 @@ all_data10 <- all_data10 %>% dplyr::select(
 check <- all_data10 %>% filter(is.na(list) & genus == target_genus)
 sort(unique(check$taxon_full_name))
 
+### keep only matched names
+all_data11 <- all_data10 %>% filter(!is.na(list))
+
 # write file
 #write.csv(all_data7, file.path(local_dir, "exsitu_compiled_taxaMatched.csv"),
 #  row.names = F)
@@ -590,11 +598,11 @@ sort(unique(check$taxon_full_name))
 # 5. Standardize important columns
 ################################################################################
 
-all_data11 <- all_data10
+#all_data11 <- all_data10
 
 # add institution metadata
 inst_data <- read.csv(file.path(main_dir,"inputs","respondent_institution_data_table",
-  "respondent_institution_data_table - BATCH 1.csv"),stringsAsFactors = F)
+  "respondent_institution_data_table.csv"),stringsAsFactors = F)
 str(inst_data)
 all_data11 <- left_join(all_data11,inst_data)
 str(all_data11)
@@ -647,16 +655,14 @@ unique(all_data11$prov_type)
 ## B) Number of Individuals
 ##
 
-# look at column contents
 sort(unique(all_data11$num_indiv))
-## IF NEEDED: replace unwanted characters
+  ## IF NEEDED: replace unwanted characters
   all_data11$num_indiv <- mgsub(all_data11$num_indiv,
-  c("+3","+","ca ","*"," in terra"," In terra","-3?","-Jan","?deck",
-    " & 2","-Apr",":04","mass of ","?","deck","-10","inG7","Alive;",
+  c("+3","+","ca ","*"," in terra"," In terra","-3?","-Jan","?deck","~","E",
+    " & 2","-Apr",":04","mass of ","?","deck","-10","inG7","Alive;","RJ",
     "A","-Mar","/4"," ","innur","inpots","inhoutunia","(4)","(4B&B)","(1)"), "")
   sort(unique(all_data11$num_indiv))
-
-# change type to numeric and replace NA with 1
+  # change type to numeric and replace NA with 1
 all_data11$num_indiv <- as.numeric(all_data11$num_indiv)
 all_data11$num_indiv[which(is.na(all_data11$num_indiv))] <- 1
 
@@ -667,6 +673,27 @@ nrow(all_data11) #93958
 # remove records with no individuals
 all_data11 <- all_data11[which(all_data11$num_indiv > 0),]
 nrow(all_data11) #92182
+
+##
+## ** ADD Unique ID Column
+##
+
+# add unique ID column
+  # create UID with institution name, acc num, provenance type, and taxon name
+  # also remove duplicates based on new UID and sum individuals
+  # first, fix up number of individuals column before summing
+  # now create UID and remove dups
+nms <- names(all_data11)
+nrow(all_data11)
+all_data11 <- all_data11 %>%
+  arrange(orig_lat,locality) %>%
+  mutate(UID = paste(inst_short,acc_num,prov_type,taxon_name_acc,sep="~")) %>%
+  group_by(UID) %>%
+  mutate(num_indiv = sum(as.numeric(num_indiv))) %>%
+  distinct(UID,.keep_all=T) %>%
+  ungroup() %>%
+  dplyr::select(c("UID",all_of(nms)))
+nrow(all_data11)
 
 ##
 ## C) Latitude and Longitude
@@ -842,8 +869,29 @@ table(all_data12$prov_type)
 all_data12$coll_year <- mgsub(all_data12$coll_year,
   c("([0-9]+);","about ","ca.","Unknown","original","Estate","estate"),"")
 all_data12$coll_year[which(all_data12$coll_year == "")] <- NA
+# remove extra elements so its just year
+all_data12$coll_year <- gsub(";[1-2][0-9][0-9][0-9]","",all_data12$coll_year)
+all_data12$coll_year <- gsub("[0-9][0-9]/[0-9][0-9]/","",all_data12$coll_year)
+all_data12$coll_year <- gsub("[0-9]/[0-9][0-9]/","",all_data12$coll_year)
+all_data12$coll_year <- gsub("[0-9][0-9]/[0-9]/","",all_data12$coll_year)
+all_data12$coll_year <- gsub("[0-9]/[0-9]/","",all_data12$coll_year)
+all_data12$coll_year <- gsub("[1-9] [A-Z][a-z][a-z] ","",all_data12$coll_year)
+all_data12$coll_year <- gsub("[A-Z][a-z][a-z] ","",all_data12$coll_year)
+all_data12$coll_year <- gsub("[1-9]-[A-Z][a-z][a-z]-","",all_data12$coll_year)
+# make column numeric
+all_data12$coll_year <- as.numeric(all_data12$coll_year)
+  # assume 2000s if values is less than 21
+all_data12$coll_year[which(all_data12$coll_year < 10)] <-
+  paste0("200",as.character(all_data12$coll_year[which(all_data12$coll_year < 10)]))
+all_data12$coll_year <- as.numeric(all_data12$coll_year)
+all_data12$coll_year[which(all_data12$coll_year < 21)] <-
+  paste0("20",as.character(all_data12$coll_year[which(all_data12$coll_year < 21)]))
+all_data12$coll_year <- as.numeric(all_data12$coll_year)
+  # assume 1900s if values is greater than or equal to 21
+all_data12$coll_year[which(all_data12$coll_year < 100)] <-
+  paste0("19",as.character(all_data12$coll_year[which(all_data12$coll_year < 100)]))
+all_data12$coll_year <- as.numeric(all_data12$coll_year)
 unique(all_data12$coll_year)
-#all_data12$coll_year <- as.numeric(all_data12$coll_year)
 
 ##
 ## E) Locality
@@ -860,7 +908,6 @@ all_data12$all_locality <- gsub("NA","",all_data12$all_locality)
 # if no locality info at all, make it NA
 all_data12$all_locality[which(all_data12$all_locality ==
   " |  |  |  |  |  |  | ")] <- NA
-
 
 ##
 ## F) Condition
@@ -937,10 +984,10 @@ all_data14 <- all_data12 %>%
   inst_short,filename,submission_year,inst_lat,inst_long,
   inst_country,list,species_name_acc,taxon_full_name) %>%
   # concatenate values in ID fields
-  mutate(UID = paste(UID, collapse="; "),
-    acc_num = paste(acc_num, collapse="; "),
-    lin_num = paste(lin_num, collapse="; "),
-    coll_num = paste(coll_num, collapse="; "),
+  mutate(UID = paste(UID, collapse="|"),
+    acc_num = paste(acc_num, collapse="|"),
+    lin_num = paste(lin_num, collapse="|"),
+    coll_num = paste(coll_num, collapse="|"),
     sum_num_indiv = sum(as.numeric(num_indiv))) %>%
   ungroup() %>%
   # remove duplicates
@@ -969,11 +1016,11 @@ all_data14 <- all_data12 %>%
 # remove dot in column names (replace with space) for GEOLocate
 names(all_data14) <- gsub(x = names(all_data14),pattern = "\\.",
   replacement = " ")
-# remove extra semicolons in concatenated columns
-all_data14$acc_num_CONCAT <- mgsub(all_data14$acc_num_CONCAT,c("; ; ","^; $"),"",fixed=F)
-all_data14$lin_num_CONCAT <- mgsub(all_data14$lin_num_CONCAT,c("; ; ","^; $"),"",fixed=F)
-all_data14$coll_num_CONCAT <- mgsub(all_data14$coll_num_CONCAT,c("; ; ","^; $"),"",fixed=F)
-all_data14$UID_CONCAT <- mgsub(all_data14$UID_CONCAT,c("; ; ","^; $"),"",fixed=F)
+# remove extra separators in concatenated columns
+all_data14$acc_num_CONCAT <- mgsub(all_data14$acc_num_CONCAT,c("||","^|$"),"",fixed=F)
+all_data14$lin_num_CONCAT <- mgsub(all_data14$lin_num_CONCAT,c("||","^|$"),"",fixed=F)
+all_data14$coll_num_CONCAT <- mgsub(all_data14$coll_num_CONCAT,c("||","^|$"),"",fixed=F)
+all_data14$UID_CONCAT <- mgsub(all_data14$UID_CONCAT,c("||","^|$"),"",fixed=F)
 str(all_data14)
 
 # create one CSV for each target species
@@ -987,3 +1034,130 @@ if(!dir.exists(file.path(main_dir,"Compiled ex situ data","CSV_by_target_species
 lapply(seq_along(sp_split), function(i) write.csv(sp_split[[i]],
   file.path(main_dir,"Compiled ex situ data","CSV_by_target_species",
   paste0(names(sp_split)[[i]], ".csv")),row.names = F))
+
+
+
+
+### Read geolocated CSVs back in and add geolocate info to rest of data
+
+# read in geolocated CSVs
+file_list <- list.files(
+  path=file.path(main_dir,"Compiled ex situ data","Geolocated_CSV_by_target_species",target_genus),
+  pattern=".csv",full.names=TRUE)
+file_dfs <- lapply(file_list,read.csv,header=TRUE,fileEncoding="LATIN1",
+  strip.white=TRUE,stringsAsFactors=F,na.strings=c("","NA"))
+# check that geolocated CSVs each have same number of rows as inital export;
+# if they don't, you'll need to manually see where the mistake is
+for(i in 1:length(sp_split)){
+  for(j in 1:nrow(sp_split[[i]])){
+    if(sp_split[[i]]$inst_short[j] !=file_dfs[[i]]$inst_short[j]){
+      print(sp_split[[i]]$species_name_acc[1])
+    } else {
+      print(i)
+    }
+  }
+}
+
+# bind geolocated CSVs together
+post_geo <- Reduce(rbind.fill, file_dfs)
+# fix a few inconsistencies
+  # provenance type column
+unique(post_geo$prov_type)
+post_geo[which(post_geo$prov_type == "N"),]
+post_geo[which(post_geo$prov_type == "N"),]$prov_type <- "W"
+  # gps determination column
+unique(post_geo$gps_det)
+post_geo[which(is.na(post_geo$gps_det)),]
+post_geo[which(is.na(post_geo$gps_det)),]$gps_det <- "X"
+  # uncertainty column
+post_geo$uncertainty <- gsub(" m","",post_geo$uncertainty)
+post_geo[which(post_geo$uncertainty == "0"),]$uncertainty <- NA
+post_geo$uncertainty <- as.numeric(post_geo$uncertainty)
+  # lat and long
+sort(unique(post_geo$latitude))
+sort(unique(post_geo$longitude))
+
+# keep only edited columns
+geolocated <- post_geo %>%
+  rename(UID = UID_CONCAT) %>%
+  dplyr::select(country,state,county,latitude,longitude,precision,
+    uncertainty,gps_det,prov_type,UID) #multiple.results
+head(as.data.frame(geolocated),n = 40)
+
+## for Quercus, because geolocated before changed UID system
+# bind itial export together, to join UID to geolocated data
+#pre_geo <- Reduce(rbind.fill, sp_split)
+#pre_geo <- pre_geo %>% dplyr::select(UID_CONCAT)
+# add UID to geolocated rows and separate to accession level again
+#geolocated <- cbind(post_geo,pre_geo)
+
+# separate to accession level again
+geolocated2 <- separate_rows(geolocated, UID, sep="\\|")
+geolocated2 <- separate_rows(geolocated2, UID, sep="; ")
+geolocated2 <- geolocated2 %>%
+  rename(lat_dd = latitude, long_dd = longitude,
+    coord_precision = uncertainty)
+
+# see if all UIDs are matching up
+yes_geo <- all_data13 %>% filter(UID %in% geolocated2$UID)
+  # should be character(0)
+setdiff(geolocated2$UID,yes_geo$UID)
+# add gelocated rows to data
+yes_geo <- yes_geo %>% dplyr::select(-prov_type,-gps_det,-flag,-lat_dd,
+  -long_dd,-county,-state,-country,-coord_precision)
+yes_geo <- full_join(yes_geo,geolocated2)
+# bind all data together (geolocated and garden origin)
+no_geo <- all_data13 %>% filter(!(UID %in% geolocated2$UID)) %>%
+  dplyr::select(-flag)
+no_geo$precision <- NA
+all_data15 <- rbind(yes_geo,no_geo)
+
+# make gps_det "X" if NA
+all_data15[which(is.na(all_data15$gps_det)),]$gps_det <- "X"
+unique(all_data15$gps_det)
+
+# arrange columns
+all_data15 <- all_data15 %>%
+  arrange(species_name_acc,UID) %>%
+  dplyr::select(
+    # key data
+    UID,inst_short,submission_year,species_name_acc,target_species,
+    prov_type,gps_det,lat_dd,long_dd,coord_precision,all_locality,
+    # locality
+    locality,municipality,county,state,country,orig_lat,orig_long,
+    orig_source,notes,assoc_sp,habitat,num_indiv,acc_num,precision,
+    latlong_country,
+    # source
+    lin_num,coll_num,coll_name,coll_year,
+    # material info
+    germ_type,garden_loc,rec_as,condition,name_determ,
+    # other metadata
+    dataset_year,private,filename,list,
+    # taxon name
+    taxon_name_acc,taxon_full_name,genus,species,infra_rank,infra_name,
+    taxon_full_name_orig,taxon_full_name_concat,cultivar,trade_name,
+    # institution metadata
+    inst_name,inst_country,inst_lat,inst_long)
+str(all_data15)
+
+# write file
+write.csv(all_data15, file.path(main_dir,"Compiled ex situ data",
+  "ALL DATA - POST GEOLOCATE",
+  paste0(target_genus,"_POSTGEO_exsitu_compiled_standardized.csv")),
+  row.names = F)
+
+# create one CSV for each target species
+all_data_target <- all_data15 %>% filter(target_species == "Y")
+sp_split2 <- split(all_data_target,
+  as.factor(all_data_target$species_name_acc))
+names(sp_split2) <- gsub(" ","_",names(sp_split2))
+
+# write files
+if(!dir.exists(file.path(main_dir,"Compiled ex situ data",
+  "ALL DATA - POST GEOLOCATE","target_species")))
+  dir.create(file.path(main_dir,"Compiled ex situ data",
+  "ALL DATA - POST GEOLOCATE","target_species"),recursive=T)
+lapply(seq_along(sp_split2), function(i) write.csv(sp_split2[[i]],
+  file.path(main_dir,"Compiled ex situ data","ALL DATA - POST GEOLOCATE",
+  "target_species",
+  paste0(names(sp_split2)[[i]], "_ALL_POSTGEO.csv")),row.names = F))
