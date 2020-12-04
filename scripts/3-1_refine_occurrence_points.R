@@ -84,7 +84,7 @@ summary_tbl <- data.frame(species_name_acc = "start", total_pts = "start",
   unflagged_pts = "start", .cen = "start", .urb = "start", .inst = "start",
   .con = "start", .outl = "start", .gtsnative = "start", .rlnative = "start",
   .rlintroduced = "start", .yr1950 = "start", .yr1980 = "start",
-  stringsAsFactors=F)
+  .yrna = "start", stringsAsFactors=F)
 
   # header/column name order and selection
   c.nms <- c("species_name_acc", "taxon_name", "scientificName",
@@ -96,7 +96,7 @@ summary_tbl <- data.frame(species_name_acc = "start", total_pts = "start",
     "informationWithheld", "issue", "taxon_name_full", "list", "UID",
     "country.name", "country.iso_a2", "country.iso_a3", "country.continent",
     ".cen",".urb",".inst",".con",".outl",".gtsnative",".rlnative",
-    ".rlintroduced",".yr1950",".yr1980")
+    ".rlintroduced",".yr1950",".yr1980",".yrna")
 
 # iterate through each species file to flag suspect points
 cat("Starting ", "target ", "taxa (", length(spp_list), " total)", ".\n\n",
@@ -191,7 +191,7 @@ for (i in 1:length(spp_list)){
   flag_outl <- cc_outl(eo.post2,
     lon = "decimalLongitude",lat = "decimalLatitude",
     species = "species_name_acc", method = "quantile",
-    mltpl = 5, value = "flagged")
+    mltpl = 4, value = "flagged")
   eo.post2$.outl <- flag_outl
 
   ## OTHER CHECKS
@@ -207,12 +207,14 @@ for (i in 1:length(spp_list)){
     (as.numeric(year)>1950 | is.na(year)), TRUE, FALSE)))
   eo.post2 <- eo.post2 %>% mutate(.yr1980=(ifelse(
     (as.numeric(year)>1980 | is.na(year)), TRUE, FALSE)))
+  eo.post2 <- eo.post2 %>% mutate(.yrna=(ifelse(
+    !is.na(year), TRUE, FALSE)))
 
   # set column order and remove a few unnecessary columns
   eo.post3 <- eo.post2 %>% dplyr::select(all_of(c.nms))
   # df of unflagged points
   unflagged <- eo.post3 %>%
-    filter(.cen & .urb & .inst & .con & .outl & .yr1950 & .yr1980 &
+    filter(.cen & .urb & .inst & .con & .outl & .yr1950 & .yr1980 & .yrna &
       (.gtsnative | is.na(.gtsnative)) &
       (.rlnative  | is.na(.rlnative)) &
       (.rlintroduced | is.na(.rlintroduced)) &
@@ -234,6 +236,7 @@ for (i in 1:length(spp_list)){
     .rlintroduced = sum(!eo.post3$.rlintroduced),
     .yr1950 = sum(!eo.post3$.yr1950),
     .yr1980 = sum(!eo.post3$.yr1980),
+    .yrna = sum(!eo.post3$.yrna),
     stringsAsFactors=F)
   summary_tbl[i,] <- summary_add
 
