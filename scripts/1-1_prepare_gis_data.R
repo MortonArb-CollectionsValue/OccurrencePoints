@@ -143,7 +143,7 @@ taxon_list <- left_join(taxon_list, gts_list[,c(2,4,5)],
 # use rredlist package to get taxon names and country-level spp. dist.
 # can take a little while if lots of species
 countries <- data.frame()
-target_taxa <- taxon_list[,1]
+target_taxa <- taxon_list$taxon_name
 for(i in 1:length(target_taxa)){
 	dist <- rl_occ_country(target_taxa[[i]])
 	name <- dist$name
