@@ -52,17 +52,19 @@ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 ################################################################################
 
 # set up file paths
-imls.output <- file.path(main_dir, "outputs")
-path.pts <- file.path(imls.output, "spp_edited_points")
-path.figs <- file.path(imls.output, "spp_interactive_maps")
+output <- file.path(main_dir, "outputs")
+path.pts <- file.path(output, "spp_edited_points")
+path.figs <- file.path(output, "spp_interactive_maps")
               # Christy/Murphy's target species
 spp.all <- c("Quercus_dalechampii","Quercus_imbricaria","Quercus_falcata",
               "Quercus_stellata","Quercus_acutissima","Quercus_palmeri",
               # Sean's target species
             "Quercus_acerifolia","Quercus_arkansana","Quercus_austrina",
             "Quercus_boyntonii","Quercus_georgiana","Quercus_havardii",
-            "Quercus_oglethorpensis"
-            #"Quercus_ajoensis",#"Quercus_carmenensis","Quercus_graciliformis",
+            "Quercus_oglethorpensis",
+            "Ulmus_chenmoui","Malus_komarovii"#,
+                # not on desiderata
+            #"Quercus_ajoensis","Quercus_carmenensis","Quercus_graciliformis",
             #"Quercus_cedrosensis","Quercus_dumosa","Quercus_engelmannii",
             #"Quercus_hinckleyi","Quercus_pacifica","Quercus_robusta",
             #"Quercus_tardifolia","Quercus_tomentella"
@@ -303,6 +305,21 @@ for(i in 1:length(spp.all)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "Recorded prior to 1980 (.yr1980)") %>%
+    addCircleMarkers(data = spp.now %>% filter(!.yrna),
+      ~decimalLongitude, ~decimalLatitude,
+      popup = ~paste0(
+        "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
+        "<b>Verbatim taxon name:</b> ",taxon_name_full,"<br/>",
+        "<b>Source database:</b> ",database,"<br/>",
+        "<b>All databases with duplicate record:</b> ",all_source_databases,"<br/>",
+        "<b>Year:</b> ",year,"<br/>",
+        "<b>Basis of record:</b> ",basisOfRecord,"<br/>",
+        "<b>Dataset name:</b> ",datasetName,"<br/>",
+        "<b>Establishment means:</b> ",establishmentMeans,"<br/>",
+        "<b>Coordinate uncertainty:</b> ",coordinateUncertaintyInMeters,"<br/>",
+        "<b>ID:</b> ",UID),
+      radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
+      group = "Year unknown (.yrna)") %>%
     # Layers control
     addLayersControl(
       #baseGroups = c("CartoDB.PositronNoLabels",
@@ -320,7 +337,8 @@ for(i in 1:length(spp.all)){
                         "FOSSIL_SPECIMEN or LIVING_SPECIMEN (basisOfRecord)",
                         "INTRODUCED, MANAGED, or INVASIVE (establishmentMeans)",
                         "Recorded prior to 1950 (.yr1950)",
-                        "Recorded prior to 1980 (.yr1980)"),
+                        "Recorded prior to 1980 (.yr1980)",
+                        "Year unknown (.yrna)"),
       options = layersControlOptions(collapsed = FALSE)) %>%
     #hideGroup("Within 500m of country/state centroid (.cen)") %>%
     hideGroup("In urban area (.urb)") %>%
@@ -334,6 +352,7 @@ for(i in 1:length(spp.all)){
     hideGroup("INTRODUCED, MANAGED, or INVASIVE (establishmentMeans)") %>%
     hideGroup("Recorded prior to 1950 (.yr1950)") %>%
     hideGroup("Recorded prior to 1980 (.yr1980)") %>%
+    hideGroup("Year unknown (.yrna)") %>%
     addLegend(pal = database.pal, values = unique(spp.now$database),
       title = "Source database", position = "bottomright", opacity = 0.6) %>%
     addControl(
@@ -353,7 +372,7 @@ for(i in 1:length(spp.all)){
 # Basic fixed maps
 ################################################################################
 
-path.figs <- file.path(imls.output, "spp_basic_maps")
+path.figs <- file.path(output, "spp_basic_maps")
 spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
 
 if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
@@ -388,7 +407,7 @@ for(i in 1:length(spp.all)){
 
   # map with all flagged points removed
   dat.now2 <- dat.now %>%
-    filter(.cen & .urb & .inst & .con & .outl & .yr1950 & .yr1980 &
+    filter(.cen & .urb & .inst & .con & .outl & .yr1950 & .yr1980 & .yrna &
       (.gtsnative | is.na(.gtsnative)) &
       (.rlnative  | is.na(.rlnative)) &
       (.rlintroduced | is.na(.rlintroduced)) &
