@@ -446,3 +446,4 @@ for(i in 1:length(spp.all)){
 
   cat("\tEnding ", spp.now, ", ", i, " of ", length(spp.all), ".\n\n", sep="")
 }
+/Users/emily/Documents/GitHub/IMLS_Beckman/scripts/CountyLevelVersion
