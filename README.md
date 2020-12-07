@@ -117,6 +117,7 @@
  - **.rlintroduced**: Flag records in countries reported in the IUCN Red List as part of the species "introduced" range
  - **.yr1950**: Flag records recorded before 1950 (NA is left unflagged)
  - **.yr1980**: Flag records recorded before 1980 (NA is left unflagged)
+ - **.yrna**: Flag records with no year
 
  Other important columns for sorting and filtering include:
  - **species_name_acc**: Your accepted species name, based on target taxa list and synonyms
