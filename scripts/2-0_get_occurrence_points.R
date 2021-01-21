@@ -605,6 +605,8 @@ nrow(bien_raw) #2199972
 write.csv(bien_raw, file.path(main_dir,"inputs","raw_occurrence","bien_raw",
   "bien_R_download.csv"),row.names=FALSE)
 
+BIEN_metadata_citation(dataframe = bien_raw)
+
 ### standardize column names
 
 # split date collected column to just get year
