@@ -45,7 +45,7 @@ rm(my.packages)
 # source('scripts/0-1_set_workingdirectory.R')
 
 # set target genus/genera name (for file reading and writing)
-target_genus <- "Magnolia"
+target_genus <- "Acer"
 
 ################################################################################
 # Load functions
@@ -440,10 +440,13 @@ all_data7 <- all_data6 %>% filter(!grepl("[A-Z]",species_new))
 # remove records without specific/certain species name
 all_data8 <- all_data7 %>%
   filter(species_new != "sp" & species_new != "species" &
-         species_new != "cv" & species_new != "aff" &
+         species_new != "cv" & #species_new != "aff" &
          species_new != "unknown" & species_new != "undetermined" &
          species_new != "cf" & !grepl(".",species_new, fixed=T) &
          !grepl("[0-9]",species_new) & !is.na(species_new))
+  # there is an accepted Acer name with "aff" -- add the period back
+all_data8$taxon_full_name <- gsub(" aff "," aff. ",all_data8$taxon_full_name)
+all_data8$species_new <- gsub("aff","aff.",all_data8$species_new)
 # see records removed:
 #sort(unique(anti_join(all_data7,all_data8)$taxon_full_name))
 
@@ -602,7 +605,7 @@ all_data11 <- all_data10 %>% filter(!is.na(list))
 
 # add institution metadata
 inst_data <- read.csv(file.path(main_dir,"inputs","respondent_institution_data_table",
-  "respondent_institution_data_table.csv"),stringsAsFactors = F)
+  "respondent_institution_data_table_2020.csv"),stringsAsFactors = F)
 str(inst_data)
 all_data11 <- left_join(all_data11,inst_data)
 str(all_data11)
@@ -1069,7 +1072,7 @@ post_geo[which(post_geo$prov_type == "H?"),]
 post_geo[which(post_geo$prov_type == "H?"),]$prov_type <- "H"
     # check prov_type for rows with coordinates
 unique(post_geo[which(!is.na(post_geo$latitude)),]$prov_type)
-#post_geo[which(!is.na(post_geo$latitude) & post_geo$prov_type == "U"),]
+post_geo[which(!is.na(post_geo$latitude) & post_geo$prov_type == "U"),]
   ## gps determination column
 unique(post_geo$gps_det)
 post_geo[which(is.na(post_geo$gps_det)),]$latitude

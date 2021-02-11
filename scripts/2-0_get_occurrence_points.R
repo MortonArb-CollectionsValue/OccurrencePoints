@@ -51,7 +51,7 @@ rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'spocc', 'rgbif', 'data.table', 'BIEN',
                  'ridigbio', 'batchtools', 'googledrive', 'textclean','rbison',
                  'tools')
- # install.packages(my.packages) #Turn on to install current versions
+#  install.packages(my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
     rm(my.packages)
 
@@ -60,13 +60,13 @@ lapply(my.packages, require, character.only=TRUE)
 ################################################################################
 
 # either set manually:
-#main_dir <- "./Desktop"
+main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
-#log_loc <- "./Desktop/IMLS_passwords.txt"
+log_loc <- "./Desktop/IMLS_passwords.txt"
 
 # or use 0-1_set_workingdirectory.R script:
 # source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-source('scripts/0-1_set_workingdirectory.R')
+#source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions
@@ -74,12 +74,12 @@ source('scripts/0-1_set_workingdirectory.R')
 #source(file.path(script_dir,"0-2_load_IMLS_functions.R"))
 
 # calculates percent of each data frame column that is not NA
-percent.filled <- function(df){
-  for(i in 1:ncol(df)){
-    print(paste(names(df)[i],": ",
-                round((nrow(df)-sum(is.na(df[,i])))/nrow(df),3)*100,"%",sep=""))
-  }
-}
+#percent.filled <- function(df){
+#  for(i in 1:ncol(df)){
+#    print(paste(names(df)[i],": ",
+#                round((nrow(df)-sum(is.na(df[,i])))/nrow(df),3)*100,"%",sep=""))
+#  }
+#}
 
 
 ################################################################################
@@ -93,8 +93,8 @@ taxon_list <- read.csv(file.path(main_dir, "inputs","taxa_list",
   "target_taxa_with_syn.csv"), header = T, colClasses="character")
 head(taxon_list)
 # as needed, filter out cultivars and blank rows
-taxon_list <- taxon_list %>%
-  filter(taxon_type != "cultivar" & !is.na(taxon_name))
+#taxon_list <- taxon_list %>%
+#  filter(taxon_type != "cultivar" & !is.na(taxon_name))
 nrow(taxon_list) #805
 # list of target taxon names
 taxon_names <- taxon_list$taxon_name
@@ -168,7 +168,7 @@ login <- read_lines(log_loc)
     rm(login)
 # get GBIF taxon keys for all taxa in target list
 keys <- sapply(taxon_names,function(x) name_backbone(name=x)$speciesKey,
-  simplify = "array")
+  simplify = "array"); keys
 # remove duplicate and NULL keys
 keys_nodup <- keys[!duplicated(keys) & keys != "NULL"]
 # create data frame of keys and matching taxon_name
@@ -200,7 +200,7 @@ download_key <- gbif_download
   # it may take a while (up to 3 hours) if you have a large taxa list;
   # function below will pause script until the download is ready
 occ_download_wait(download_key, status_ping=10, quiet=TRUE)
-
+  # get download when its ready then unzip and read in
 occ_download_get(key=download_key[1],path=file.path(main_dir,"inputs",
   "raw_occurrence","gbif_raw"),overwrite=TRUE) #Download file size: 684.49 MB
 unzip(zipfile=paste0(file.path(main_dir,"inputs","raw_occurrence","gbif_raw",
@@ -311,7 +311,7 @@ if(!dir.exists(file.path(main_dir,"inputs","raw_occurrence","idigbio_raw")))
   recursive=T)
 
 # Not sure the R interface actually gets all fields available; use manual
-#    method down below (line 361) if you want to be sure
+#    method down below (line 336) if you want to be sure
 
 # download iDigBio data for target taxa
   # we have to go taxon by taxon; function can only return 100,000
@@ -605,7 +605,10 @@ nrow(bien_raw) #2199972
 write.csv(bien_raw, file.path(main_dir,"inputs","raw_occurrence","bien_raw",
   "bien_R_download.csv"),row.names=FALSE)
 
-BIEN_metadata_citation(dataframe = bien_raw)
+# get citation info and write file
+bien_citation <- BIEN_metadata_citation(dataframe = bien_raw)
+write.csv(bien_citation, file.path(main_dir,"inputs","raw_occurrence","bien_raw",
+  "bien_data_citation.csv"),row.names=FALSE)
 
 ### standardize column names
 
@@ -665,8 +668,8 @@ setnames(bien_raw,
   skip_absent=T)
 bien_raw$database <- "BIEN"
 
-# remove rows from GBIF or FIA if you are separately downloading those datasets
-bien_raw <- bien_raw %>% filter(publisher != "FIA" & publisher != "GBIF")
+# OPTIONAL: remove rows from GBIF or FIA if you are separately downloading those datasets
+#bien_raw <- bien_raw %>% filter(publisher != "FIA" & publisher != "GBIF")
 nrow(bien_raw) #71495
 
 # combine a few similar columns

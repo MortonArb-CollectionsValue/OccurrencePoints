@@ -84,27 +84,30 @@ families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
 # read in taxa list
 taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
   "target_taxa.csv"), header = T, colClasses="character")
-nrow(taxa_list_acc)
+nrow(taxa_list_acc) #532
 # make sure there aren't extra spaces within species names
 taxa_list_acc[,1] <- str_squish(taxa_list_acc[,1])
 # create list of target taxa names
-taxa_names <- taxa_list_acc[,1]
+#taxa_names <- taxa_list_acc[,1]
   # use this instead if you want to select names based on values in other col:
-  #taxa_names <- taxa_list_acc[which(taxa_list_acc$can_match == "match"),]
-  #taxa_names <- taxa_names[,1]
+  taxa_names_sel <- taxa_list_acc[which(taxa_list_acc$taxon_name_acc_type != "cultivar"),]
+  taxa_names <- taxa_names_sel[,1]
+length(taxa_names) #303
 
 ## OR: you can create vector of taxa names here instead of reading in
-#taxa_names <- c("name1","name2","name3")
+#taxa_names <- c("Quercus fabrei","Quercus fabri","Quercus alba")
 
 # create list of target species names, with infraspecific taxa removed
 species_names <- taxa_names[
   !grepl(" var. ",taxa_names) &
   !grepl(" subsp.",taxa_names) &
   !grepl(" f. ",taxa_names)]
+length(species_names) #237
 
 # create list of target species names only, with hybrids removed
 species_only <- species_names[
   !grepl(" x ",species_names)]
+length(species_only) #191
 
 ################################################################################
 # 2. Find taxonomic status and synonyms for target taxa
@@ -305,7 +308,7 @@ itis_all <- rbind.fill(itis_names_noDup,itis_syn_df)
 head(itis_all)
 
 ###############
-### C) Kew’s Plants of the World (POW)
+### C) Kew’s Plants of the World Online (POWO)
 ### http://www.plantsoftheworldonline.org
 ###############
 
@@ -321,6 +324,7 @@ for(i in 1:length(taxa_names)){
   id <- get_pow(taxa_names[[i]])[1]
   if(!is.na(id)){
     output_new <- pow_lookup(id)
+    if(length(output_new$meta$authors>0)){
       acc <- data.frame(
         "taxon_name_match" = output_new$meta$name,
         "match_id" = output_new$meta$fqId,
@@ -328,6 +332,14 @@ for(i in 1:length(taxa_names)){
         "author" = output_new$meta$authors,
         "taxon_name_acc" = taxa_names[[i]]
       )
+    }else{
+      acc <- data.frame(
+        "taxon_name_match" = output_new$meta$name,
+        "match_id" = output_new$meta$fqId,
+        "acceptance" = output_new$meta$taxonomicStatus,
+        #"author" = output_new$meta$authors,
+        "taxon_name_acc" = taxa_names[[i]]
+      )}
     not_acc <- data.frame(output_new$meta$accepted)
     if(length(not_acc)>0){
       acc <- data.frame(
@@ -361,6 +373,13 @@ pow_names_noDup <- pow_names
 pow_names_noDup <- pow_names_noDup[,c("taxon_name_acc","taxon_name_match",
   "match_id","database","acceptance","match_name_with_authors")]
 pow_names_noDup$acceptance <- str_to_lower(pow_names_noDup$acceptance)
+  # replace hybrid character
+pow_names_noDup$taxon_name_acc <- gsub(" × "," x ",
+  pow_names_noDup$taxon_name_acc,fixed=T)
+pow_names_noDup$taxon_name_match <- gsub(" × "," x ",
+  pow_names_noDup$taxon_name_match,fixed=T)
+pow_names_noDup$match_name_with_authors <- gsub(" × "," x ",
+  pow_names_noDup$match_name_with_authors,fixed=T)
   # OPTIONAL, IF NOT LOOKING FOR CHILDREN: remove subsp., var., and f.
 pow_names_noDup <- pow_names_noDup %>%
   filter(!grepl("subsp.",taxon_name_match,fixed=T) &
@@ -375,6 +394,11 @@ pow_syn_df$database <- "pow"
 setnames(pow_syn_df,
   old = c("name","fqId","taxonomicStatus"),
   new = c("taxon_name_match","match_id","acceptance"))
+  # replace hybrid character
+pow_syn_df$taxon_name_acc <- gsub(" × "," x ",
+  pow_syn_df$taxon_name_acc,fixed=T)
+pow_syn_df$taxon_name_match <- gsub(" × "," x ",
+  pow_syn_df$taxon_name_match,fixed=T)
   # add column with authors
 pow_syn_df$match_name_with_authors <- paste(
   pow_syn_df$taxon_name_match,pow_syn_df$author)
@@ -503,7 +527,7 @@ head(tpl_all)
 ################################################################################
 
 # create dataframe of all data found
-datasets <- list(tp_all,itis_all,pow_all,tpl_all,gbif_all)
+datasets <- list(itis_all,pow_all,tpl_all,tp_all) #,gbif_all
 all_data_raw <- Reduce(rbind.fill,datasets)
 all_data <- all_data_raw
   names(all_data)
@@ -570,8 +594,8 @@ all_data$list <- "synonym"
 all_data[which(all_data$taxon_name_acc == all_data$taxon_name_match),]$list <-
   "desiderata"
 # write file
-#write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
-#  "target_taxa_with_syn_all.csv"),row.names=F)
+write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
+  "target_taxa_with_syn_all.csv"),row.names=F)
 
 # IF DESIRED:
   ## remove forms
@@ -587,22 +611,22 @@ all_data <- setdiff(all_data,all_data[which(
 nrow(all_data)
   ## remove var. and subsp. synonyms when species is already represented
   ## (skip if you want children!)
-all_data <- setdiff(all_data,all_data[which(
-  all_data$genus_species_acc == all_data$genus_species_match &
-  grepl("\\.",all_data$taxon_name_match)),])
-all_data$syn_pair <- paste(all_data$genus_species_acc,
-  all_data$genus_species_match,sep=";")
-all_data$syn_pair2 <- paste(all_data$genus_species_acc,
-  all_data$taxon_name_match,sep=";")
-all_data <- setdiff(all_data,all_data[which(
-  all_data$syn_pair %in% all_data$syn_pair2 &
-  grepl("\\.",all_data$taxon_name_match)),])
-nrow(all_data)
+#all_data <- setdiff(all_data,all_data[which(
+#  all_data$genus_species_acc == all_data$genus_species_match &
+#  grepl("\\.",all_data$taxon_name_match)),])
+#all_data$syn_pair <- paste(all_data$genus_species_acc,
+#  all_data$genus_species_match,sep=";")
+#all_data$syn_pair2 <- paste(all_data$genus_species_acc,
+#  all_data$taxon_name_match,sep=";")
+#all_data <- setdiff(all_data,all_data[which(
+#  all_data$syn_pair %in% all_data$syn_pair2 &
+#  grepl("\\.",all_data$taxon_name_match)),])
+#nrow(all_data)
   ## remove hybrids (naming format is too variable to be useful)
   ##  and other strange names
-all_data <- all_data[which(!grepl(" x | unranked | group | subg\\.",
-  all_data$taxon_name_match)),]
-nrow(all_data)
+#all_data <- all_data[which(!grepl(" x | unranked | group | subg\\.",
+#  all_data$taxon_name_match)),]
+#nrow(all_data)
   ## remove synonyms with less than two sources
   ## CUTS DOWN SIGNIFICANTLY BUT MAY REMOVE IMPORTANT SYNONYMS!
 #all_data <- all_data[which(all_data$database_count > 1 |
@@ -615,10 +639,12 @@ all_data_final <- all_data %>%
   dplyr::arrange(taxon_name_acc,database_count) %>%
   dplyr::select(taxon_name_match,genus,species,
     infra_rank,infra_name,list,taxon_name_acc,genus_species_acc,database,
-    acceptance,database_count,match_name_with_authors) %>%
+    acceptance,database_count,match_name_with_authors,
+    taxon_name_acc_type
+  ) %>%
   rename(species_name_acc = genus_species_acc,
          taxon_name = taxon_name_match)
 head(all_data_final)
 # write file
 write.csv(all_data_final,file.path(main_dir,"inputs","taxa_list",
-  "target_taxa_with_syn.csv"),row.names=F)
+  "target_taxa_with_syn_new.csv"),row.names=F)

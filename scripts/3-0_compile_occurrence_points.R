@@ -46,12 +46,12 @@ lapply(my.packages, require, character.only=TRUE)
 ################################################################################
 
 # either set manually:
-#main_dir <- "./Desktop"
+main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
 #source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-source('scripts/0-1_set_workingdirectory.R')
+#source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions
@@ -102,8 +102,13 @@ all_data_raw <- all_data_raw %>% mutate(UID=paste0('id', sprintf("%08d",
 taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
   "target_taxa_with_syn.csv"), header = T, na.strings = c("","NA"),
   colClasses = "character")
-taxon_list <- taxon_list %>% select(taxon_name,genus,species,infra_rank,
-  infra_name,list,taxon_name_acc,species_name_acc)
+taxon_list <- taxon_list %>%
+  # if needed, add columns that separate out taxon name
+  separate("taxon_name",c("genus","species","infra_rank","infra_name"),
+    sep=" ",remove=F,fill="right") %>%
+  # select necessary columns
+  select(taxon_name,genus,species,infra_rank,
+    infra_name,list,taxon_name_acc,species_name_acc)
 
 # full join to taxon list
 all_data_raw <- left_join(all_data_raw,taxon_list)
@@ -253,16 +258,16 @@ table(geo_pts$database)
 # standardize country code column for checking against lat-long later
   # country name to 3 letter ISO code
     # fix some issues first
-geo_pts$country <- mgsub(geo_pts$country,
-    c("áustria","brasil","England","hungria","méxico","México","MÉXICO",
-      "Republic of Kosovo","u.s.s.r.","U.S.S.R.","estados unidos","EE. UU.",
-      "repubblica italiana","Repubblica Italiana","America","canadá",
-      "United Statese",
-      "^CAN$","MÃ?â?°XICO","^CA$","^CAN$","^MX$"),
-    c("Austria","Brazil","United Kingdom","Hungary","Mexico","Mexico","Mexico",
-      "Serbia","Russia","Russia","United States","United States",
-      "Italy","Italy","United States","Canada","United States",
-      "Canada","Mexico","Canada","Canada","Mexico"))
+#geo_pts$country <- mgsub(geo_pts$country,
+#    c("áustria","brasil","England","hungria","méxico","México","MÉXICO",
+#      "Republic of Kosovo","u.s.s.r.","U.S.S.R.","estados unidos","EE. UU.",
+#      "repubblica italiana","Repubblica Italiana","America","canadá",
+#      "United Statese",
+#      "^CAN$","MÃ?â?°XICO","^CA$","^CAN$","^MX$"),
+#    c("Austria","Brazil","United Kingdom","Hungary","Mexico","Mexico","Mexico",
+#      "Serbia","Russia","Russia","United States","United States",
+#      "Italy","Italy","United States","Canada","United States",
+#      "Canada","Mexico","Canada","Canada","Mexico"))
 country_set <- as.data.frame(sort(unique(geo_pts$country))) %>%
   add_column(iso3c = countrycode(sort(unique(geo_pts$country)),
       origin="country.name", destination="iso3c"))
@@ -270,8 +275,8 @@ names(country_set) <- c("country","iso3c")
   country_set[which(is.na(country_set$iso3c)),]
   # country code to 3 letter ISO code
 geo_pts$countryCode <- str_to_upper(geo_pts$countryCode)
-geo_pts$countryCode <- mgsub(geo_pts$countryCode,
-    c("XK","ZZ"),c("SRB",NA))
+#geo_pts$countryCode <- mgsub(geo_pts$countryCode,
+#    c("XK","ZZ"),c("SRB",NA))
 country_set2 <- as.data.frame(sort(unique(geo_pts$countryCode))) %>%
   add_column(iso3c = countrycode(sort(unique(geo_pts$countryCode)),
       origin="iso2c", destination="iso3c"))
@@ -285,6 +290,7 @@ names(country_set3) <- c("countryCode","iso3c_3")
 geo_pts <- join(geo_pts,country_set)
 geo_pts <- join(geo_pts,country_set2)
 geo_pts <- join(geo_pts,country_set3)
+# errors here are ok! just ignore
 geo_pts[which(geo_pts$iso3c == geo_pts$iso3c_2),]$iso3c_2 <- NA
 geo_pts[which(geo_pts$iso3c == geo_pts$iso3c_3),]$iso3c_3 <- NA
 geo_pts <- tidyr::unite(geo_pts,"countryCode_standard",
@@ -348,6 +354,7 @@ geo_pts2 <- geo_pts %>%
 # add ex situ data back in
 geo_pts2 <- geo_pts2 %>%
   filter(!grepl("Ex_situ",all_source_databases))
+  # error here is ok if you don't have ex situ data!
 ex_situ$all_source_databases <- "Ex_situ"
 ex_situ_add <- ex_situ %>% arrange(UID) %>%
   select(basisOfRecord,establishmentMeans)

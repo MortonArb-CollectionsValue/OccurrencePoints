@@ -130,6 +130,7 @@
 
  >INPUTS:<br>
  > ~ Compiled occurrence points from 3-0
+ > ~ Output from 1-1_prepare_gis_data.R
  >
  >OUTPUTS:<br>
  > ~ spp_edited_points folder with CSV of occurrence points for each target species (e.g., Quercus_lobata.csv); see ["Occurrence Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for full output metadata<br>

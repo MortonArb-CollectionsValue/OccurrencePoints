@@ -37,7 +37,12 @@ lapply(my.packages, require, character.only=TRUE)
 # Set working directory
 ################################################################################
 
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+# either set manually:
+main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+#script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
+
+# or use 0-1_set_workingdirectory.R script:
+#source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
@@ -69,7 +74,7 @@ spp.all <- c("Quercus_dalechampii","Quercus_imbricaria","Quercus_falcata",
             #"Quercus_hinckleyi","Quercus_pacifica","Quercus_robusta",
             #"Quercus_tardifolia","Quercus_tomentella"
             )
-#spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
+spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
 
 # create folder for maps, if not yet created
 if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)

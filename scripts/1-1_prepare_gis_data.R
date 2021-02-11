@@ -34,7 +34,10 @@ rm(list=ls())
 my.packages <- c("raster", "sp", "tools", "spatialEco", "rgdal", "geosphere",
   "readxl", "writexl", "dplyr", "tidyr", "tidyverse", "housingData",
   "data.table", "textclean", "CoordinateCleaner", "countrycode", "usmap",
-  "rnaturalearth", "rnaturalearthdata", "maps","rredlist")#, "sf"
+  "rnaturalearth", "rnaturalearthdata", "maps","rredlist",
+  "rnaturalearthhires")#, "sf"
+# you may need to run this too:
+devtools::install_github("ropensci/rnaturalearthhires")
 #install.packages(my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
   rm(my.packages)
@@ -44,12 +47,12 @@ lapply(my.packages, require, character.only=TRUE)
 ################################################################################
 
 # either set manually:
-#main_dir <- "./Desktop"
+main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
 # source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-source("scripts/0-1_set_workingdirectory.R")
+#source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
 # Load functions
@@ -78,7 +81,7 @@ if(!dir.exists(file.path(main_dir,"inputs","known_distribution")))
 
 ### GlobalTreeSearch (GTS)
 
-# First, download raw data
+# FIRST, download raw data
   # Go to https://tools.bgci.org/global_tree_search.php
   # Type your target genus name into the "Genus" box
   # Click "Search Plants" then scroll to the bottom and click "download as CSV

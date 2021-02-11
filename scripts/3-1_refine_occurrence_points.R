@@ -41,7 +41,12 @@ lapply(my.packages, require, character.only=TRUE)
 # Set working directory
 ################################################################################
 
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+# either set manually:
+main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+#script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
+
+# or use 0-1_set_workingdirectory.R script:
+#source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
