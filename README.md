@@ -31,7 +31,9 @@
  >OUTPUTS:<br>
  > ~ List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); synonyms are added as additional rows; see ["Taxonomic Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for table metadata
  >
- >NOTE: Some of the functions in this script (from "taxize" package) are slow and require manual input while running; therefore if your list is more than a few hundred names, maximum, you may need to find synonyms a different way (e.g., based on one backbone suited to your target taxa).
+ >NOTES:<br>
+ > ~ Some of the functions in this script (from "taxize" package) are slow and require manual input while running; therefore if your list is more than a few hundred names, maximum, you may need to find synonyms a different way (e.g., based on one backbone suited to your target taxa).<br>
+ > ~ The output likely does not contain all necessary synonyms. For best results, use this script to get synonyms from common databases (Tropicos, ITIS, POW) and then manually review to remove synonyms you don't want and add any missed synonyms; since different plant groups have different backbones/flora that focus on them and become the 'authority', you should reference those that are most relevant to your target group to add/remove synonyms.
 
 ## 1-1_prepare_gis_data.R
 
