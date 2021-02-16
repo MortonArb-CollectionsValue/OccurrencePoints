@@ -143,6 +143,10 @@ taxon_list <- left_join(taxon_list, gts_list[,c(2,4,5)],
 
 ### IUCN Red List (RL)
 
+## ! you first need an API key ! run the following line and fill out
+#   the necessary online form to receive a key, then follow the instructions
+#   to add to your R environment:
+rl_use_iucn()
 # use rredlist package to get taxon names and country-level spp. dist.
 # can take a little while if lots of species
 countries <- data.frame()

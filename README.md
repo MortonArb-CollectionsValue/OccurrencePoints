@@ -40,6 +40,7 @@
  >INPUTS:<br>
  > ~ List of target taxa with synonyms (target_taxa_with_syn.csv)<br>
  > ~ [GlobalTreeSearch](https://tools.bgci.org/global_tree_search.php) country-level distribution data for target genera; must download data for each genus individually and place files in "inputs/known_distribution" folder<br>
+ > ~ You need an API key to use the IUCN Red List section of the script; run rl_use_iucn() and follow the instructions to get set up<br>
  >
  >OUTPUTS:<br>
  > ~ List of target taxa with native country distribution from GTS and IUCN RL added (target_taxa_with_native_dist.csv); RL also has some introduced country distribution data that is added<br>
