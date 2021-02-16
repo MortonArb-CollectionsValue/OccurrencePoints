@@ -37,15 +37,15 @@ rm(my.packages)
 ################################################################################
 
 # either set manually:
-  main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/Ex situ analysis"
-  script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
+#  main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/Ex situ analysis"
+#  script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 # source('scripts/0-1_set_workingdirectory.R')
 
-# set target genus/genera name (for file reading and writing)
-target_genus <- "Acer"
+# OPTIONAL, depending on workflow: set target genus/genera name (for file reading and writing)
+#target_genus <- "Acer"
 
 ################################################################################
 # Load functions
@@ -126,34 +126,35 @@ read.exsitu.csv <- function(path,submission_year){
 #   https://docs.google.com/spreadsheets/d/1QLxxWu-bUIRcrjHiaWeSz9n1ms4EQB3yQ8P8PBBx3Zk/edit?usp=sharing
 
 #  read in data from multiple surveys and stack
-raw_2020 <- read.exsitu.csv(file.path(main_dir,"inputs",
-  "exsitu_standard_column_names","data_2020"), "2020")
+#raw_2020 <- read.exsitu.csv(file.path(main_dir,"inputs",
+#  "exsitu_standard_column_names","data_2020"), "2020")
   #names(raw_2020)
-  raw_2020 <- raw_2020 %>% dplyr::select(-Other.standard.names.to.use.if.futher.fields.are.provided....)
-raw_2019 <- read.exsitu.csv(file.path(main_dir,"inputs",
+#  raw_2020 <- raw_2020 %>% dplyr::select(-Other.standard.names.to.use.if.futher.fields.are.provided....)
+raw_2019 <- read.exsitu.csv(file.path(main_dir,"inputs","raw_occurrence",
   "exsitu_standard_column_names","data_2019"), "2019")
   #names(raw_2019)
-raw_2018 <- read.exsitu.csv(file.path(main_dir,"inputs",
-  "exsitu_standard_column_names","data_2018_GapAnalysis10Genera"), "2018")
-  raw_2018 <- raw_2018 %>% dplyr::select(-author,-datum,-Diameter,-family,
-    -garden_lat,-garden_long,-inst_name,-isnt_name,-specific2)
+#raw_2018 <- read.exsitu.csv(file.path(main_dir,"inputs",
+#  "exsitu_standard_column_names","data_2018_GapAnalysis10Genera"), "2018")
+#  raw_2018 <- raw_2018 %>% dplyr::select(-author,-datum,-Diameter,-family,
+#    -garden_lat,-garden_long,-inst_name,-isnt_name,-specific2)
   #names(raw_2018)
-raw_2017 <- read.exsitu.csv(file.path(main_dir,"inputs",
-  "exsitu_standard_column_names","data_2017_OakGapAnalysis"), "2017")
+#raw_2017 <- read.exsitu.csv(file.path(main_dir,"inputs",
+#  "exsitu_standard_column_names","data_2017_OakGapAnalysis"), "2017")
   #names(raw_2017)
-  raw_2017 <- raw_2017 %>% dplyr::select(-common_name,-plant_age,-plant_ht,
-    -plant_ht_units,-author,-species_distrib,-garden_lat,-garden_long,
-    -altitude,-altitude_units,-plant_dbh,-plant_dbh_units,-spatial_proj,
-    -syn,-id_year,-voucher)
+#  raw_2017 <- raw_2017 %>% dplyr::select(-common_name,-plant_age,-plant_ht,
+#    -plant_ht_units,-author,-species_distrib,-garden_lat,-garden_long,
+#    -altitude,-altitude_units,-plant_dbh,-plant_dbh_units,-spatial_proj,
+#    -syn,-id_year,-voucher)
 # if genus is blank in 2017 data, make it "Quercus"
-raw_2017[which(!is.na(raw_2017$species) &
-                is.na(raw_2017$genus)),]$genus <- "Quercus"
+#raw_2017[which(!is.na(raw_2017$species) &
+#                is.na(raw_2017$genus)),]$genus <- "Quercus"
 # stack all data
-to_stack <- list(raw_2020,raw_2019,raw_2018,raw_2017)
-all_data_raw <- Reduce(rbind.fill,to_stack)
+#to_stack <- list(raw_2020,raw_2019,raw_2018,raw_2017)
+#all_data_raw <- Reduce(rbind.fill,to_stack)
 
 # create new version before big changes, so can easily go back to original
-all_data <- all_data_raw
+#all_data <- all_data_raw
+all_data <- raw_2019
 
 # replace non-ascii characters
   # first fix some common lat/long character issues
@@ -165,77 +166,64 @@ all_data$orig_long <- mgsub(all_data$orig_long,
 all_data <- as.data.frame(lapply(all_data,replace_non_ascii),stringsAsFactors=F)
 
 # check out column names
-#sort(colnames(all_data))
+sort(colnames(all_data))
 # IF NEEDED: remove extra columns (can be created through Excel to CSV issues)
 #  all_data <- all_data[, -grep("^X", names(all_data))]
 # IF NEEDED: separate column into multiple
-  all_data <- all_data %>% separate("specific",
-    c("infra_rank_add","infra_name_add"),sep=" ",remove=T,fill="right")
+#  all_data <- all_data %>% separate("specific",
+#    c("infra_rank_add","infra_name_add"),sep=" ",remove=T,fill="right")
 # IF NEEDED: see which datasets have extraneous columns so you can fix manually
 #  as desired; change line below as needed
   #unique(all_data$filename[all_data$ï..taxon_full_name!=""])
 # IF NEEDED: merge similar columns (you may not need to do this if no schema
 #   mistakes were made when manually editing column names).
 ## IMLS ##
-  all_data <- tidyr::unite(all_data,"acc_num", c("acc_num","acc_no"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"lin_num", c("lin_num","lin_no"),
-    sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"acc_num", c("acc_num","acc_no"),
+#    sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"lin_num", c("lin_num","lin_no"),
+#    sep=";",remove=T,na.rm=T)
   all_data <- tidyr::unite(all_data,"inst_short", c("inst_short",
-    "ï..inst_short"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"orig_source", c("orig_source","donor_name",
-    "source2","source","donor"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"garden_loc", c("garden_loc","loc"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"dataset_year", c("dataset_year",
-    "updated_year"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"state", c("state","maj_region"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"county", c("county","min_region"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"municipality", c("municipality",
-    "other_region"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"habitat", c("habitat","site_notes",
-    "habitat2"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"notes", c("notes","Notes","orig_notes",
-    "coord_det","note"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"taxon_full_name", c("taxon_full_name",
-    "sp_full_name","ï..sp_full_name"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"infra_name", c("infra_name",
-    "infra_name_add","intra_name","specific_name"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"infra_rank", c("infra_rank",
-    "infra_rank_add","intra_rank","specific_rank"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"name_determ", c("name_determ","id_by",
-    "id_notes","uncert_id"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"num_indiv", c("num_indiv","num_plants",
-    "no_alive","no_plants","num_alive"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"coll_num", c("coll_num","coll_no",
-    "coll_yr"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"coll_year", c("coll_year","planted_year",
-    "acq_year","aqu_year","aqu_yr"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"condition", c("condition","plant_status",
-    "status"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"hybrid", c("hybrid","hybrid.1"),
-    sep=";",remove=T,na.rm=T)
-  all_data <- tidyr::unite(all_data,"locality", c("locality","locallity",
-    "locality2"),
-    sep=";",remove=T,na.rm=T)
+    "ï..inst_short"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"orig_source", c("orig_source","donor_name",
+#    "source2","source","donor"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"garden_loc", c("garden_loc","loc"),
+#    sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"dataset_year", c("dataset_year",
+#    "updated_year"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"state", c("state","maj_region"),
+#    sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"county", c("county","min_region"),
+#    sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"municipality", c("municipality",
+#    "other_region"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"habitat", c("habitat","site_notes",
+#    "habitat2"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"notes", c("notes","Notes","orig_notes",
+#    "coord_det","note"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"taxon_full_name", c("taxon_full_name",
+#    "sp_full_name","ï..sp_full_name"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"infra_name", c("infra_name",
+#    "infra_name_add","intra_name","specific_name"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"infra_rank", c("infra_rank",
+#    "infra_rank_add","intra_rank","specific_rank"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"name_determ", c("name_determ","id_by",
+#    "id_notes","uncert_id"),sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"num_indiv", c("num_indiv","num_plants"#,
+    #"no_alive","no_plants","num_alive"
+    ),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"coll_num", c("coll_num","coll_no",
+#    "coll_yr"),sep=";",remove=T,na.rm=T)
+  all_data <- tidyr::unite(all_data,"coll_year", c("coll_year","acq_year"#,
+    #"aqu_year","aqu_yr","planted_year"
+  ),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"condition", c("condition","plant_status",
+#    "status"),sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"hybrid", c("hybrid","hybrid.1"),
+#    sep=";",remove=T,na.rm=T)
+#  all_data <- tidyr::unite(all_data,"locality", c("locality","locallity",
+#    "locality2"),sep=";",remove=T,na.rm=T)
 # IF NEEDED: remove unused columns or rename columns
-  #all_data <- all_data[ , -which(names(all_data) %in% c("col1","col2"))]
+  all_data <- all_data[ , -which(names(all_data) %in% c("genus_species"))]
   #colnames(all_data)[colnames(all_data)=="elevation"] <- "altitude"
 
 ### CHECK THINGS OUT ###
@@ -255,16 +243,16 @@ all_data$inst_short[all_data$inst_short==""] <-
 all_data <- all_data[which(all_data$inst_short!=""),]
 # IF NEEDED:remove duplicates in PCN datasets if institution submitted their own
 #     data separately
-nrow(all_data) #159435
+nrow(all_data) #96841
   # Magnolia
-magnolia_remove <- c("JCRaulstonArb","QuarryhillBG",
-  "UBritishColumbiaBG","MortonArb")
-all_data <- all_data[!(all_data$filename=="PCNMagnolia" &
-  all_data$inst_short %in% magnolia_remove),]
+#magnolia_remove <- c("JCRaulstonArb","QuarryhillBG",
+#  "UBritishColumbiaBG","MortonArb")
+#all_data <- all_data[!(all_data$filename=="PCNMagnolia" &
+#  all_data$inst_short %in% magnolia_remove),]
   # Acer
-acer_remove <- c("QuarryhillBG","UBritishColumbiaBG","USNatlArb","MortonArb")
-all_data <- all_data[!(all_data$filename=="PCNAcer" &
-  all_data$inst_short %in% acer_remove),]
+#acer_remove <- c("QuarryhillBG","UBritishColumbiaBG","USNatlArb","MortonArb")
+#all_data <- all_data[!(all_data$filename=="PCNAcer" &
+#  all_data$inst_short %in% acer_remove),]
   # Quercus
 quercus_remove <- c("MissouriBG","RanchoSantaAnaBG","MortonArb")
 all_data <- all_data[!(all_data$filename=="PCNQuercus" &
@@ -272,7 +260,7 @@ all_data <- all_data[!(all_data$filename=="PCNQuercus" &
   # Hackfalls Arb
 all_data <- all_data[!(all_data$filename=="CultivatedOaks" &
   all_data$inst_short == "HackfallsArb"),]
-nrow(all_data) #156362
+nrow(all_data) #95244
 
 ### CHECK ALL INSTITUTIONS ARE HERE ###
 sort(unique(all_data$inst_short))
@@ -313,10 +301,10 @@ all_data2[is.na(all_data2$taxon_full_name),]$taxon_full_name <-
 
 ### REPLACE ANYTHING IN HYBRID COLUMN THAT MARKS IT AS A NON-HYBRID ###
 sort(unique(all_data2$hybrid))
-all_data2 <- replace.value(all_data2, "hybrid", c("species"), NA)
+all_data2 <- replace.value(all_data2, "hybrid", c("species","unknown"), NA)
 # remove rows with anything in 'hyrbid' column
 all_data2 <- all_data2 %>% filter(is.na(hybrid))
-nrow(all_data2)
+nrow(all_data2) #92594
 
 # add space after periods in taxon_full_name
 all_data2$taxon_full_name <- gsub(".",". ",all_data2$taxon_full_name,fixed=T)
@@ -326,9 +314,9 @@ all_data2$taxon_full_name <- mgsub(all_data2$taxon_full_name,
 all_data2$taxon_full_name <- str_squish(all_data2$taxon_full_name)
 all_data2$taxon_full_name <- gsub("Quercus Quercus","Quercus",
   all_data2$taxon_full_name)
-all_data2$taxon_full_name <- mgsub(all_data2$taxon_full_name,
-  c("Magnolia Michelia","Magnolia Manglietia","Magnolia Mangletia",
-    "Magnolia Magnolia","Magnolia Parakmeria","Magnolia M."), "Magnolia")
+#all_data2$taxon_full_name <- mgsub(all_data2$taxon_full_name,
+#  c("Magnolia Michelia","Magnolia Manglietia","Magnolia Mangletia",
+#    "Magnolia Magnolia","Magnolia Parakmeria","Magnolia M."), "Magnolia")
 
 # trim whitespace
 all_data2 <- as.data.frame(lapply(all_data2,str_squish),stringsAsFactors=F)
@@ -346,13 +334,14 @@ all_data2$taxon_full_name <- mgsub(all_data2$taxon_full_name,
 
 # remove hybrids based on "x" in taxon_full_name
 all_data3 <- all_data2 %>% filter(!grepl(" x ",taxon_full_name))
-nrow(all_data3)
+nrow(all_data3) #86582
 # see hybrids removed:
 #sort(unique(anti_join(all_data2,all_data3)$taxon_full_name))
 
 # remove records with uncertain taxon name
-all_data4 <- all_data3 %>% filter(!grepl("?",taxon_full_name,fixed=T))
-nrow(all_data4)
+all_data4 <- all_data3
+#all_data4 <- all_data3 %>% filter(!grepl("?",taxon_full_name,fixed=T))
+#nrow(all_data4) #86434
 # see records removed:
 #sort(unique(anti_join(all_data3,all_data4)$taxon_full_name))
 
@@ -366,7 +355,7 @@ all_data4 <- as.data.frame(lapply(all_data4,str_squish),stringsAsFactors=F)
 # remove cultivars with no species name
 all_data5 <- all_data4 %>%
   filter(!grepl("\"",species_new) & !grepl("\'",species_new))
-nrow(all_data5)
+nrow(all_data5) #81748
 # see records removed:
 #sort(unique(anti_join(all_data4,all_data5)$taxon_full_name))
 
@@ -376,23 +365,23 @@ all_data5$genus_new <- str_to_title(all_data5$genus_new)
 sort(unique(all_data5$genus_new))
 # IF NEEDED: fix misspellings or abbreviations
 all_data5$genus_new <- mgsub(all_data5$genus_new,
-  c("\"",
-    "^M$","^M.$","Michelia","Manglietia","Mangletia","Parakmeria",
-    "^Mag.$","^Mag$","Magnlia","Magnolis",
-    "^Q$","^Q.$","Querces","Quercu","Qurercus","Querucs","Querus","Quercuss"),
-  c("",
-    "Magnolia","Magnolia","Magnolia","Magnolia","Magnolia","Magnolia",
-    "Magnolia","Magnolia","Magnolia","Magnolia",
-    "Quercus","Quercus","Quercus","Quercus","Quercus","Quercus","Quercus",
-    "Quercus"),
+  c(#"\"",
+    #"^M$","^M.$","Michelia","Manglietia","Mangletia","Parakmeria",
+    #"^Mag.$","^Mag$","Magnlia","Magnolis",
+    "^Q$","Querucs"),#"Quercu","^Q.$","Querces","Qurercus","Quercuss","Querus",
+  c(#"",
+    #"Magnolia","Magnolia","Magnolia","Magnolia","Magnolia","Magnolia",
+    #"Magnolia","Magnolia","Magnolia","Magnolia",
+    #"Quercus","Quercus","Quercus","Quercus","Quercus","Quercus",
+    "Quercus","Quercus"),
   fixed=F)
 # keep only rows from target genera
-target_genera <- c("Quercus","Acer","Magnolia","Malus","Tilia","Ulmus",
-  "Kalopanax","Dipteronia","Cyclobalanopsis","Michelia","Manglietia")
-#  "Pyrus","Crataegus","Docyniopsis","Eriolobus","Eulomalus","Euphorbia",
-#  "Microptelea","Planera","Sinomalus","Tithymalus")
+target_genera <- c("Crataegus","Docyniopsis","Eriolobus","Eulomalus","Euphorbia",
+  "Malus","Microptelea","Planera","Pyrus","Quercus","Scolodrys","Sinomalus","Tilia",
+  "Tithymalus","Ulmus") #,"Acer","Magnolia","Kalopanax","Dipteronia",
+  #"Cyclobalanopsis","Michelia","Manglietia")"Microptelea")
 all_data6 <- all_data5 %>% filter(genus_new %in% target_genera)
-nrow(all_data6)
+nrow(all_data6) #38306
 # see records removed:
 #sort(unique(anti_join(all_data5,all_data6)$taxon_full_name))
 
@@ -418,22 +407,23 @@ all_data6$species_new <- gsub("cheniiNakai","chenii",all_data6$species_new)
 all_data6$species_new <- gsub("Ilex","ilex",all_data6$species_new)
 all_data6$species_new <- gsub("Iyrata","iyrata",all_data6$species_new)
 all_data6$species_new <- gsub("Kobus","kobus",all_data6$species_new)
-all_data6$species_new <- gsub("Liliflora","liliflora",all_data6$species_new)
-all_data6$species_new <- gsub("Liliiflora","liliiflora",all_data6$species_new)
-all_data6$species_new <- gsub("oocarpaE","oocarpa",all_data6$species_new)
-all_data6$species_new <- gsub("platanoAdes","platano",all_data6$species_new)
-all_data6$species_new <- gsub("Salicifolia","salicifolia",all_data6$species_new)
-all_data6$species_new <- gsub("seemanniiE","seemannii",all_data6$species_new)
-all_data6$species_new <- gsub("shirasaWanum","shirasa",all_data6$species_new)
-all_data6$species_new <- gsub("Stellata","stellata",all_data6$species_new)
-all_data6$species_new <- gsub("asheiA","ashei",all_data6$species_new)
-all_data6$species_new <- gsub("Cathcartii","cathcartii",all_data6$species_new)
-all_data6$species_new <- gsub("grandifloraA","grandiflora",all_data6$species_new)
-all_data6$species_new <- gsub("IN","",all_data6$species_new)
-all_data6$species_new <- gsub("Ex","",all_data6$species_new)
-all_data6$species_new <- gsub("macrophyllaA","macrophylla",all_data6$species_new)
+#all_data6$species_new <- gsub("Liliflora","liliflora",all_data6$species_new)
+#all_data6$species_new <- gsub("Liliiflora","liliiflora",all_data6$species_new)
+#all_data6$species_new <- gsub("oocarpaE","oocarpa",all_data6$species_new)
+#all_data6$species_new <- gsub("platanoAdes","platano",all_data6$species_new)
+#all_data6$species_new <- gsub("Salicifolia","salicifolia",all_data6$species_new)
+#all_data6$species_new <- gsub("seemanniiE","seemannii",all_data6$species_new)
+#all_data6$species_new <- gsub("shirasaWanum","shirasa",all_data6$species_new)
+#all_data6$species_new <- gsub("Stellata","stellata",all_data6$species_new)
+#all_data6$species_new <- gsub("asheiA","ashei",all_data6$species_new)
+#all_data6$species_new <- gsub("Cathcartii","cathcartii",all_data6$species_new)
+#all_data6$species_new <- gsub("grandifloraA","grandiflora",all_data6$species_new)
+#all_data6$species_new <- gsub("IN","",all_data6$species_new)
+#all_data6$species_new <- gsub("Ex","",all_data6$species_new)
+#all_data6$species_new <- gsub("macrophyllaA","macrophylla",all_data6$species_new)
 # remove remaining cultivars without species name
 all_data7 <- all_data6 %>% filter(!grepl("[A-Z]",species_new))
+nrow(all_data7) #37990
 # see records removed:
 #sort(unique(anti_join(all_data6,all_data7)$taxon_full_name))
 
@@ -447,6 +437,7 @@ all_data8 <- all_data7 %>%
   # there is an accepted Acer name with "aff" -- add the period back
 all_data8$taxon_full_name <- gsub(" aff "," aff. ",all_data8$taxon_full_name)
 all_data8$species_new <- gsub("aff","aff.",all_data8$species_new)
+nrow(all_data8) #36260
 # see records removed:
 #sort(unique(anti_join(all_data7,all_data8)$taxon_full_name))
 
@@ -528,11 +519,16 @@ all_data9 <- all_data8
 
 # read in target taxa list
 taxon_list <- read.csv(file.path(main_dir, "inputs", "taxa_list",
-  paste0("target_",target_genus,"_taxa_with_syn.csv")), header = T,
+  "target_taxa_with_syn.csv"), header = T,
   na.strings = c("","NA"),colClasses = "character")
-if(length(unique(grepl("^X", names(taxon_list))))>1){
-  taxon_list <- taxon_list[, -grep("^X", names(taxon_list))]
-}
+taxon_list <- taxon_list %>%
+  select(taxon_name,taxon_name_acc,species_name_acc,list,threat_category,threat_assessment)
+#taxon_list <- read.csv(file.path(main_dir, "inputs", "taxa_list",
+#  paste0("target_",target_genus,"_taxa_with_syn.csv")), header = T,
+#  na.strings = c("","NA"),colClasses = "character")
+#if(length(unique(grepl("^X", names(taxon_list))))>1){
+#  taxon_list <- taxon_list[, -grep("^X", names(taxon_list))]
+#}
 head(taxon_list)
 
 # rename some taxon name columns to preserve originals
@@ -549,7 +545,7 @@ setnames(all_data9,
 all_data9 <- left_join(all_data9,taxon_list)
   # join again just by species name if no taxon match
 need_match <- all_data9[which(is.na(all_data9$list)),]
-  nrow(need_match) #61035
+  nrow(need_match) #6052
     # remove columns from first taxon name match
 need_match <- need_match[,1:(ncol(all_data9)-ncol(taxon_list)+1)]
     # rename column for matching
@@ -561,15 +557,16 @@ need_match <- left_join(need_match,taxon_list)
 matched <- all_data9[which(!is.na(all_data9$list)),]
 matched$taxon_full_name <- matched$taxon_name
 all_data10 <- rbind(matched,need_match)
-  table(all_data10$list) # desiderata: 30989 | synonym: 8228
+  table(all_data10$list) # desiderata: 30806 | synonym: 545
   # see how many rows have taxon name match
-nrow(all_data10[which(!is.na(all_data10$list)),]) #39217 ; 45533 with gloabl oak
+nrow(all_data10[which(!is.na(all_data10$list)),]) #31351
 
 # remove unused columns
   # columns to keep
 all_data10 <- all_data10 %>% dplyr::select(
   # key data
-  inst_short,submission_year,species_name_acc,target_species,
+  inst_short,submission_year,species_name_acc,#target_species,
+    threat_category,threat_assessment,
   prov_type,num_indiv,acc_num,
   # locality
   orig_lat,orig_long,locality,municipality,county,state,country,
@@ -587,11 +584,14 @@ all_data10 <- all_data10 %>% dplyr::select(
   trade_name,cultivar)
 
 ### CHECK UNMATCHED SPECIES, TO ADD TO SYNONYM LIST AS NECESSARY ###
-check <- all_data10 %>% filter(is.na(list) & genus == target_genus)
+check <- all_data10 %>% filter(is.na(list)) #& genus == target_genus)
 sort(unique(check$taxon_full_name))
+write.csv(check, file.path(main_dir,"outputs","exsitu_unmatchedTaxa.csv"),
+  row.names = F)
 
 ### keep only matched names
 all_data11 <- all_data10 %>% filter(!is.na(list))
+nrow(all_data11) #31351
 
 # write file
 #write.csv(all_data7, file.path(local_dir, "exsitu_compiled_taxaMatched.csv"),
@@ -604,8 +604,8 @@ all_data11 <- all_data10 %>% filter(!is.na(list))
 #all_data11 <- all_data10
 
 # add institution metadata
-inst_data <- read.csv(file.path(main_dir,"inputs","respondent_institution_data_table",
-  "respondent_institution_data_table_2020.csv"),stringsAsFactors = F)
+inst_data <- read.csv(file.path(main_dir,"inputs",#"respondent_institution_data_table",
+  "respondent_institution_data_table_2019.csv"),stringsAsFactors = F)
 str(inst_data)
 all_data11 <- left_join(all_data11,inst_data)
 str(all_data11)
@@ -645,14 +645,20 @@ all_data11$prov_type <- ifelse(grepl(paste(
   c("cultiva","garden","nursery","^c$","^g$","^h$","horticult","purchase",
   "coll"),
   collapse = "|"), all_data11$prov_type),"H",all_data11$prov_type)
-  # unknown (U) ; everything else is unknown
+  # unknown (U)
+all_data11$prov_type <- ifelse(grepl(paste(
+  c("(u)","u"),
+  collapse = "|"), all_data11$prov_type),"U",all_data11$prov_type)
+  # not given (NG) ; everything else
 all_data11$prov_type <- ifelse(all_data11$prov_type!= "W" &
   all_data11$prov_type != "Z" & all_data11$prov_type != "H" &
-  all_data11$prov_type != "N","U",all_data11$prov_type)
-all_data11$prov_type[which(is.na(all_data11$prov_type))] <- "U"
+  all_data11$prov_type != "N" & all_data11$prov_type != "U",
+  "NG",all_data11$prov_type)
+all_data11$prov_type[which(is.na(all_data11$prov_type))] <- "NG"
 
 # check results
 unique(all_data11$prov_type)
+table(all_data11$prov_type)
 
 ##
 ## B) Number of Individuals
@@ -671,11 +677,11 @@ all_data11$num_indiv[which(is.na(all_data11$num_indiv))] <- 1
 
 # check results
 sort(unique(all_data11$num_indiv))
-nrow(all_data11) #93958
+nrow(all_data11) #31351
 
 # remove records with no individuals
 all_data11 <- all_data11[which(all_data11$num_indiv > 0),]
-nrow(all_data11) #92182
+nrow(all_data11) #31265
 
 ##
 ## ** ADD Unique ID Column
@@ -753,34 +759,34 @@ all_data11$long_dd <- str_squish(all_data11$long_dd)
   # mark rows that need to be converted
 convert <- all_data11[which(grepl(" ",all_data11$lat_dd) |
   grepl(" ",all_data11$long_dd)),]
-  nrow(convert) #1885
+  nrow(convert) #451
 unique(convert$lat_dd)
 good <- anti_join(all_data11, convert)
   # separate by dec_min_sec and deg_dec_min then convert to decimal degrees
     # latitude
-dms <- convert[which(str_count(convert$lat_dd," ") == 2),]; nrow(dms) #1474
-ddm <- convert[which(str_count(convert$lat_dd," ") == 1),]; nrow(ddm) #390
+dms <- convert[which(str_count(convert$lat_dd," ") == 2),]; nrow(dms)
+ddm <- convert[which(str_count(convert$lat_dd," ") == 1),]; nrow(ddm)
 other <- convert[which((str_count(convert$lat_dd," ") != 1 &
   str_count(convert$lat_dd," ") != 2) | is.na(str_count(convert$lat_dd," "))),]
-  nrow(other) #21
+  nrow(other)
 dms$lat_dd = measurements::conv_unit(dms$lat_dd, from = 'deg_min_sec',
   to = 'dec_deg')
 ddm$lat_dd = measurements::conv_unit(ddm$lat_dd, from = 'deg_dec_min',
   to = 'dec_deg')
-convert <- rbind(dms,ddm,other); nrow(convert) #1885
+convert <- rbind(dms,ddm,other); nrow(convert)
     # longitude
-dms <- convert[which(str_count(convert$long_dd," ") == 2),]; nrow(dms) #1477
-ddm <- convert[which(str_count(convert$long_dd," ") == 1),]; nrow(ddm) #390
+dms <- convert[which(str_count(convert$long_dd," ") == 2),]; nrow(dms)
+ddm <- convert[which(str_count(convert$long_dd," ") == 1),]; nrow(ddm)
 other <- convert[which((str_count(convert$long_dd," ") != 1 &
   str_count(convert$long_dd," ") != 2) | is.na(str_count(convert$long_dd," "))),]
-  nrow(other) #18
+  nrow(other)
   dms$long_dd = measurements::conv_unit(dms$long_dd, from = 'deg_min_sec',
     to = 'dec_deg')
   ddm$long_dd = measurements::conv_unit(ddm$long_dd, from = 'deg_dec_min',
     to = 'dec_deg')
-  convert <- rbind(dms,ddm,other); nrow(convert) #1885
+  convert <- rbind(dms,ddm,other); nrow(convert) #451
   # join everything back together
-all_data12 <- rbind(good,convert); nrow(all_data12) #100224
+all_data12 <- rbind(good,convert); nrow(all_data12) #29058
 
 # check validity of lat and long
 all_data12$lat_dd <- as.numeric(all_data12$lat_dd)
@@ -793,14 +799,15 @@ all_data12$lat_dd[zero] <- NA; all_data12$long_dd[zero] <- NA
   # flag non-numeric and not available coordinates and lat > 90, lat < -90,
   # lon > 180, and lon < -180
 coord_test <- cc_val(all_data12, lon = "long_dd",lat = "lat_dd",
-  value = "flagged", verbose = TRUE) #Flagged 496009 records.
+  value = "flagged", verbose = TRUE) #Flagged 24469 records.
   # try switching lat and long for invalid points and check validity again
 all_data12[!coord_test,c("lat_dd","long_dd")] <-
   all_data12[!coord_test,c("long_dd","lat_dd")]
 coord_test <- cc_val(all_data12,lon = "long_dd",lat = "lat_dd",
-  value = "flagged",verbose = TRUE) #Flagged 496002 records.
+  value = "flagged",verbose = TRUE) #Flagged 24462 records.
   # make coords NA if they are still flagged
-all_data12[!coord_test,c("lat_dd","long_dd")] <- c(NA,NA)
+all_data12[!coord_test,"lat_dd"] <- NA
+all_data12[!coord_test,"long_dd"] <- NA
 
 # check if geolocated points are in water and mark
 world_polygons <- ne_countries(type = 'countries', scale = 'medium')
@@ -858,7 +865,7 @@ all_data12$gps_det[which(!is.na(all_data12$lat_dd) &
   !is.na(all_data12$long_dd))] <- "G"
 table(all_data12$gps_det)
 #     G     H
-# 11504 25191
+#  4596  5961
 
 # where prov_type is "H" but lat-long is given, change to "H?"
 all_data12$prov_type[which(all_data12$gps_det == "G" &
@@ -922,7 +929,7 @@ all_data12$condition <- str_to_lower(all_data12$condition)
 all_data12 <- all_data12 %>%
   filter(!grepl("dead|removed|rmvd",condition))
 sort(unique(all_data12$condition))
-nrow(all_data12)
+nrow(all_data12) #29058
 
 ##
 ## SELECT AND ORDER FINAL COLUMNS
@@ -935,7 +942,8 @@ all_data12 <- as.data.frame(lapply(all_data12, function(x) gsub(",",";",x)),
 
 all_data13 <- all_data12 %>% dplyr::select(
   # key data
-  UID,inst_short,submission_year,species_name_acc,target_species,
+  UID,inst_short,submission_year,species_name_acc,#target_species,
+    threat_category,threat_assessment,
   prov_type,gps_det,flag,lat_dd,long_dd,all_locality,
   # locality
   locality,municipality,county,state,country,orig_lat,orig_long,
@@ -951,12 +959,18 @@ all_data13 <- all_data12 %>% dplyr::select(
   taxon_name_acc,taxon_full_name,genus,species,infra_rank,infra_name,
   taxon_full_name_orig,taxon_full_name_concat,cultivar,trade_name,
   # institution metadata
-  inst_name,inst_country,inst_lat,inst_long)
+  inst_name,inst_country,inst_lat,inst_long,
+    inst_file_name
+)
 str(all_data13)
 
 # write file
 #write.csv(all_data13, file.path(main_dir,"Compiled ex situ data",
 #  paste0(target_genus,"_exsitu_compiled_standardized.csv")),row.names = F)
+write.csv(all_data13, file.path(main_dir,"outputs",
+  paste0("exsitu_compiled_standardized_", Sys.Date(), ".csv")),row.names = F)
+
+
 
 ##
 ## RENAME FOR GEOLOCATE AND SPLIT BY SPECIES

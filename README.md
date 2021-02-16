@@ -56,11 +56,11 @@
  - Botanical Information and Ecology Network (BIEN) [auto download with "BIEN"]
 
  National databases include:
- - Forest Inventory and Analysis (FIA) Program, USDA Forest Service [references raw web files to look for target taxa; does not download because very large]
+ - Forest Inventory and Analysis (FIA) Program, USDA Forest Service [references raw web files to look for target taxa; does not download because very large; but this also means its very slow...]
  - Biodiversity Information Serving Our Nation (BISON), USGS [auto download with "rbison"]
 
  >INPUTS:<br>
- > ~ List of target taxa and synonyms (target_taxa_with_syn.csv); all target names (including synonyms) are searched<br>
+ > ~ List of target taxa and synonyms (target_taxa_with_syn.csv) or can manually create taxa list in script itself; all target names (including synonyms) are searched<br>
  > ~ FIA metadata tables (FIA_AppendixF_TreeSpeciesCodes_2016.csv; US_state_county_FIPS_codes.csv); available in repository's "data" folder
  >
  >OUTPUTS:<br>
@@ -97,7 +97,7 @@
 
  >INPUTS:<br>
  > ~ Raw occurrence point data from 2-0 and (optionally) 2-1<br>
- > ~ List of target taxa and synonyms (target_taxa_with_syn.csv)
+ > ~ List of target taxa and synonyms (target_taxa_with_syn.csv); see ["Taxonomic Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for necessary columns
  >
  >OUTPUTS:<br>
  > ~ CSV of all occurrence points without lat-long but with locality description (need_geolocation.csv)<br>
