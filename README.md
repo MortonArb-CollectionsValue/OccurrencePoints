@@ -10,7 +10,7 @@
 
 ## 1-0_get_taxonomic_info.R
 
- Takes a list of taxa and uses the "taxize" package to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually based on expert knowledge of the taxa (not all synonyms pulled are agreeable, depending on your taxonomic viewpoint). Taxonomic information can also be added manually to the final list. Information pulled includes:
+ Takes a list of taxa and uses the "taxize" package to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually based on expert knowledge of the taxa (not all synonyms pulled are agreeable, depending on your taxonomic viewpoint). Taxonomic information can also be added manually to the final list (additional 'good' synonyms may have been be missed). Information pulled includes:
 
  Acceptance status and authors from:
  - Tropicos
