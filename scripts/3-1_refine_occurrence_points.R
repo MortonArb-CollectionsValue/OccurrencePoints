@@ -62,6 +62,9 @@ main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occ
 
 # bring in polygon (load from saved .RData file)
 load(file.path(main_dir, "inputs", "gis_data", "admin_shapefiles.RData"))
+# define projection
+wgs_proj <- sp::CRS(SRS_string="EPSG:4326")
+urban.poly <- spTransform(urban.poly,wgs_proj)
 
 # read in country-level native distribution data
 native_dist <- read.csv(file.path(main_dir,"inputs","known_distribution",
@@ -115,9 +118,8 @@ for (i in 1:length(spp_list)){
     paste0(f.nm, ".csv")))
 
   # create SpatialPointsDataFrame for species
-  proj4string4poly <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
   eo.spdf <- SpatialPointsDataFrame(eo.df[,c("decimalLongitude",
-    "decimalLatitude")], eo.df, proj4string = CRS(proj4string4poly))
+    "decimalLatitude")], eo.df, proj4string = wgs_proj)
   ## add country polygon data to each point based on lat-long location
   eo.post <- point.in.poly(eo.spdf, adm0.poly, sp=TRUE)@data
 
