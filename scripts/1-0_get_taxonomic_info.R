@@ -773,8 +773,8 @@ wfo_all$database <- "wfo"
 ################################################################################
 
 # create dataframe of all data found
-  ## change this list to reflect the sources you're using
-datasets <- list(itis_all,pow_all,tpl_all,tp_all,wcvp_all,wfo_all) #,rl_all,gbif_all
+  ## !!! change this list to reflect the sources you're using
+datasets <- list(itis_all,pow_all,tpl_all,tp_all,wcvp_all,wfo_all,rl_all) #,gbif_all
 all_data_raw <- Reduce(rbind.fill,datasets)
 all_data <- all_data_raw
   names(all_data)
