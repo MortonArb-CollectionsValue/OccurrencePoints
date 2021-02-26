@@ -1,27 +1,43 @@
 ################################################################################
 
 ## 1-0_get_taxonomic_info.R
-### Authors: Emily Beckman & Shannon Still ### Date: 5/30/2020
+### Authors: Emily Beckman & Shannon Still ### Date: 5/30/2020; updated 2/26/2021
 
 ### DESCRIPTION:
-  # This script takes a list of taxa and uses the taxize package to pull
-  #   taxonomic information from multiple databases
+  # This script takes a list of taxa and uses the taxize package and static
+  #   backbones to pull taxonomic information from multiple databases.
   # Information pulled includes:
-    # - Acceptance and authors from Tropicos, Integrated Taxonomic
-    #   Information Service (ITIS), Kew’s Plants of the World (POW), and
-    #   The Plant List (TPL)
-    # - Synonyms from Tropicos, ITIS, and POW
+    # - Acceptance and authors from The Plant List (TPL); could not find good
+    #   way to get synonyms
+    # - Acceptance and authors plus synonyms from:
+    #   - Tropicos (via taxize package)
+    #   - Integrated Taxonomic Information Service (ITIS; via taxize package)
+    #   - Plants of the World (POW; via taxize package)
+    #   - World Checklist of Vascular Plants (WCVP; via static backbone)
+    #   - World Flora Online (WFO; via static backbone)
+    # - Synonyms, conservation category, and assessment year from IUCN Red List
+    # - There is a section for pulling GBIF synonyms, but not used currently
+    #   because sometimes pulled completely unrelated names such as insects
   # The output can either be used directly in following scripts
-  #   or can be reviewed and revised by hand (recommended)
+  #   or can be reviewed and revised by hand (recommended) based on your
+  #   taxonomic viewpoint
 
 ### DATA IN:
   # target_taxa.csv (list of target taxa) or create list by hand in script
     # one column: "taxon_name_acc" (genus, species, infra rank, and infra name,
     # all separated by one space each; hybrid symbol should be " x ", rather
-    # than "_" or "✕", and go between genus and species)
+    # than "_" or "✕" and go between genus and species)
 
 ### DATA OUT:
-  # target_taxa_with_syn.csv
+  # target_taxa_with_syn_all.csv
+  # target_taxa_with_syn_filtered.csv
+  # more info here: https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing
+
+### PLEASE NOTE:
+  # Some functions from taxize package require manual input so you must pause
+  #   to answer queries before continuing with script; these areas are marked
+  #   with "!!" to help you spot them.
+  # See README file for more information
 
 ################################################################################
 # Load libraries
@@ -29,7 +45,7 @@
 
 # rm(list=ls())
 my.packages <- c('plyr', 'tidyverse', 'rgbif', 'data.table', 'taxize',
-  'anchors', 'batchtools', 'textclean', 'stringi', 'devtools')
+  'anchors', 'batchtools', 'textclean', 'stringi', 'devtools','rredlist')
 # install.packages (my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
 rm(my.packages)
@@ -39,12 +55,12 @@ rm(my.packages)
 ################################################################################
 
 # either set manually:
-#main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Gap Analysis/occurrence_points"
+main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
 # source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
-source('scripts/0-1_set_workingdirectory.R')
+#source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
 # Load functions
@@ -77,9 +93,10 @@ synonyms.compiled <- function(syn_output,db_name){
 
 # CHANGE THIS LIST OF FAMILIES BASED ON TAXA YOURE LOOKING FOR:
 #tpl_families() # list of families in database
-families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
+#families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
 #families <- "Sapindaceae"
 #families <- c("Juglandaceae","Fagaceae","Leguminosae","Lauraceae","Pinaceae","Taxaceae")
+families <- c("Fagaceae","Magnoliaceae")
 
 # read in taxa list
 taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
@@ -92,10 +109,13 @@ taxa_list_acc[,1] <- str_squish(taxa_list_acc[,1])
   # use this instead if you want to select names based on values in other col:
   taxa_names_sel <- taxa_list_acc[which(taxa_list_acc$taxon_name_acc_type != "cultivar"),]
   taxa_names <- taxa_names_sel[,1]
+  # OR, if not, just run this line:
+  #taxa_names <- taxa_list_acc[,1]
 length(taxa_names) #303
 
 ## OR: you can create vector of taxa names here instead of reading in
-#taxa_names <- c("Quercus fabrei","Quercus fabri","Quercus alba")
+taxa_names <- c("Quercus fabrei","Quercus fabri","Magnolia albosericea",
+  "Quercus montana","Quercus palmeri")
 
 # create list of target species names, with infraspecific taxa removed
 species_names <- taxa_names[
@@ -187,14 +207,11 @@ tp_names_noDup$acceptance <- str_to_lower(tp_names_noDup$acceptance)
 
 ## GET SYNONYMS
 
-#if(exists("tpkey")){
-#  tp_syn <- synonyms(species_names, db="tropicos", key=tpkey)
-#} else {
-  tp_syn <- synonyms(species_names, db="tropicos")
-#}
-#rm(tpkey)
+tp_syn <- synonyms(species_names, db="tropicos")
 
+# !!
 # !! STOP BEFORE RUNNING NEXT SECTION -- YOU MAY HAVE TO ANSWER SOME PROMPTS
+# !!
 
 # remove species/taxa that did not have any synonyms,
 #   create data frame of synonyms,
@@ -273,7 +290,9 @@ itis_names_noDup$acceptance <- str_to_lower(itis_names_noDup$acceptance)
 
 itis_syn <- synonyms(taxa_names, db="itis", accepted = F)
 
+# !!
 # !! STOP BEFORE RUNNING NEXT SECTION -- YOU MAY HAVE TO ANSWER SOME PROMPTS
+# !!
 
 # remove species/taxa that did not have any synonyms,
 #   create data frame of synonyms,
@@ -359,7 +378,9 @@ for(i in 1:length(taxa_names)){
   }
 }
 
+# !!
 # !! STOP BEFORE RUNNING NEXT SECTION -- YOU MAY HAVE TO ANSWER SOME PROMPTS
+# !!
 
 # fix up acceptance df
   # add column stating which database it came from
@@ -522,12 +543,238 @@ head(tpl_all)
 #    acceptance,taxon_name_match)
 #head(gbif_all)
 
+###############
+### F) IUCN Red List
+### https://www.iucnredlist.org
+###############
+
+## ! you first need an API key ! run the following line and fill out
+##   the necessary online form to receive a key, then follow the instructions
+##   to add to your R environment:
+#rl_use_iucn()
+
+## GET ASSESSMENT INFO
+
+## use rredlist package to get assessment information
+## can take a little while if lots of species
+rl_names <- data.frame()
+for(i in 1:length(species_only)){
+	hist <- rl_history(species_only[[i]])
+	name <- hist$name
+	hist <- as.data.frame(hist$result)
+	if(nrow(hist>0)){
+    print(species_only[[i]])
+		hist$genus_species <- rep(name)
+		rl_names <- rbind(rl_names,hist)
+	} else {
+		print(paste(species_only[[i]],"no assessment"))
+	}
+}
+# add col stating which database it came from
+rl_names_df <- rl_names
+rl_names_df$database <- "redlist"
+colnames(rl_names_df)
+# keep only necessary columns
+rl_names_df <- rl_names_df[,c("year","code","genus_species","database")]
+rl_names_df$acceptance <- "accepted"
+# standardize column names for joining later
+setnames(rl_names_df,
+  old = c("genus_species","code","year"),
+  new = c("taxon_name_acc","rl_category","rl_year"))
+rl_names_df$taxon_name_match <- rl_names_df$taxon_name_acc
+# keep only necessary columns
+rl_names_df <- rl_names_df[,c("taxon_name_acc","taxon_name_match",
+  "acceptance","database","rl_year","rl_category")]
+
+# GET SYNONYMS
+
+## use rredlist package to get synonyms
+## can take a little while if lots of species
+rl_syn <- data.frame()
+for(i in 1:length(species_only)){
+	syn <- rl_synonyms(species_only[[i]])
+	name <- syn$name
+	syn <- as.data.frame(syn$result)
+	if(nrow(syn>0)){
+    print(species_only[[i]])
+		syn$genus_species <- rep(name)
+		rl_syn <- rbind(rl_syn,syn)
+	} else {
+		print(paste(species_only[[i]],"no synonyms"))
+	}
+}
+# add col stating which database it came from
+rl_syn_df <- rl_syn
+rl_syn_df$database <- "redlist"
+colnames(rl_syn_df)
+# standardize column names for joining later
+setnames(rl_syn_df,
+  old = c("accepted_name","synonym","syn_authority"),
+  new = c("taxon_name_acc","taxon_name_match","author"))
+# keep only necessary columns
+rl_syn_df <- rl_syn_df[,c("taxon_name_acc","taxon_name_match","author",
+  "database")]
+rl_syn_df$acceptance <- "synonym"
+# add column with authors
+rl_syn_df$match_name_with_authors <- paste(
+  rl_syn_df$taxon_name_match,rl_syn_df$author)
+# remove records where taxa name and syn name are the same
+rl_syn_df <- rl_syn_df[which(rl_syn_df$taxon_name_acc !=
+  rl_syn_df$taxon_name_match),]
+# keep only necessary columns
+rl_syn_df <- rl_syn_df[,c("taxon_name_acc","taxon_name_match",
+  "acceptance","match_name_with_authors","database")]
+
+## BIND TOGETHER STATUS AND SYNONYMS
+
+rl_all <- rbind.fill(rl_names_df,rl_syn_df)
+head(rl_all)
+
+###############
+### G) World Checklist of Vascular Plants (WCVP) - static backbone
+### https://wcvp.science.kew.org
+###############
+
+# DOWNLOAD MOST RECENT BACKBONE AT https://wcvp.science.kew.org AND
+#   PLACE IN "taxa_list" FOLDER
+
+# read in data
+wcvp <- read.delim(file.path(main_dir, "inputs","taxa_list",
+  "wcvp_v3_nov_2020.txt"),colClasses="character",sep="|")
+head(wcvp)
+
+## GET TAXONOMIC STATUS
+
+# search for target taxa
+wcvp_names <- data.frame()
+for(i in 1:length(taxa_names)){
+  matched <- wcvp[which(wcvp$taxon_name == taxa_names[i]),]
+  if(length(matched) > 0){
+    wcvp_names <- rbind(wcvp_names,matched)
+  }
+}
+head(wcvp_names)
+wcvp_names_df <- wcvp_names
+colnames(wcvp_names_df)
+# standardize column names for joining later
+setnames(wcvp_names_df,
+  old = c("taxon_name","kew_id","taxonomic_status"),
+  new = c("taxon_name_acc","match_id","acceptance"))
+wcvp_names_df$match_name_with_authors <-
+  paste(wcvp_names_df$taxon_name_acc,wcvp_names_df$authors)
+wcvp_names_df$taxon_name_match <- wcvp_names_df$taxon_name_acc
+# keep only necessary columns
+wcvp_names_df <- wcvp_names_df[,c("taxon_name_acc","taxon_name_match",
+  "match_id","acceptance","match_name_with_authors")]
+wcvp_names_df$acceptance <- str_to_lower(wcvp_names_df$acceptance)
+
+## GET SYNONYMS
+
+# search for target taxa
+wcvp_syn <- data.frame()
+for(i in 1:nrow(wcvp_names_df)){
+  id <- wcvp_names_df$match_id[i]
+  syn <- wcvp[which(wcvp$accepted_kew_id == id),]
+  if(nrow(syn) > 0){
+    wcvp_syn <- rbind(wcvp_syn,syn)
+  }
+}
+head(wcvp_syn)
+wcvp_syn_df <- wcvp_syn
+wcvp_syn_df$match_name_with_authors <-
+  paste(wcvp_syn_df$taxon_name_match,wcvp_syn_df$authors)
+colnames(wcvp_syn_df)
+# standardize column names for joining later
+wcvp_syn_df$acceptance <- "synonym"
+# keep only necessary columns
+wcvp_syn_df <- wcvp_syn_df[,c("taxon_name_acc","taxon_name_match",
+  "match_id","acceptance","match_name_with_authors")]
+
+## BIND TOGETHER STATUS AND SYNONYMS
+
+wcvp_all <- rbind.fill(wcvp_names_df,wcvp_syn_df)
+head(wcvp_all)
+# add col stating which database it came from
+wcvp_all$database <- "wcvp"
+
+###############
+### H) World Flora Online - static backbone
+### http://www.worldfloraonline.org/downloadData
+###############
+
+# DOWNLOAD MOST RECENT BACKBONE AT http://www.worldfloraonline.org/downloadData
+#   AND PLACE IN "taxa_list" FOLDER
+
+# read in data
+wfo <- read.delim(file.path(main_dir, "inputs","taxa_list",
+  "WFO_Backbone_v.2019.05","classification.txt"),colClasses="character")
+head(wfo)
+
+## GET TAXONOMIC STATUS
+
+# search for target taxa
+wfo_names <- data.frame()
+for(i in 1:length(taxa_names)){
+  matched <- wfo[which(wfo$scientificName == taxa_names[i]),]
+  if(length(matched) > 0){
+    wfo_names <- rbind(wfo_names,matched)
+  }
+}
+head(wfo_names)
+wfo_names_df <- wfo_names
+colnames(wfo_names_df)
+# standardize column names for joining later
+setnames(wfo_names_df,
+  old = c("scientificName","taxonID","taxonomicStatus"),
+  new = c("taxon_name_acc","match_id","acceptance"))
+wfo_names_df$match_name_with_authors <-
+  paste(wfo_names_df$taxon_name_acc,wfo_names_df$scientificNameAuthorship)
+wfo_names_df$taxon_name_match <- wfo_names_df$taxon_name_acc
+# keep only necessary columns
+wfo_names_df <- wfo_names_df[,c("taxon_name_acc","taxon_name_match",
+  "match_id","acceptance","match_name_with_authors")]
+wfo_names_df$acceptance <- str_to_lower(wfo_names_df$acceptance)
+
+## GET SYNONYMS
+
+# search for target taxa
+wfo_syn <- data.frame()
+for(i in 1:nrow(wfo_names_df)){
+  id <- wfo_names_df$match_id[i]
+  syn <- wfo[which(wfo$acceptedNameUsageID == id),]
+  if(nrow(syn) > 0){
+    syn$accepted_name <- wfo_names_df$taxon_name_acc[i]
+    wfo_syn <- rbind(wfo_syn,syn)
+  }
+}
+head(wfo_syn)
+wfo_syn_df <- wfo_syn
+colnames(wfo_syn_df)
+# standardize column names for joining later
+setnames(wfo_syn_df,
+  old = c("taxon_name_acc","accepted_name"),
+  new = c("taxon_name_match","taxon_name_acc"))
+wfo_syn_df$match_name_with_authors <-
+  paste(wfo_syn_df$taxon_name_match,wfo_syn_df$scientificNameAuthorship)
+wfo_syn_df$acceptance <- "synonym"
+# keep only necessary columns
+wfo_syn_df <- wfo_syn_df[,c("taxon_name_acc","taxon_name_match",
+  "match_id","acceptance","match_name_with_authors")]
+
+## BIND TOGETHER STATUS AND SYNONYMS
+
+wfo_all <- rbind.fill(wfo_names_df,wfo_syn_df)
+head(wfo_all)
+# add col stating which database it came from
+wfo_all$database <- "wfo"
+
 ################################################################################
 # 3. Bind all taxonomic status info and synonyms together
 ################################################################################
 
 # create dataframe of all data found
-datasets <- list(itis_all,pow_all,tpl_all,tp_all) #,gbif_all
+  ## change this list to reflect the sources you're using
+datasets <- list(itis_all,pow_all,tpl_all,tp_all,wcvp_all,wfo_all) #,rl_all,gbif_all
 all_data_raw <- Reduce(rbind.fill,datasets)
 all_data <- all_data_raw
   names(all_data)
@@ -551,31 +798,24 @@ all_data$match_name_with_authors <- stringi::stri_trans_general(
 all_data <- all_data %>%
   dplyr::group_by(taxon_name_acc,taxon_name_match) %>%
   dplyr::summarize(
-    database = paste(database, collapse = ','),
-    acceptance = paste(acceptance,collapse = ','),
-    ref_id = paste(match_id,collapse = ','),
-    match_name_with_authors = paste(match_name_with_authors,collapse = '|')) %>%
+    database = paste(unique(database), collapse = ','),
+    acceptance = paste(unique(acceptance),collapse = ','),
+    ref_id = paste(unique(match_id),collapse = ' | '),
+    match_name_with_authors = paste(unique(match_name_with_authors),collapse = ' | ')) %>%
   dplyr::ungroup()
-# remove duplicates in database column
-add <- setDT(all_data)[, list(database = toString(sort(unique(strsplit(database,
-  ',')[[1]])))), by = ref_id]
-all_data <- subset(all_data, select=-database)
-all_data <- join(all_data,add)
 unique(all_data$database)
 unique(all_data$acceptance)
+head(all_data$match_name_with_authors)
 # add "database_count" column tallying number of items (databases) per taxon
 all_data$database_count <- str_count(all_data$database, ',')+1
 all_data[which(all_data$database == "NA"),]$database_count <- 0
 str(all_data)
-# remove duplicates in authorship column
-add <- setDT(all_data)[, list(match_name_with_authors =
-  toString(sort(unique(strsplit(match_name_with_authors,
-    '\\|')[[1]])))), by = ref_id]
-all_data <- subset(all_data, select=-match_name_with_authors)
-all_data <- join(all_data,add)
-head(all_data$match_name_with_authors)
 
 # join with initial taxa list again
+  # if using a manually-created list of target taxa:
+#taxa_list_acc <- as.data.frame(taxa_names)
+#taxa_list_acc <- taxa_list_acc %>% rename(taxon_name_acc = taxa_names)
+  # either way:
 taxa_list_acc$taxon_name_match <- taxa_list_acc$taxon_name_acc
 all_data <- full_join(all_data,taxa_list_acc)
 all_data[which(is.na(all_data$database)),]$acceptance <- "no match"
@@ -593,42 +833,60 @@ all_data$genus_species_acc <- paste(all_data$genus_acc,all_data$species_acc,
 all_data$list <- "synonym"
 all_data[which(all_data$taxon_name_acc == all_data$taxon_name_match),]$list <-
   "desiderata"
+# remove var. and subsp. synonyms when species is already represented
+#    (skip if you want children!)
+all_data <- setdiff(all_data,all_data[which(
+  all_data$genus_species_acc == all_data$genus_species_match &
+  grepl("\\.",all_data$taxon_name_match)),])
+all_data$syn_pair <- paste(all_data$genus_species_acc,
+  all_data$genus_species_match,sep=";")
+all_data$syn_pair2 <- paste(all_data$genus_species_acc,
+  all_data$taxon_name_match,sep=";")
+all_data <- setdiff(all_data,all_data[which(
+  all_data$syn_pair %in% all_data$syn_pair2 &
+  grepl("\\.",all_data$taxon_name_match)),]) %>%
+  select(-syn_pair,-syn_pair2)
+nrow(all_data)
+# add flag if same syn match name matches more than 1 taxon_name_acc
+all_data$dup_flag <- c(duplicated(all_data$taxon_name_match,fromLast=T)
+  | duplicated(all_data$taxon_name_match))
+# final ordering of names and column selection
+all_data <- all_data %>%
+  dplyr::arrange(taxon_name_acc,database_count) %>%
+  dplyr::select(taxon_name_match,genus,species,
+    infra_rank,infra_name,list,taxon_name_acc,genus_species_acc,database,
+    acceptance,ref_id,database_count,match_name_with_authors,dup_flag
+  ) %>%
+  rename(species_name_acc = genus_species_acc,
+         taxon_name = taxon_name_match)
+head(all_data)
 # write file
 write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
   "target_taxa_with_syn_all.csv"),row.names=F)
 
-# IF DESIRED:
+################################################################################
+# 4. Automatically pare down list, if desired
+################################################################################
+
+# THESE STEPS MAY REMOVE GOOD SYNONYMS, BUT HELP MAKE LIST HIGHER CONFIDENCE IF
+#   YOU DON'T PLAN TO LOOK OVER MANUALLY
+
   ## remove forms
 nrow(all_data)
 all_data <- all_data[which(is.na(all_data$infra_rank) |
   all_data$infra_rank != "f."),]
 nrow(all_data)
   ## remove records where same syn match name matches more than 1 taxon_name_acc
-all_data$dup <- c(duplicated(all_data$taxon_name_match,fromLast=T)
-  | duplicated(all_data$taxon_name_match))
 all_data <- setdiff(all_data,all_data[which(
-  all_data$list == "synonym" & all_data$dup == T),])
+  all_data$list == "synonym" & all_data$dup_flag == T),])
 nrow(all_data)
-  ## remove var. and subsp. synonyms when species is already represented
-  ## (skip if you want children!)
-#all_data <- setdiff(all_data,all_data[which(
-#  all_data$genus_species_acc == all_data$genus_species_match &
-#  grepl("\\.",all_data$taxon_name_match)),])
-#all_data$syn_pair <- paste(all_data$genus_species_acc,
-#  all_data$genus_species_match,sep=";")
-#all_data$syn_pair2 <- paste(all_data$genus_species_acc,
-#  all_data$taxon_name_match,sep=";")
-#all_data <- setdiff(all_data,all_data[which(
-#  all_data$syn_pair %in% all_data$syn_pair2 &
-#  grepl("\\.",all_data$taxon_name_match)),])
-#nrow(all_data)
-  ## remove hybrids (naming format is too variable to be useful)
-  ##  and other strange names
+  ## remove hybrids (naming format can be too variable to be useful)
+  ##    and other strange names
 #all_data <- all_data[which(!grepl(" x | unranked | group | subg\\.",
 #  all_data$taxon_name_match)),]
 #nrow(all_data)
   ## remove synonyms with less than two sources
-  ## CUTS DOWN SIGNIFICANTLY BUT MAY REMOVE IMPORTANT SYNONYMS!
+  ##   CUTS DOWN SIGNIFICANTLY BUT MAY REMOVE IMPORTANT SYNONYMS!
 #all_data <- all_data[which(all_data$database_count > 1 |
 #  grepl("homotypic",all_data$acceptance) |
 #  grepl("accepted",all_data$acceptance)),]
@@ -639,12 +897,11 @@ all_data_final <- all_data %>%
   dplyr::arrange(taxon_name_acc,database_count) %>%
   dplyr::select(taxon_name_match,genus,species,
     infra_rank,infra_name,list,taxon_name_acc,genus_species_acc,database,
-    acceptance,database_count,match_name_with_authors,
-    taxon_name_acc_type
+    acceptance,database_count,match_name_with_authors
   ) %>%
   rename(species_name_acc = genus_species_acc,
          taxon_name = taxon_name_match)
 head(all_data_final)
 # write file
 write.csv(all_data_final,file.path(main_dir,"inputs","taxa_list",
-  "target_taxa_with_syn_new.csv"),row.names=F)
+  "target_taxa_with_syn_filtered.csv"),row.names=F)

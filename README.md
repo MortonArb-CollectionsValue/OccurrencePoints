@@ -10,30 +10,39 @@
 
 ## 1-0_get_taxonomic_info.R
 
- Takes a list of taxa and uses the "taxize" package to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually based on expert knowledge of the taxa (not all synonyms pulled are agreeable, depending on your taxonomic viewpoint). Taxonomic information can also be added manually to the final list (additional 'good' synonyms may have been be missed). Information pulled includes:
+ In order to pull in situ occurrence point data and process ex situ data, it is helpful to have a list of synonyms for your target taxa. That way, records preceding nomenclature updates or records that follow a different backbone will still be included in your output data. Taxonomy is inherently complicated, and it is recommended to get input from a taxonomist who specializes in your target group(s). Some synonyms represent a broader concept and could pull in situ or ex situ records that don't match your definition of a specific species. This script provides a starting point for quickly gathering taxonomic data from a variety of databases.
+
+ This script takes a list of taxa and uses the "taxize" package, in addition to some static backbones, to pull taxonomic information from multiple databases. The output can either be used directly in the following scripts, or can be reviewed and revised manually based on expert knowledge of the taxa (not all synonyms pulled are agreeable, depending on your taxonomic viewpoint; therefore it is recommended to review and edit the output). Taxonomic information can also be added manually to the final list (additional 'good' synonyms may have been be missed). Information pulled includes:
 
  Acceptance status and authors from:
- - Tropicos
- - Integrated Taxonomic Information Service (ITIS)
- - Kew’s Plants of the World (POW)
- - The Plant List (TPL)
+ - Tropicos (via taxize package)
+ - Integrated Taxonomic Information Service (ITIS; via taxize package)
+ - Kew’s Plants of the World (POW; via taxize package)
+ - The Plant List (TPL; via taxize package)
+ - World Checklist of Vascular Plants (WCVP; via static backbone)
+ - World Flora Online (WFO; via static backbone)
 
  Synonyms from:
- - Tropicos
- - ITIS
- - POW
- - [NOT USING CURRENTLY] Global Biodiversity Information Facility (GBIF)
+ - Tropicos (via taxize package)
+ - Integrated Taxonomic Information Service (ITIS; via taxize package)
+ - Kew’s Plants of the World (POW; via taxize package)
+ - [NOT USING CURRENTLY] Global Biodiversity Information Facility (GBIF; via rgbif)
+ - IUCN Red List (via rredlist)
+ - World Checklist of Vascular Plants (WCVP; via static backbone)
+ - World Flora Online (WFO; via static backbone)
+
+ Assessment year and category are also pulled from the IUCN Red List
 
  >INPUTS:<br>
- > ~ List of target taxa (target_taxa.csv with one column containing target taxa tames; or create list by hand in script)
- > ~ Must manually add list of target families (line 80 in script)
+ > ~ List of target taxa (target_taxa.csv with one column [taxon_name_acc] containing target taxa tames; or create list by hand in script)
+ > ~ Must manually add list of target families (~line 95 in script)
  >
  >OUTPUTS:<br>
  > ~ List of target taxa with acceptance, authors, and synonyms (target_taxa_with_syn.csv); synonyms are added as additional rows; see ["Taxonomic Output" tab](https://docs.google.com/spreadsheets/d/1dllfDXaZBLvB1AsrY1wDS-sPceKAdOY681bqUbfoQAs/edit?usp=sharing) for table metadata
  >
  >NOTES:<br>
  > ~ Some of the functions in this script (from "taxize" package) are slow and require manual input while running; therefore if your list is more than a few hundred names, maximum, you may need to find synonyms a different way (e.g., based on one backbone suited to your target taxa).<br>
- > ~ The output likely does not contain all necessary synonyms. For best results, use this script to get synonyms from common databases (Tropicos, ITIS, POW) and then manually review to remove synonyms you don't want and add any missed synonyms; since different plant groups have different backbones/flora that focus on them and become the 'authority', you should reference those that are most relevant to your target group to add/remove synonyms.
+ > ~ The output likely does not contain all necessary synonyms. For best results, use this script to get synonyms from common databases and then manually review to remove synonyms you don't want and add any missed synonyms; since different plant groups have different backbones/flora that focus on them and become the 'authority', you should reference those that are most relevant to your target group to add/remove synonyms.
 
 ## 1-1_prepare_gis_data.R
 
