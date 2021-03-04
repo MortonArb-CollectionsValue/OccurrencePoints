@@ -55,11 +55,11 @@ rm(my.packages)
 ################################################################################
 
 # either set manually:
-main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+#main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
@@ -93,36 +93,34 @@ synonyms.compiled <- function(syn_output,db_name){
 
 # CHANGE THIS LIST OF FAMILIES BASED ON TAXA YOURE LOOKING FOR:
 #tpl_families() # list of families in database
-#families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
+families <- c("Fagaceae","Rosaceae","Ulmaceae","Malvaceae")
 #families <- "Sapindaceae"
 #families <- c("Juglandaceae","Fagaceae","Leguminosae","Lauraceae","Pinaceae","Taxaceae")
-families <- c("Fagaceae","Magnoliaceae")
+#families <- c("Fagaceae","Magnoliaceae")
 
 # read in taxa list
 taxa_list_acc <- read.csv(file.path(main_dir,"inputs","taxa_list",
   "target_taxa.csv"), header = T, colClasses="character")
-nrow(taxa_list_acc) #532
+nrow(taxa_list_acc) #191
 # make sure there aren't extra spaces within species names
 taxa_list_acc[,1] <- str_squish(taxa_list_acc[,1])
 # create list of target taxa names
-#taxa_names <- taxa_list_acc[,1]
+taxa_names <- taxa_list_acc[,1]
   # use this instead if you want to select names based on values in other col:
-  taxa_names_sel <- taxa_list_acc[which(taxa_list_acc$taxon_name_acc_type != "cultivar"),]
-  taxa_names <- taxa_names_sel[,1]
-  # OR, if not, just run this line:
-  #taxa_names <- taxa_list_acc[,1]
-length(taxa_names) #303
+  #taxa_names_sel <- taxa_list_acc[which(taxa_list_acc$taxon_name_acc_type != "cultivar"),]
+  #taxa_names <- taxa_names_sel[,1]
+length(taxa_names) #191
 
 ## OR: you can create vector of taxa names here instead of reading in
-taxa_names <- c("Quercus fabrei","Quercus fabri","Magnolia albosericea",
-  "Quercus montana","Quercus palmeri")
+#taxa_names <- c("Quercus fabrei","Quercus fabri","Magnolia albosericea",
+#  "Quercus montana","Quercus palmeri")
 
 # create list of target species names, with infraspecific taxa removed
 species_names <- taxa_names[
   !grepl(" var. ",taxa_names) &
   !grepl(" subsp.",taxa_names) &
   !grepl(" f. ",taxa_names)]
-length(species_names) #237
+length(species_names) #191
 
 # create list of target species names only, with hybrids removed
 species_only <- species_names[
@@ -376,6 +374,7 @@ for(i in 1:length(taxa_names)){
     pow_names <- rbind.fill(pow_names,acc)
     pow_syn <- rbind.fill(pow_syn,syn)
   }
+  Sys.sleep(5)
 }
 
 # !!
@@ -686,6 +685,9 @@ wcvp_syn_df$match_name_with_authors <-
 colnames(wcvp_syn_df)
 # standardize column names for joining later
 wcvp_syn_df$acceptance <- "synonym"
+setnames(wcvp_syn_df,
+  old = c("taxon_name_acc","accepted_name"),
+  new = c("taxon_name_match","taxon_name_acc"))
 # keep only necessary columns
 wcvp_syn_df <- wcvp_syn_df[,c("taxon_name_acc","taxon_name_match",
   "match_id","acceptance","match_name_with_authors")]
@@ -779,6 +781,9 @@ all_data_raw <- Reduce(rbind.fill,datasets)
 all_data <- all_data_raw
   names(all_data)
   str(all_data)
+  ## save these objects for later reference, if needed
+  save(itis_all,pow_all,tpl_all,tp_all,wcvp_all,wfo_all,rl_all,
+     file=file.path(main_dir, "inputs", "taxa_list", "raw_backbone_queries.RData"))
 
 # add a space after every period and fix some other inconsistencies,
 #  to standardize authors more
