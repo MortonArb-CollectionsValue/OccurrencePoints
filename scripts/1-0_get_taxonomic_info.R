@@ -680,14 +680,14 @@ for(i in 1:nrow(wcvp_names_df)){
 }
 head(wcvp_syn)
 wcvp_syn_df <- wcvp_syn
-wcvp_syn_df$match_name_with_authors <-
-  paste(wcvp_syn_df$taxon_name_match,wcvp_syn_df$authors)
 colnames(wcvp_syn_df)
 # standardize column names for joining later
-wcvp_syn_df$acceptance <- "synonym"
 setnames(wcvp_syn_df,
   old = c("taxon_name_acc","accepted_name"),
   new = c("taxon_name_match","taxon_name_acc"))
+wcvp_syn_df$match_name_with_authors <-
+  paste(wcvp_syn_df$taxon_name_match,wcvp_syn_df$authors)
+wcvp_syn_df$acceptance <- "synonym"
 # keep only necessary columns
 wcvp_syn_df <- wcvp_syn_df[,c("taxon_name_acc","taxon_name_match",
   "match_id","acceptance","match_name_with_authors")]
@@ -774,6 +774,10 @@ wfo_all$database <- "wfo"
 # 3. Bind all taxonomic status info and synonyms together
 ################################################################################
 
+## save taxonomic backbone query results for later reference, if needed
+save(itis_all,pow_all,tpl_all,tp_all,wcvp_all,wfo_all,rl_all,
+ file=file.path(main_dir, "inputs", "taxa_list", "raw_backbone_queries.RData"))
+
 # create dataframe of all data found
   ## !!! change this list to reflect the sources you're using
 datasets <- list(itis_all,pow_all,tpl_all,tp_all,wcvp_all,wfo_all,rl_all) #,gbif_all
@@ -781,9 +785,6 @@ all_data_raw <- Reduce(rbind.fill,datasets)
 all_data <- all_data_raw
   names(all_data)
   str(all_data)
-  ## save these objects for later reference, if needed
-  save(itis_all,pow_all,tpl_all,tp_all,wcvp_all,wfo_all,rl_all,
-     file=file.path(main_dir, "inputs", "taxa_list", "raw_backbone_queries.RData"))
 
 # add a space after every period and fix some other inconsistencies,
 #  to standardize authors more
@@ -815,6 +816,9 @@ head(all_data$match_name_with_authors)
 all_data$database_count <- str_count(all_data$database, ',')+1
 all_data[which(all_data$database == "NA"),]$database_count <- 0
 str(all_data)
+# replace NA in match name with authors column
+all_data$match_name_with_authors <-
+  gsub(" | NA","",all_data$match_name_with_authors,fixed=T)
 
 # join with initial taxa list again
   # if using a manually-created list of target taxa:
