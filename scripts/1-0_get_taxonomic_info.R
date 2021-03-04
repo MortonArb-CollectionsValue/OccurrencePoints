@@ -584,6 +584,15 @@ rl_names_df$taxon_name_match <- rl_names_df$taxon_name_acc
 # keep only necessary columns
 rl_names_df <- rl_names_df[,c("taxon_name_acc","taxon_name_match",
   "acceptance","database","rl_year","rl_category")]
+# version for adding year and category at end of script
+rl_assess <- rl_names_df %>%
+  distinct(taxon_name_acc,.keep_all = T) %>%
+  dplyr::select("taxon_name_acc","rl_year","rl_category")
+# version for compiling acceptance with all other backbones
+rl_names_df <- rl_names_df %>%
+  distinct(taxon_name_acc,.keep_all = T) %>%
+  dplyr::select("taxon_name_acc","taxon_name_match",
+    "acceptance","database")
 
 # GET SYNONYMS
 
@@ -862,15 +871,18 @@ all_data$dup_flag <- c(duplicated(all_data$taxon_name_match,fromLast=T)
 # final ordering of names and column selection
 all_data <- all_data %>%
   dplyr::arrange(taxon_name_acc,database_count) %>%
-  dplyr::select(taxon_name_match,genus,species,
-    infra_rank,infra_name,list,taxon_name_acc,genus_species_acc,database,
-    acceptance,ref_id,database_count,match_name_with_authors,dup_flag
+  dplyr::select(taxon_name_acc,genus_species_acc,
+    taxon_name_match,genus,species,infra_rank,infra_name,
+    match_name_with_authors,
+    list,database,acceptance,ref_id,database_count,dup_flag
   ) %>%
   rename(species_name_acc = genus_species_acc,
          taxon_name = taxon_name_match)
-head(all_data)
+# add RL assessment data
+all_data_final <- join(all_data,rl_assess)
+head(all_data_final)
 # write file
-write.csv(all_data,file.path(main_dir,"inputs","taxa_list",
+write.csv(all_data_final,file.path(main_dir,"inputs","taxa_list",
   "target_taxa_with_syn_all.csv"),row.names=F)
 
 ################################################################################
