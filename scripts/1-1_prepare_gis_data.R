@@ -143,40 +143,75 @@ taxon_list <- left_join(taxon_list, gts_list[,c(2,4,5)],
 
 ### IUCN Red List (RL)
 
-## ! you first need an API key ! run the following line and fill out
-#   the necessary online form to receive a key, then follow the instructions
-#   to add to your R environment:
-rl_use_iucn()
-# use rredlist package to get taxon names and country-level spp. dist.
-# can take a little while if lots of species
-countries <- data.frame()
-target_taxa <- taxon_list$taxon_name
-for(i in 1:length(target_taxa)){
-	dist <- rl_occ_country(target_taxa[[i]])
-	name <- dist$name
-	dist <- as.data.frame(dist$result)
-	if(nrow(dist>0)){
-    print(target_taxa[[i]])
-		dist$genus_species <- rep(name)
-		countries <- rbind(countries,dist)
-	} else {
-		print(paste(target_taxa[[i]],"not found"))
-	}
-}
+## you can either use the RL API or manually download data via IUCN RL website.
+
+## To use the RL API (can be hard to set up and rate limits are unclear):
+  ## ! you first need an API key ! run the following line and fill out
+  #   the necessary online form to receive a key, then follow the instructions
+  #   to add to your R environment:
+#  rl_use_iucn()
+  # use rredlist package to get taxon names and country-level spp. dist.
+  # can take a little while if lots of species
+#  countries <- data.frame()
+#  target_taxa <- taxon_list$taxon_name
+#  for(i in 1:length(target_taxa)){
+#	  dist <- rl_occ_country(target_taxa[[i]])
+#    name <- dist$name
+#	  dist <- as.data.frame(dist$result)
+#    if(nrow(dist>0)){
+#      print(target_taxa[[i]])
+#		  dist$genus_species <- rep(name)
+#		  countries <- rbind(countries,dist)
+#	  } else {
+#		  print(paste(target_taxa[[i]],"not found"))
+#	  }
+#  }
+  # condense output so its one entry per species
+#  countries_c <- countries %>%
+#    filter(presence != "Extinct Post-1500" &
+#           distribution_code != "Regionally Extinct") %>%
+#    group_by(genus_species,origin) %>%
+#    mutate(
+#      rl_native_dist_iso2c = paste(code, collapse = '; '),
+#      rl_native_dist = paste(country, collapse = '; ')) %>%
+#    ungroup() %>%
+#    dplyr::select(genus_species,origin,rl_native_dist_iso2c,rl_native_dist) %>%
+#    distinct(genus_species,origin,.keep_all=T)
+
+## To use data download manually from IUCN RL website:
+  # Go to https://www.iucnredlist.org/search
+  # Create an account if you don't have one (click "Login/Register" in top bar)
+  # Login to your account
+  # Open the "Taxonomy" tab in the left bar
+  #   Either search for your target genus or just check "Plantae"
+  #   You can limit the search further using the other tabs, if desired,
+  #     but further refinement can sometimes exclude assessments you want
+  #   When you're ready, on the right click "Download" then "Search Results"
+  # You will receive an email when your download is ready
+  # Next, go to your account (https://www.iucnredlist.org/account)
+  #   Under "Saved downloads" click "Download" for your recent search
+  #   Move downloaded folder to "occurrence_points/inputs/known_distribution"
+# read in downloaded IUCN RL data for country-level species distribution
+countries <- read.csv(file.path(main_dir,"inputs","known_distribution",
+    "redlist_plant_global_data_2_20_21","countries.csv"),
+    colClasses = "character",na.strings=c("","NA"),strip.white=T)
 # condense output so its one entry per species
 countries_c <- countries %>%
-  filter(presence != "Extinct Post-1500" &
-         distribution_code != "Regionally Extinct") %>%
+  filter(presence != "Extinct Post-1500") %>%
+  rename(genus_species = scientificName) %>%
   group_by(genus_species,origin) %>%
   mutate(
     rl_native_dist_iso2c = paste(code, collapse = '; '),
-    rl_native_dist = paste(country, collapse = '; ')) %>%
+    rl_native_dist = paste(name, collapse = '; ')) %>%
   ungroup() %>%
   dplyr::select(genus_species,origin,rl_native_dist_iso2c,rl_native_dist) %>%
   distinct(genus_species,origin,.keep_all=T)
+
+# use this next part regardless of whether you used the API or manual download:
+
 # separate native dist countries from introduced dist countries
 rl_native <- countries_c %>% filter(origin == "Native")
-rl_introduced <- countries_c %>% filter(origin != "Native")
+rl_introduced <- countries_c %>% filter(origin == "Introduced")
 names(rl_introduced)[3] <- "rl_introduced_dist_iso2c"
 names(rl_introduced)[4] <- "rl_introduced_dist"
 
