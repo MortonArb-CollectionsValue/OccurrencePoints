@@ -47,11 +47,11 @@ lapply(my.packages, require, character.only=TRUE)
 ################################################################################
 
 # either set manually:
-main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+#main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
@@ -67,12 +67,12 @@ main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occ
 ################################################################################
 
 # read in taxa list
-taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
+taxon_list_orig <- read.csv(file.path(main_dir,"inputs","taxa_list",
   "target_taxa_with_syn.csv"), header = T, na.strings=c("","NA"),
   colClasses="character")
 # keep only taxa with accepted species name
-taxon_list <- taxon_list %>% filter(!is.na(species_name_acc))
-  nrow(taxon_list) #636
+taxon_list_orig <- taxon_list_orig %>% filter(!is.na(species_name_acc))
+  nrow(taxon_list_orig) #237
 
 # create new folder if not already present
 if(!dir.exists(file.path(main_dir,"inputs","known_distribution")))
@@ -138,8 +138,25 @@ head(gts_list)
 #gadm <- country_set; rm(country_set)
 
 # add country codes to the taxon list by matching to GTS
-taxon_list <- left_join(taxon_list, gts_list[,c(2,4,5)],
+  # match to accepted species names
+taxon_list <- left_join(taxon_list_orig, gts_list[,c(2,4,5)],
   by=c("species_name_acc" = "taxon"))
+  # when no match, try matching to synonyms then add any data found
+no_match <- taxon_list[which(is.na(taxon_list$gts_native_dist)),1:ncol(taxon_list_orig)]
+no_match <- left_join(no_match, gts_list[,c(2,4,5)],
+  by=c("taxon_name" = "taxon"))
+matched <- no_match[which(!is.na(no_match$gts_native_dist)),]$taxon_name
+print(paste("Synonyms matched to GTS:",paste(matched,collapse = ", ")))
+no_match$gts_name <- no_match$taxon_name
+add <- no_match %>%
+  filter(!is.na(gts_native_dist)) %>%
+  dplyr::select(species_name_acc,gts_native_dist,gts_native_dist_iso2c,gts_name)
+taxon_list$gts_name <- NA
+for(i in 1:nrow(add)){
+  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$gts_native_dist <- add[i,2]
+  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$gts_native_dist_iso2c <- add[i,3]
+  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$gts_name <- add[i,4]
+}
 
 ### IUCN Red List (RL)
 
@@ -199,6 +216,7 @@ countries <- read.csv(file.path(main_dir,"inputs","known_distribution",
 countries_c <- countries %>%
   filter(presence != "Extinct Post-1500") %>%
   rename(genus_species = scientificName) %>%
+  arrange(code) %>%
   group_by(genus_species,origin) %>%
   mutate(
     rl_native_dist_iso2c = paste(code, collapse = '; '),
@@ -214,20 +232,36 @@ rl_native <- countries_c %>% filter(origin == "Native")
 rl_introduced <- countries_c %>% filter(origin == "Introduced")
 names(rl_introduced)[3] <- "rl_introduced_dist_iso2c"
 names(rl_introduced)[4] <- "rl_introduced_dist"
+# join both native and introduced together
+rl_list <- full_join(rl_native[,c(1,4,3)],rl_introduced[,c(1,4,3)])
 
 # add country codes to the taxon list by matching to RL data
-taxon_list <- left_join(taxon_list, rl_native[,c(1,4,3)],
+taxon_list <- left_join(taxon_list, rl_list,
   by=c("species_name_acc" = "genus_species"))
-taxon_list <- left_join(taxon_list, rl_introduced[,c(1,4,3)],
-  by=c("species_name_acc" = "genus_species"))
+  # when no match, try matching to synonyms then add any data found
+no_match <- taxon_list[which(is.na(taxon_list$rl_native_dist)),1:(ncol(taxon_list_orig)+3)]
+no_match <- left_join(no_match, rl_list, by=c("taxon_name" = "genus_species"))
+matched <- no_match[which(!is.na(no_match$rl_native_dist)),]$taxon_name
+print(paste("Synonyms matched to RL:",paste(matched,collapse = ", ")))
+no_match$rl_name <- no_match$taxon_name
+add <- no_match %>%
+  filter(!is.na(rl_native_dist)) %>%
+  dplyr::select(species_name_acc,rl_native_dist,rl_native_dist_iso2c,rl_name)
+taxon_list$rl_name <- NA
+for(i in 1:nrow(add)){
+  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$rl_native_dist <- add[i,2]
+  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$rl_native_dist_iso2c <- add[i,3]
+  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$rl_name <- add[i,4]
+}
 
+# keep only added native distribution columns
 native_dist <- taxon_list %>%
   dplyr::select(species_name_acc,gts_native_dist,
-  gts_native_dist_iso2c,rl_native_dist,rl_native_dist_iso2c,
-  rl_introduced_dist,rl_introduced_dist_iso2c) %>%
+  gts_native_dist_iso2c,gts_name,rl_native_dist,rl_native_dist_iso2c,
+  rl_introduced_dist,rl_introduced_dist_iso2c,rl_name) %>%
   distinct(species_name_acc,gts_native_dist,
-  gts_native_dist_iso2c,rl_native_dist,rl_native_dist_iso2c,
-  rl_introduced_dist,rl_introduced_dist_iso2c)
+  gts_native_dist_iso2c,gts_name,rl_native_dist,rl_native_dist_iso2c,
+  rl_introduced_dist,rl_introduced_dist_iso2c,rl_name)
 
 # see which target species are missing GTS or RL data
 native_dist[is.na(native_dist$gts_native_dist),]$species_name_acc
