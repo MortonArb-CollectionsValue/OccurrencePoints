@@ -38,11 +38,11 @@ lapply(my.packages, require, character.only=TRUE)
 ################################################################################
 
 # either set manually:
-main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+#main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-#source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
@@ -60,21 +60,20 @@ main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occ
 output <- file.path(main_dir, "outputs")
 path.pts <- file.path(output, "spp_edited_points")
 path.figs <- file.path(output, "spp_interactive_maps")
-              # Christy/Murphy's target species
-spp.all <- c("Quercus_dalechampii","Quercus_imbricaria","Quercus_falcata",
-              "Quercus_stellata","Quercus_acutissima","Quercus_palmeri",
-              # Sean's target species
-            "Quercus_acerifolia","Quercus_arkansana","Quercus_austrina",
-            "Quercus_boyntonii","Quercus_georgiana","Quercus_havardii",
-            "Quercus_oglethorpensis",
-            "Ulmus_chenmoui","Malus_komarovii"#,
-                # not on desiderata
-            #"Quercus_ajoensis","Quercus_carmenensis","Quercus_graciliformis",
-            #"Quercus_cedrosensis","Quercus_dumosa","Quercus_engelmannii",
-            #"Quercus_hinckleyi","Quercus_pacifica","Quercus_robusta",
-            #"Quercus_tardifolia","Quercus_tomentella"
-            )
-spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
+  # either run for all species...
+#spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
+  # ...or select target species only:
+taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
+  "target_species_with_syn.csv"), header = T, na.strings = c("","NA"),
+  colClasses = "character")
+taxon_list$num_latlong_records <- as.numeric(taxon_list$num_latlong_records)
+target_spp <- taxon_list %>% filter(grepl("^MAP",map_flag) &
+                                    num_latlong_records > 2)
+spp.all <- gsub(" ","_",target_spp$species_name_acc)
+spp.all
+
+countries <- target_spp$native_dist_iso2
+load(file.path(main_dir, "inputs", "gis_data", "admin_shapefiles.RData"))
 
 # create folder for maps, if not yet created
 if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
@@ -85,16 +84,19 @@ for(i in 1:length(spp.all)){
   # read in records
   spp.now <- read.csv(file.path(path.pts, paste0(spp.all[i], ".csv")))
 
+  target.iso <- unlist(strsplit(countries[i],split="; "))
+  target_countries <- adm0.poly[adm0.poly@data$country.iso_a2 %in% target.iso,]
+
   ## palette based on database
   # set database as factor and order appropriately
   spp.now$database <- factor(spp.now$database,
-    levels = c("Ex_situ","FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN"))
+    levels = c("Ex_situ","FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN","IUCN_RedList"))
   spp.now <- spp.now %>% arrange(desc(database))
   # create color palette
-  colors <- c("#cf8d5f","#d4a93d","#c1c46c","#73ad2b","#0aa3a6","#2e46c9",
-    "#a86abd")
+  # orange, bright green, blue, yellow, purple, dusty green, teal, dark blue-purple
+  colors <- c("#c9a467","#48b06c","#2f68d4","#c1c70c","#9279a6","#7d9e77","#27abb0","#432194")
   database.pal <- colorFactor(palette=colors,
-    levels=c("Ex_situ","FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN"))
+    levels=c("Ex_situ","FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN","IUCN_RedList"))
 
   # create map
     map <- leaflet() %>%
@@ -109,6 +111,9 @@ for(i in 1:length(spp.all)){
       If no points turn red when box is checked, there are no points flagged in that category.</br>
       Click each point for more information about the record.",
       position = "topright") %>%
+	  # Native country outlines
+	  addPolygons(data = target_countries, fillColor = "transparent",
+		  weight = 3, opacity = 0.8, color = "#126e52") %>%
     # Color by database
     addCircleMarkers(data = spp.now, ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
@@ -123,9 +128,9 @@ for(i in 1:length(spp.all)){
         "<b>Coordinate uncertainty:</b> ",coordinateUncertaintyInMeters,"<br/>",
         "<b>ID:</b> ",UID),
       color = ~database.pal(database),radius = 5,
-      fillOpacity = 0.6,stroke = F) %>%
+      fillOpacity = 0.9, stroke = T) %>%
     # Overlay groups (can toggle)
-    addCircleMarkers(data = spp.now %>% filter(!.cen),
+    addCircleMarkers(data = spp.now %>% filter(!.cen & database!="Ex_situ"),
       ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
         "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
@@ -140,7 +145,7 @@ for(i in 1:length(spp.all)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "Within 500m of country/state centroid (.cen)") %>%
-    addCircleMarkers(data = spp.now %>% filter(!.urb),
+    addCircleMarkers(data = spp.now %>% filter(!.urb & database!="Ex_situ"),
       ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
         "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
@@ -155,7 +160,7 @@ for(i in 1:length(spp.all)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "In urban area (.urb)") %>%
-    addCircleMarkers(data = spp.now %>% filter(!.inst),
+    addCircleMarkers(data = spp.now %>% filter(!.inst & database!="Ex_situ"),
       ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
         "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
@@ -170,7 +175,7 @@ for(i in 1:length(spp.all)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "Within 100m of biodiversity institution (.inst)") %>%
-    addCircleMarkers(data = spp.now %>% filter(!.con),
+    addCircleMarkers(data = spp.now %>% filter(!.con & database!="Ex_situ"),
       ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
         "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
@@ -185,7 +190,7 @@ for(i in 1:length(spp.all)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "Not in reported country (.con)") %>%
-    addCircleMarkers(data = spp.now %>% filter(!.outl),
+    addCircleMarkers(data = spp.now %>% filter(!.outl & database!="Ex_situ"),
       ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
         "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
@@ -280,7 +285,7 @@ for(i in 1:length(spp.all)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "INTRODUCED, MANAGED, or INVASIVE (establishmentMeans)") %>%
-    addCircleMarkers(data = spp.now %>% filter(!.yr1950),
+    addCircleMarkers(data = spp.now %>% filter(!.yr1950 & database!="Ex_situ"),
       ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
         "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
@@ -295,7 +300,7 @@ for(i in 1:length(spp.all)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "Recorded prior to 1950 (.yr1950)") %>%
-    addCircleMarkers(data = spp.now %>% filter(!.yr1980),
+    addCircleMarkers(data = spp.now %>% filter(!.yr1980 & database!="Ex_situ"),
       ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
         "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
@@ -310,7 +315,7 @@ for(i in 1:length(spp.all)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "Recorded prior to 1980 (.yr1980)") %>%
-    addCircleMarkers(data = spp.now %>% filter(!.yrna),
+    addCircleMarkers(data = spp.now %>% filter(!.yrna & database!="Ex_situ"),
       ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
         "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
@@ -347,14 +352,14 @@ for(i in 1:length(spp.all)){
       options = layersControlOptions(collapsed = FALSE)) %>%
     #hideGroup("Within 500m of country/state centroid (.cen)") %>%
     hideGroup("In urban area (.urb)") %>%
-    hideGroup("Within 100m of biodiversity institution (.inst)") %>%
-    hideGroup("Not in reported country (.con)") %>%
-    hideGroup("Geographic outlier (.outl)") %>%
-    hideGroup("Outside GTS native country (.gtsnative)") %>%
-    hideGroup("Outside IUCN RL native country (.rlnative)") %>%
+    #hideGroup("Within 100m of biodiversity institution (.inst)") %>%
+    #hideGroup("Not in reported country (.con)") %>%
+    #hideGroup("Geographic outlier (.outl)") %>%
+    #hideGroup("Outside GTS native country (.gtsnative)") %>%
+    #hideGroup("Outside IUCN RL native country (.rlnative)") %>%
     hideGroup("In IUCN RL introduced country (.rlintroduced)") %>%
-    hideGroup("FOSSIL_SPECIMEN or LIVING_SPECIMEN (basisOfRecord)") %>%
-    hideGroup("INTRODUCED, MANAGED, or INVASIVE (establishmentMeans)") %>%
+    #hideGroup("FOSSIL_SPECIMEN or LIVING_SPECIMEN (basisOfRecord)") %>%
+    #hideGroup("INTRODUCED, MANAGED, or INVASIVE (establishmentMeans)") %>%
     hideGroup("Recorded prior to 1950 (.yr1950)") %>%
     hideGroup("Recorded prior to 1980 (.yr1980)") %>%
     hideGroup("Year unknown (.yrna)") %>%
@@ -378,11 +383,16 @@ for(i in 1:length(spp.all)){
 ################################################################################
 
 path.figs <- file.path(output, "spp_basic_maps")
-spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
+#spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
 
 if(!dir.exists(path.figs)) dir.create(path.figs, recursive=T)
 
 map.world <- map_data("world")
+
+native_dist <- read.csv(file.path(main_dir,"inputs","known_distribution",
+  "target_taxa_with_native_dist.csv"), header = T, na.strings = c("","NA"),
+  colClasses = "character")
+native_dist <- native_dist %>% dplyr::select(species_name_acc,rl_native_dist)
 
 for(i in 1:length(spp.all)){
   # get data
@@ -390,6 +400,7 @@ for(i in 1:length(spp.all)){
   dat.now <- read.csv(file.path(path.pts, paste0(spp.all[i], ".csv")))
   dat.now$decimalLatitude <- as.numeric(dat.now$decimalLatitude)
   dat.now$decimalLongitude <- as.numeric(dat.now$decimalLongitude)
+  spp.rl.dist <- native_dist %>% filter(species_name_acc == dat.now$species_name_acc[i])
   summary(dat.now)
 
   if(nrow(dat.now[!is.na(dat.now$decimalLatitude),])==0) next
@@ -411,14 +422,23 @@ for(i in 1:length(spp.all)){
   dev.off()
 
   # map with all flagged points removed
+
   dat.now2 <- dat.now %>%
-    filter(.cen & .urb & .inst & .con & .outl & .yr1950 & .yr1980 & .yrna &
-      (.gtsnative | is.na(.gtsnative)) &
-      (.rlnative  | is.na(.rlnative)) &
-      (.rlintroduced | is.na(.rlintroduced)) &
+    filter(database == "Ex_situ" |
+      (.cen & .inst & .con & .outl & #.urb & .yr1950 & .yr1980 & .yrna &
+      #(.gtsnative | is.na(.gtsnative)) &
+      #(.rlnative  | is.na(.rlnative)) &
+      #(.rlintroduced | is.na(.rlintroduced)) &
       basisOfRecord != "FOSSIL_SPECIMEN" & basisOfRecord != "LIVING_SPECIMEN" &
       establishmentMeans != "INTRODUCED" & establishmentMeans != "MANAGED" &
-      establishmentMeans != "INVASIVE")
+      establishmentMeans != "INVASIVE"))
+  if(is.na(spp.rl.dist[1,2])){
+    dat.now2 <- dat.now2 %>%
+      filter(.gtsnative | is.na(.gtsnative))
+  } else {
+    dat.now2 <- dat.now2 %>%
+      filter(.rlnative | is.na(.rlnative))
+  }
 
   png(file.path(path.figs, paste0(spp.now, "_filtered.png")), height=6,
     width=10, units="in", res=180)
