@@ -636,6 +636,9 @@ rl_syn_df <- rl_syn_df[,c("taxon_name_acc","taxon_name_match",
 ## BIND TOGETHER STATUS AND SYNONYMS
 
 rl_all <- rbind.fill(rl_names_df,rl_syn_df)
+# remove names not in accepted taxa list
+rl_all <- rl_all %>% filter(rl_all$taxon_name_acc %in%
+  taxa_names)
 head(rl_all)
 
 ###############
@@ -879,7 +882,7 @@ all_data <- all_data %>%
   rename(species_name_acc = genus_species_acc,
          taxon_name = taxon_name_match)
 # add RL assessment data
-all_data_final <- join(all_data,rl_assess)
+all_data_final <- left_join(all_data,rl_assess)
 head(all_data_final)
 # write file
 write.csv(all_data_final,file.path(main_dir,"inputs","taxa_list",

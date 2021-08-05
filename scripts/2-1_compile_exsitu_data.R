@@ -543,8 +543,9 @@ sort(unique(all_data11$num_indiv))
   ## IF NEEDED: replace unwanted characters
   all_data11$num_indiv <- mgsub(all_data11$num_indiv,
   c("1:1:1:1","1:1:1:1:1:1:1:1:1:1","1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1",
-    "1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1","3+3","2+3"),
-  c("4","10","19","28","6","5"))
+    "1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1","3+3","2+3",
+    "A A A A A A A A A A A"),
+  c("4","10","19","28","6","5",""))
     sort(unique(all_data11$num_indiv))
   all_data11$num_indiv <- mgsub(all_data11$num_indiv,c("*"," in terra","+"), "")
     sort(unique(all_data11$num_indiv))
