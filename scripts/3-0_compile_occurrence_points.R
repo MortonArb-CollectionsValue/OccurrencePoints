@@ -46,11 +46,11 @@ lapply(my.packages, require, character.only=TRUE)
 ################################################################################
 
 # either set manually:
-main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+#main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-#source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
@@ -73,14 +73,14 @@ file_list <- list.files(file.path(main_dir,"inputs","compiled_occurrence"),
   pattern = ".csv", full.names = T)
 file_dfs <- lapply(file_list, read.csv, header = T, na.strings = c("","NA"),
   colClasses = "character")
-length(file_dfs) #7
+length(file_dfs) #8
 
 # stack all datasets using rbind.fill, which keeps non-matching columns
 #   and fills with NA; 'Reduce' iterates through list and merges with previous.
 # this may take a few minutes if you have lots of data
 all_data_raw <- Reduce(rbind.fill, file_dfs)
-  nrow(all_data_raw) #6437517
-  names(all_data_raw) #28
+  nrow(all_data_raw) #7131852
+  names(all_data_raw) #36
   table(all_data_raw$database)
 
 ##add unique identifier
@@ -100,7 +100,7 @@ all_data_raw <- all_data_raw %>% mutate(UID=paste0('id', sprintf("%08d",
 
 # read in target taxa list
 taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
-  "target_taxa_with_syn.csv"), header = T, na.strings = c("","NA"),
+  "target_species_with_syn.csv"), header = T, na.strings = c("","NA"),
   colClasses = "character")
 taxon_list <- taxon_list %>%
   # if needed, add columns that separate out taxon name
@@ -111,10 +111,11 @@ taxon_list <- taxon_list %>%
     infra_name,list,taxon_name_acc,species_name_acc)
 
 # full join to taxon list
+all_data_raw <- all_data_raw %>% select(-genus)
 all_data_raw <- left_join(all_data_raw,taxon_list)
 # join again just by species name if no taxon match
 need_match <- all_data_raw[which(is.na(all_data_raw$list)),]
-  nrow(need_match) #220368
+  nrow(need_match) #3954153
   # remove columns from first taxon name match
 need_match <- need_match[,1:(ncol(all_data_raw)-ncol(taxon_list)+1)]
   # rename column for matching
@@ -126,11 +127,11 @@ need_match <- left_join(need_match,taxon_list)
 matched <- all_data_raw[which(!is.na(all_data_raw$list)),]
 matched$taxon_name_full <- matched$taxon_name
 all_data <- rbind(matched,need_match)
-  table(all_data$list) # desiderata: 4343608 | synonym: 1962972
+  table(all_data$list) # desiderata: 6674689 | synonym: 274980
 
 # check names that got excluded.....
 still_no_match <- all_data[which(is.na(all_data$list)),]
-  nrow(still_no_match) #157429
+  nrow(still_no_match) #183917
 table(still_no_match$database)
 #sort(table(still_no_match$taxon_name))
 ## write out file to review if needed
@@ -140,7 +141,7 @@ table(still_no_match$database)
 
 # keep only rows for target taxa
 all_data <- all_data[which(!is.na(all_data$list)),]
-  nrow(all_data) #6306580
+  nrow(all_data) #6306580 | 4/28/21 = 6761940 | 6/15/21 = 6949669
 
 #save(all_data, all_data_raw, file="all_data_to_clean.RData")
 #  rm(still_no_match, matched, need_match, all_data_raw)
@@ -169,6 +170,9 @@ head(unique(all_data$localityDescription))
 
 # check year column
 all_data$year <- as.numeric(all_data$year)
+  # remove values less than 1500 or greater than current year
+all_data$year[which(all_data$year < 1500 |
+                    all_data$year > as.numeric(format(Sys.time(),"%Y")))] <- NA
 sort(unique(all_data$year))
 
 # check basis of record column
@@ -204,9 +208,9 @@ h.nms <- c("UID", "species_name_acc", "taxon_name", "scientificName",
   "taxonIdentificationNotes", "database", "year", "basisOfRecord",
   "establishmentMeans","decimalLatitude", "decimalLongitude",
   "coordinateUncertaintyInMeters", "geolocationNotes", "localityDescription",
-  "county", "stateProvince", "country", "countryCode",
-  "datasetName", "publisher", "nativeDatabaseID", "references",
-  "informationWithheld", "issue", "taxon_name_full", "list", "flag")
+  "county", "stateProvince", "country", "countryCode","institutionCode",
+  "datasetName", "publisher", "rightsHolder", "license", "nativeDatabaseID",
+  "references", "informationWithheld", "issue", "taxon_name_full", "list", "flag")
 # set column order and remove a few unnecessary columns
 all_data <- all_data %>% select(all_of(h.nms))
 
@@ -215,13 +219,13 @@ locality_pts <- all_data %>% filter(!is.na(localityDescription) &
     !is.na(flag)) %>%
   arrange(desc(year)) %>%
   distinct(species_name_acc,localityDescription,.keep_all=T)
-nrow(locality_pts) #240227
+nrow(locality_pts) #240227 | 4/28/21 = 236678
 
 # move forward with subset of points that do have lat and long
 geo_pts <- all_data %>%
   filter(is.na(flag)) #%>%
   #dplyr::select(-localityDescription)
-    nrow(geo_pts) #5838416
+    nrow(geo_pts) #5838416 | 4/28/21 = 6084971
 
 # check if points are in water, mark, and separate out
 world_polygons <- ne_countries(type = 'countries', scale = 'medium')
@@ -232,7 +236,7 @@ world_buff <- buffer(world_polygons, width=0.04, dissolve=F)
 geo_pts[is.na(map.where(world_buff, geo_pts$decimalLongitude,
   geo_pts$decimalLatitude)),]$flag <- paste("Coordinates in water",sep="; ")
 water_pts <- geo_pts %>% filter(grepl("water",flag))
-  nrow(water_pts) #49715
+  nrow(water_pts) #49715 | 4/28/21 = 22134
 table(water_pts$database)
 
 # add water points to locality points if they have locality data
@@ -249,7 +253,7 @@ write.csv(locality_pts, file.path(main_dir,"outputs",
 
 # create final subset of geolocated points which are on land
 geo_pts <- geo_pts %>% filter(!grepl("Coordinates in water",flag))
-nrow(geo_pts) #5788701
+nrow(geo_pts) #5788701 | 4/28/21 = 6062837
 table(geo_pts$database)
 # can write a file just to look it over
 #write.csv(geo_pts, file.path(main_dir,"outputs","are_geolocated.csv"),
@@ -337,7 +341,7 @@ geo_pts <- geo_pts %>% arrange(geo_pts$coordinateUncertaintyInMeters)
 geo_pts <- geo_pts %>% arrange(desc(year))
   # sort by dataset
 geo_pts$database <- factor(geo_pts$database,
-  levels = c("FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN","Ex_situ"))
+  levels = c("FIA","GBIF","US_Herbaria","iDigBio","BISON","BIEN","IUCN_RedList","Ex_situ"))
 geo_pts <- geo_pts %>% arrange(database)
 
 # remove duplicates
@@ -374,9 +378,9 @@ h.nms2 <- c("species_name_acc", "taxon_name", "scientificName",
   "taxonIdentificationNotes", "database", "all_source_databases", "year",
   "basisOfRecord", "establishmentMeans","decimalLatitude", "decimalLongitude",
   "coordinateUncertaintyInMeters", "geolocationNotes", "localityDescription",
-  "county", "stateProvince", "countryCode_standard",
-  "datasetName", "publisher", "nativeDatabaseID", "references",
-  "informationWithheld", "issue", "taxon_name_full", "list", "UID")
+  "county", "stateProvince", "countryCode_standard", "institutionCode",
+  "datasetName", "publisher", "rightsHolder", "license", "nativeDatabaseID",
+  "references", "informationWithheld", "issue", "taxon_name_full", "list", "UID")
 # set column order and remove a few unnecessary columns
 geo_pts2 <- geo_pts2 %>% select(all_of(h.nms2))
 
