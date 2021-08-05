@@ -68,7 +68,8 @@ lapply(my.packages, require, character.only=TRUE)
 
 # read in taxa list
 taxon_list_orig <- read.csv(file.path(main_dir,"inputs","taxa_list",
-  "target_taxa_with_syn.csv"), header = T, na.strings=c("","NA"),
+  "target_species_with_syn.csv"),
+  header = T, na.strings=c("","NA"),
   colClasses="character")
 # keep only taxa with accepted species name
 taxon_list_orig <- taxon_list_orig %>% filter(!is.na(species_name_acc))
@@ -210,7 +211,7 @@ for(i in 1:nrow(add)){
   #   Move downloaded folder to "occurrence_points/inputs/known_distribution"
 # read in downloaded IUCN RL data for country-level species distribution
 countries <- read.csv(file.path(main_dir,"inputs","known_distribution",
-    "redlist_plant_global_data_2_20_21","countries.csv"),
+    "redlist_plant_global_data_May_2021","countries.csv"),
     colClasses = "character",na.strings=c("","NA"),strip.white=T)
 # condense output so its one entry per species
 countries_c <- countries %>%
@@ -266,6 +267,28 @@ native_dist <- taxon_list %>%
 # see which target species are missing GTS or RL data
 native_dist[is.na(native_dist$gts_native_dist),]$species_name_acc
 native_dist[is.na(native_dist$rl_native_dist),]$species_name_acc
+
+# create columns that combine GTS and RL
+  # full names
+native_dist$all_native_dist <- paste(native_dist$gts_native_dist,native_dist$rl_native_dist,sep="; ")
+native_dist$all_native_dist <- str_squish(mgsub(native_dist$all_native_dist,
+    c("NA; ","; NA","NA"),""))
+native_dist$all_native_dist <- gsub(", ","~ ",native_dist$all_native_dist)
+t <- setDT(native_dist)[,list(all_native_dist =
+  toString(sort(unique(strsplit(all_native_dist,'; ')[[1]])))), by = species_name_acc]
+native_dist <- native_dist %>% dplyr::select(-all_native_dist) %>% full_join(t)
+native_dist$all_native_dist <- gsub(", ","; ",native_dist$all_native_dist)
+native_dist$all_native_dist <- gsub("~ ",", ",native_dist$all_native_dist)
+  # iso abb.
+native_dist$all_native_dist_iso2 <- paste(native_dist$gts_native_dist_iso2c,
+  native_dist$rl_native_dist_iso2c,sep="; ")
+native_dist$all_native_dist_iso2 <- str_squish(mgsub(native_dist$all_native_dist_iso2,
+    c("NA; ","; NA","NA"),""))
+t <- setDT(native_dist)[,list(all_native_dist_iso2 =
+  toString(sort(unique(strsplit(all_native_dist_iso2,'; ')[[1]])))), by = species_name_acc]
+native_dist <- native_dist %>% dplyr::select(-all_native_dist_iso2) %>% full_join(t)
+native_dist$all_native_dist_iso2 <- gsub(", ","; ",native_dist$all_native_dist_iso2)
+head(native_dist)
 
 # write taxon list with GTS and RL distribution information
 write.csv(native_dist, file.path(main_dir,"inputs","known_distribution",
