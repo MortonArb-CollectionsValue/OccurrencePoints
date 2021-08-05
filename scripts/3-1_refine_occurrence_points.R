@@ -42,11 +42,11 @@ lapply(my.packages, require, character.only=TRUE)
 ################################################################################
 
 # either set manually:
-main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+#main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-#source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
@@ -84,8 +84,24 @@ if(dir.exists(file.path(main_dir, "outputs", out.fld.nm)))
 # list of species files to iterate
 all.spp.files <- list.files(path=file.path(main_dir, "outputs",
   "spp_raw_points"), ignore.case=FALSE, full.names=FALSE, recursive=TRUE)
+  ## can either just run all species...
+#spp_list <- file_path_sans_ext(all.spp.files)
+  ## ...or select the first few...
 #all.spp.files <- all.spp.files[1:20]
-spp_list <- file_path_sans_ext(all.spp.files)
+  ## ...or select specific species...
+#spp_list <- c("Malus_sieversii","Malus_spontanea","Quercus_acerifolia",
+#              "Quercus_arkansana","Quercus_austrina","Quercus_boyntonii",
+#              "Quercus_georgiana","Quercus_havardii","Quercus_oglethorpensis",
+#              "Quercus_pontica","Ulmus_chenmoui","Ulmus_elongata","Ulmus_gaussenii")
+  ## ...or select using a variable in the species list CSV...
+taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
+  "target_species_with_syn.csv"), header = T, na.strings = c("","NA"),
+  colClasses = "character")
+taxon_list$num_latlong_records <- as.numeric(taxon_list$num_latlong_records)
+target_spp <- taxon_list %>% filter(grepl("^MAP",map_flag) &
+                                    num_latlong_records > 2)
+spp_list <- gsub(" ","_",target_spp$species_name_acc)
+spp_list
 
 # start a table to add summary of results for each species
 summary_tbl <- data.frame(species_name_acc = "start", total_pts = "start",
@@ -100,8 +116,8 @@ summary_tbl <- data.frame(species_name_acc = "start", total_pts = "start",
     "basisOfRecord", "establishmentMeans","decimalLatitude", "decimalLongitude",
     "coordinateUncertaintyInMeters", "geolocationNotes", "localityDescription",
     "county", "stateProvince", "countryCode_standard",
-    "datasetName", "publisher", "nativeDatabaseID", "references",
-    "informationWithheld", "issue", "taxon_name_full", "list", "UID",
+    "datasetName", "publisher", "rightsHolder", "license", "nativeDatabaseID",
+    "references", "informationWithheld", "issue", "taxon_name_full", "list", "UID",
     "country.name", "country.iso_a2", "country.iso_a3", "country.continent",
     ".cen",".urb",".inst",".con",".outl",".gtsnative",".rlnative",
     ".rlintroduced",".yr1950",".yr1980",".yrna")
