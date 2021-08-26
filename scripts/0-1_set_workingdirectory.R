@@ -64,4 +64,5 @@ if (Sys.info()[4] == "Still-MB-Pro-15.local") {
   # default, which sets the working driectory as the folder from which you
   #   opened the scripts/project
   setwd(getwd())
+  print("You should add your info to the 0-1_set_workingdirectory.R script so this line automatically sets up all the working directories you'll be using!")
 }
