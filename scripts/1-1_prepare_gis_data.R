@@ -32,8 +32,8 @@
 
 rm(list=ls())
 my.packages <- c("raster", "sp", "tools", "spatialEco", "rgdal", "geosphere",
-  "readxl", "writexl", "dplyr", "tidyr", "tidyverse", "housingData",
-  "data.table", "textclean", "CoordinateCleaner", "countrycode", "usmap",
+  "readxl", "writexl", "dplyr", "tidyr", "tidyverse", #"housingData",
+  "data.table", "textclean", "CoordinateCleaner", "countrycode", #"usmap",
   "rnaturalearth", "rnaturalearthdata", "maps","rredlist",
   "rnaturalearthhires")#, "sf"
 # you may need to run this too:
