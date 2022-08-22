@@ -29,10 +29,10 @@ if (Sys.info()[4] == "Still-MB-Pro-15.local") {
   # prints computer name, to let you know you're in the right spot
   print(paste("Working from the lovely", Sys.info()[4]))
 
-## For Emily Beckman:
+## For Emily Beckman Bruns:
 } else if (Sys.info()[4] == "Africa.local") {
   # set main working directory
-  main_dir <- "/Volumes/GoogleDrive/Shared drives/IMLS MFA/occurrence_points"
+  main_dir <- "/Volumes/GoogleDrive-103729429307302508433/Shared drives/IMLS MFA/occurrence_points"
   # set location of scripts
   script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
   # OPTIONAL: set local working directory, for trialing locally before saving
