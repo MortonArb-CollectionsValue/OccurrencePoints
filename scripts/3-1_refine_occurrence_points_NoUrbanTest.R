@@ -42,7 +42,8 @@ lapply(my.packages, require, character.only=TRUE)
 ################################################################################
 
 # either set manually:
-main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+#main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+main_dir <- "/Volumes/GoogleDrive-103729429307302508433/Shared drives/Global Tree Conservation Program/4. GTCP_Projects/Gap Analyses/Mesoamerican Oak Gap Analysis/3. In situ/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
@@ -86,7 +87,9 @@ all.spp.files <- list.files(path=file.path(main_dir, "outputs",
   "spp_raw_points"), ignore.case=FALSE, full.names=FALSE, recursive=TRUE)
 #all.spp.files <- all.spp.files[1:20]
 spp_list <- file_path_sans_ext(all.spp.files)
+  # or can choose specific species
 #spp_list <- c("Magnolia_brasiliensis","Magnolia_boliviana","Magnolia_arcabucoana","Magnolia_angustioblonga")#"Magnolia_calimaensis")
+spp_list
 
 # start a table to add summary of results for each species
 summary_tbl <- data.frame(species_name_acc = "start", total_pts = "start",
@@ -131,7 +134,7 @@ for (i in 1:length(spp_list)){
   # species native country distribution list from GTS
   s.nd.gts.l <- unique(unlist(strsplit(native_dist$gts_native_dist_iso2c[
     native_dist$species_name_acc==gsub("_"," ", f.nm)], "; ")))
-  if(!is.na(s.nd.gts.l)){
+  if(!is.na(s.nd.gts.l[[1]])){
   ## flag records where GTS country doesn't match record's coordinate location
   eo.post <- eo.post %>% mutate(.gtsnative=(ifelse(
     country.iso_a2 %in% s.nd.gts.l, TRUE, FALSE)))
@@ -142,7 +145,7 @@ for (i in 1:length(spp_list)){
   # species native country distribution list from RL
   s.nd.rln.l <- unique(unlist(strsplit(native_dist$rl_native_dist_iso2c[
     native_dist$species_name_acc==gsub("_"," ", f.nm)], "; ")))
-  if(!is.na(s.nd.rln.l)){
+  if(!is.na(s.nd.rln.l[[1]])){
   ## flag records where RL country doesn't match record's coordinate location
   eo.post <- eo.post %>% mutate(.rlnative=(ifelse(
     country.iso_a2 %in% s.nd.rln.l, TRUE, FALSE)))
@@ -153,7 +156,7 @@ for (i in 1:length(spp_list)){
   # species introduced country distribution list from RL
   s.nd.rli.l <- unique(unlist(strsplit(native_dist$rl_introduced_dist_iso2c[
     native_dist$species_name_acc==gsub("_"," ", f.nm)], "; ")))
-  if(!is.na(s.nd.rli.l)){
+  if(!is.na(s.nd.rli.l[[1]])){
   ## flag records where RL introduced country does match record's coord location
   eo.post <- eo.post %>% mutate(.rlintroduced=(ifelse(
     country.iso_a2 %in% s.nd.rli.l, FALSE, TRUE)))
@@ -209,6 +212,9 @@ for (i in 1:length(spp_list)){
   ## Given country vs. lat-long country
   # check if given country matches lat-long country (CoordinateCleaner
   #   has something like this but also flags when NA? Didn't love that)
+      ### KATE: I think this is causing one error? Looks like your spp_raw_points
+      ###       files dont have the countryCode_standard column -- check that its 
+      ###       getting added in script 3-0 (lines 297-303)
   eo.post2 <- eo.post2 %>% mutate(.con=(ifelse(
     (as.character(country.iso_a3) == as.character(countryCode_standard) &
     !is.na(country.iso_a3) & !is.na(countryCode_standard)) |
