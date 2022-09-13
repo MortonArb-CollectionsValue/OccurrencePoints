@@ -47,10 +47,11 @@ lapply(my.packages, require, character.only=TRUE)
 
 # either set manually:
 #main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+main_dir <- "/Volumes/GoogleDrive-103729429307302508433/Shared drives/Global Tree Conservation Program/4. GTCP_Projects/Gap Analyses/Mesoamerican Oak Gap Analysis/3. In situ/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+#source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source('scripts/0-1_set_workingdirectory.R')
 
 ################################################################################
@@ -100,7 +101,7 @@ all_data_raw <- all_data_raw %>% mutate(UID=paste0('id', sprintf("%08d",
 
 # read in target taxa list
 taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
-  "target_species_with_syn.csv"), header = T, na.strings = c("","NA"),
+  "target_taxa_with_syn.csv"), header = T, na.strings = c("","NA"),
   colClasses = "character")
 taxon_list <- taxon_list %>%
   # if needed, add columns that separate out taxon name
@@ -108,7 +109,7 @@ taxon_list <- taxon_list %>%
     sep=" ",remove=F,fill="right") %>%
   # select necessary columns
   select(taxon_name,genus,species,infra_rank,
-    infra_name,list,taxon_name_acc,species_name_acc)
+    infra_name,list,species_name_acc)
 
 # full join to taxon list
 all_data_raw <- all_data_raw %>% select(-genus)
@@ -159,6 +160,7 @@ all_data <- all_data %>%
       countryCode,locationNotes,verbatimLocality), remove = F, sep = " | ") %>%
   mutate(decimalLatitude=as.numeric(decimalLatitude),
          decimalLongitude=as.numeric(decimalLongitude))
+    ## "NAs introduced by coercion" warning is ok
 # get rid of NAs but keep pipes, so you can split back into parts if desired
 all_data$localityDescription <- mgsub(all_data$localityDescription,
   c("NA "," NA"), "")
@@ -230,7 +232,7 @@ geo_pts <- all_data %>%
 # check if points are in water, mark, and separate out
 world_polygons <- ne_countries(type = 'countries', scale = 'medium')
 # add buffer; 0.01 dd = ~ 0.4 to 1 km depending on location
-world_buff <- buffer(world_polygons, width=0.04, dissolve=F)
+world_buff <- buffer(world_polygons, width=0.04, dissolve=F) ####SAVE TO FILE?
   ## another option is data(buffland)
 # check if in water and mark, then separate out
 geo_pts[is.na(map.where(world_buff, geo_pts$decimalLongitude,
@@ -262,28 +264,31 @@ table(geo_pts$database)
 # standardize country code column for checking against lat-long later
   # country name to 3 letter ISO code
     # fix some issues first
-#geo_pts$country <- mgsub(geo_pts$country,
-#    c("áustria","brasil","England","hungria","méxico","México","MÉXICO",
-#      "Republic of Kosovo","u.s.s.r.","U.S.S.R.","estados unidos","EE. UU.",
-#      "repubblica italiana","Repubblica Italiana","America","canadá",
-#      "United Statese",
-#      "^CAN$","MÃ?â?°XICO","^CA$","^CAN$","^MX$"),
-#    c("Austria","Brazil","United Kingdom","Hungary","Mexico","Mexico","Mexico",
-#      "Serbia","Russia","Russia","United States","United States",
-#      "Italy","Italy","United States","Canada","United States",
-#      "Canada","Mexico","Canada","Canada","Mexico"))
+geo_pts$country <- mgsub(geo_pts$country,
+    c("áustria","brasil","England","hungria","méxico","México","MÉXICO",
+      "Republic of Kosovo","u.s.s.r.","U.S.S.R.","estados unidos","EE. UU.",
+      "repubblica italiana","Repubblica Italiana","America","canadá",
+      "United Statese","Mxico",
+      "^CAN$","MÃ?â?°XICO","^CA$","^CAN$","^MX$"),
+    c("Austria","Brazil","United Kingdom","Hungary","Mexico","Mexico","Mexico",
+      "Serbia","Russia","Russia","United States","United States",
+      "Italy","Italy","United States","Canada","United States","Mexico",
+      "Canada","Mexico","Canada","Canada","Mexico"))
 country_set <- as.data.frame(sort(unique(geo_pts$country))) %>%
   add_column(iso3c = countrycode(sort(unique(geo_pts$country)),
       origin="country.name", destination="iso3c"))
 names(country_set) <- c("country","iso3c")
   country_set[which(is.na(country_set$iso3c)),]
   # country code to 3 letter ISO code
+    # fix some issues first
 geo_pts$countryCode <- str_to_upper(geo_pts$countryCode)
-#geo_pts$countryCode <- mgsub(geo_pts$countryCode,
-#    c("XK","ZZ"),c("SRB",NA))
+geo_pts$countryCode <- mgsub(geo_pts$countryCode,
+    c("BLZ","CRI","GTM","HND","MEX","PAN","SLV","USA"),
+    c("BZ","CR","GT","HN","MX","PA","SV","US"))
 country_set2 <- as.data.frame(sort(unique(geo_pts$countryCode))) %>%
   add_column(iso3c = countrycode(sort(unique(geo_pts$countryCode)),
       origin="iso2c", destination="iso3c"))
+    ## "Some values were not matched unambiguously: ZZ" warning is ok
 names(country_set2) <- c("countryCode","iso3c_2")
   country_set2[which(is.na(country_set2$iso3c)),]
 country_set3 <- country_set2[which(is.na(country_set2$iso3c)),]
@@ -294,7 +299,8 @@ names(country_set3) <- c("countryCode","iso3c_3")
 geo_pts <- join(geo_pts,country_set)
 geo_pts <- join(geo_pts,country_set2)
 geo_pts <- join(geo_pts,country_set3)
-# errors here are ok! just ignore
+  ## "Error in `$<-.data.frame`(`*tmp*`, iso3c_3, value = NA) : replacement has 1 row, data has 0"
+  ##  ^the above error is ok!
 geo_pts[which(geo_pts$iso3c == geo_pts$iso3c_2),]$iso3c_2 <- NA
 geo_pts[which(geo_pts$iso3c == geo_pts$iso3c_3),]$iso3c_3 <- NA
 geo_pts <- tidyr::unite(geo_pts,"countryCode_standard",
@@ -383,6 +389,7 @@ h.nms2 <- c("species_name_acc", "taxon_name", "scientificName",
   "references", "informationWithheld", "issue", "taxon_name_full", "list", "UID")
 # set column order and remove a few unnecessary columns
 geo_pts2 <- geo_pts2 %>% select(all_of(h.nms2))
+
 
 # take a look
 head(geo_pts2)
