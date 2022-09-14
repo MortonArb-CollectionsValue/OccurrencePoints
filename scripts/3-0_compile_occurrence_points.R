@@ -36,10 +36,12 @@ rm(list=ls())
   my.packages <- c('plyr','tidyverse','housingData','data.table','textclean',
   'CoordinateCleaner','maps','rnaturalearth','rnaturalearthdata','sf','sp',
   'raster','tools','countrycode')
-  select <- dplyr::select
 # install.packages (my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
   rm(my.packages)
+# assign correct function when multiple
+ select <- dplyr::select
+ count <- dplyr::count
 
 ################################################################################
 # Set working directory
@@ -389,7 +391,6 @@ h.nms2 <- c("species_name_acc", "taxon_name", "scientificName",
   "references", "informationWithheld", "issue", "taxon_name_full", "list", "UID")
 # set column order and remove a few unnecessary columns
 geo_pts2 <- geo_pts2 %>% select(all_of(h.nms2))
-
 
 # take a look
 head(geo_pts2)
