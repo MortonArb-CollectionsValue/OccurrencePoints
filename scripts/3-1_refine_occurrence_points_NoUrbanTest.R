@@ -117,6 +117,7 @@ cat("Starting ", "target ", "taxa (", length(spp_list), " total)", ".\n\n",
   sep="")
 
 for (i in 1:length(spp_list)){
+  #i <- 1 #turn on to test loop for one species (and skip above line)
   f.nm <- spp_list[i]
 
   # bring in records
@@ -212,9 +213,6 @@ for (i in 1:length(spp_list)){
   ## Given country vs. lat-long country
   # check if given country matches lat-long country (CoordinateCleaner
   #   has something like this but also flags when NA? Didn't love that)
-      ### KATE: I think this is causing one error? Looks like your spp_raw_points
-      ###       files dont have the countryCode_standard column -- check that its 
-      ###       getting added in script 3-0 (lines 297-303)
   eo.post2 <- eo.post2 %>% mutate(.con=(ifelse(
     (as.character(country.iso_a3) == as.character(countryCode_standard) &
     !is.na(country.iso_a3) & !is.na(countryCode_standard)) |
