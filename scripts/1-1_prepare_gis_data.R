@@ -48,10 +48,12 @@ lapply(my.packages, require, character.only=TRUE)
 
 # either set manually:
 #main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+main_dir <- "/Volumes/GoogleDrive-103729429307302508433/Shared drives/Global Tree Conservation Program/4. GTCP_Projects/Gap Analyses/Mesoamerican Oak Gap Analysis/3. In situ/occurrence_points"
+
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
- source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
@@ -68,7 +70,7 @@ lapply(my.packages, require, character.only=TRUE)
 
 # read in taxa list
 taxon_list_orig <- read.csv(file.path(main_dir,"inputs","taxa_list",
-  "target_species_with_syn.csv"),
+  "target_taxa_with_syn.csv"),
   header = T, na.strings=c("","NA"),
   colClasses="character")
 # keep only taxa with accepted species name
@@ -125,7 +127,7 @@ country_set <- as.data.frame(sort(unique(gts_all$native_distribution))) %>%
       origin="country.name", destination="fips"))
 names(country_set)[1] <- "country_name"
 # add country codes to GTS native distribution data
-names(gts_list)[5] <- "gts_native_dist"
+names(gts_list)[4] <- "gts_native_dist"
 gts_list$gts_native_dist_iso2c <- gts_list$gts_native_dist
 gts_list$gts_native_dist_iso2c <- mgsub(gts_list$gts_native_dist_iso2c,
   array(as.character(country_set$country_name)),
@@ -153,10 +155,12 @@ add <- no_match %>%
   filter(!is.na(gts_native_dist)) %>%
   dplyr::select(species_name_acc,gts_native_dist,gts_native_dist_iso2c,gts_name)
 taxon_list$gts_name <- NA
-for(i in 1:nrow(add)){
-  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$gts_native_dist <- add[i,2]
-  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$gts_native_dist_iso2c <- add[i,3]
-  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$gts_name <- add[i,4]
+if(nrow(add)>0){
+  for(i in 1:nrow(add)){
+    taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$gts_native_dist <- add[i,2]
+    taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$gts_native_dist_iso2c <- add[i,3]
+    taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$gts_name <- add[i,4]
+  }
 }
 
 ### IUCN Red List (RL)
@@ -208,10 +212,11 @@ for(i in 1:nrow(add)){
   # You will receive an email when your download is ready
   # Next, go to your account (https://www.iucnredlist.org/account)
   #   Under "Saved downloads" click "Download" for your recent search
+  #   Rename the downloaded folder to "redlist_species_data"
   #   Move downloaded folder to "occurrence_points/inputs/known_distribution"
 # read in downloaded IUCN RL data for country-level species distribution
 countries <- read.csv(file.path(main_dir,"inputs","known_distribution",
-    "redlist_plant_global_data_May_2021","countries.csv"),
+    "redlist_species_data","countries.csv"),
     colClasses = "character",na.strings=c("","NA"),strip.white=T)
 # condense output so its one entry per species
 countries_c <- countries %>%
@@ -249,10 +254,12 @@ add <- no_match %>%
   filter(!is.na(rl_native_dist)) %>%
   dplyr::select(species_name_acc,rl_native_dist,rl_native_dist_iso2c,rl_name)
 taxon_list$rl_name <- NA
-for(i in 1:nrow(add)){
-  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$rl_native_dist <- add[i,2]
-  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$rl_native_dist_iso2c <- add[i,3]
-  taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$rl_name <- add[i,4]
+if(nrow(add)>0){
+  for(i in 1:nrow(add)){
+    taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$rl_native_dist <- add[i,2]
+    taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$rl_native_dist_iso2c <- add[i,3]
+    taxon_list[which(taxon_list$species_name_acc == add$species_name_acc[i]),]$rl_name <- add[i,4]
+  }
 }
 
 # keep only added native distribution columns
