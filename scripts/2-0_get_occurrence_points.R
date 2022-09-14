@@ -282,6 +282,14 @@ gbif_raw <- gbif_raw %>% unite("geolocationNotes",
   georeferencedBy:georeferenceVerificationStatus,na.rm=T,remove=T,sep=" | ")
   gbif_raw$geolocationNotes <- gsub("^$",NA,gbif_raw$geolocationNotes)
 
+# recode standards
+  # establishmentMeans
+sort(unique(gbif_raw$establishmentMeans))
+gbif_raw <- gbif_raw %>%
+  mutate(establishmentMeans = recode(establishmentMeans,
+    "Uncertain" = "UNKNOWN",
+    "Native" = "NATIVE"))
+
 # fix taxa names
 gbif_raw$taxon_name <- mgsub(gbif_raw$taxon_name,
   c("Tilia xeuropaea","Tilia xvulgaris"),
@@ -886,7 +894,11 @@ bien_raw <- bien_raw %>%
   mutate(basisOfRecord = recode(basisOfRecord,
     "literature" = "LITERATURE",
     "plot" = "OBSERVATION",
-    "specimen" = "PRESERVED_SPECIMEN"))
+    "specimen" = "PRESERVED_SPECIMEN",
+    "trait occurrence" = "OCCURRENCE",
+    "occurrence" = "OCCURRENCE",
+    "checklist occurrence" = "OCCURRENCE"
+  ))
   # establishment means
 bien_raw$is_cultivated_observation <- as.character(
   bien_raw$is_cultivated_observation)
