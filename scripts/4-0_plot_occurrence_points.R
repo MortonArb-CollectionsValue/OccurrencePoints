@@ -39,10 +39,11 @@ lapply(my.packages, require, character.only=TRUE)
 
 # either set manually:
 #main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/R Training/occurrence_points"
+main_dir <- "/Volumes/GoogleDrive-103729429307302508433/Shared drives/Global Tree Conservation Program/4. GTCP_Projects/Gap Analyses/Mesoamerican Oak Gap Analysis/3. In situ/occurrence_points"
 #script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
-source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+#source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 #source("scripts/0-1_set_workingdirectory.R")
 
 ################################################################################
@@ -60,19 +61,15 @@ source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 output <- file.path(main_dir, "outputs")
 path.pts <- file.path(output, "spp_edited_points")
 path.figs <- file.path(output, "spp_interactive_maps")
-  # either run for all species...
-#spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv"))
-  # ...or select target species only:
-taxon_list <- read.csv(file.path(main_dir,"inputs","taxa_list",
-  "target_species_with_syn.csv"), header = T, na.strings = c("","NA"),
-  colClasses = "character")
-taxon_list$num_latlong_records <- as.numeric(taxon_list$num_latlong_records)
-target_spp <- taxon_list %>% filter(grepl("^MAP",map_flag) &
-                                    num_latlong_records > 2)
-spp.all <- gsub(" ","_",target_spp$species_name_acc)
-spp.all
 
-countries <- target_spp$native_dist_iso2
+# read in species list
+spp.all <- tools::file_path_sans_ext(dir(path.pts, ".csv")); spp.all
+
+# read in / set up spatial data needed for mapping
+native_dist <- read.csv(file.path(main_dir,"inputs","known_distribution",
+  "target_taxa_with_native_dist.csv"), header = T, na.strings = c("","NA"),
+  colClasses = "character")
+countries <- native_dist$all_native_dist_iso2; countries
 load(file.path(main_dir, "inputs", "gis_data", "admin_shapefiles.RData"))
 
 # create folder for maps, if not yet created
@@ -145,21 +142,21 @@ for(i in 1:length(spp.all)){
         "<b>ID:</b> ",UID),
       radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
       group = "Within 500m of country/state centroid (.cen)") %>%
-    addCircleMarkers(data = spp.now %>% filter(!.urb & database!="Ex_situ"),
-      ~decimalLongitude, ~decimalLatitude,
-      popup = ~paste0(
-        "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
-        "<b>Verbatim taxon name:</b> ",taxon_name_full,"<br/>",
-        "<b>Source database:</b> ",database,"<br/>",
-        "<b>All databases with duplicate record:</b> ",all_source_databases,"<br/>",
-        "<b>Year:</b> ",year,"<br/>",
-        "<b>Basis of record:</b> ",basisOfRecord,"<br/>",
-        "<b>Dataset name:</b> ",datasetName,"<br/>",
-        "<b>Establishment means:</b> ",establishmentMeans,"<br/>",
-        "<b>Coordinate uncertainty:</b> ",coordinateUncertaintyInMeters,"<br/>",
-        "<b>ID:</b> ",UID),
-      radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
-      group = "In urban area (.urb)") %>%
+    #addCircleMarkers(data = spp.now %>% filter(!.urb & database!="Ex_situ"),
+    #  ~decimalLongitude, ~decimalLatitude,
+    #  popup = ~paste0(
+    #    "<b>Accepted species name:</b> ",species_name_acc,"<br/>",
+    #    "<b>Verbatim taxon name:</b> ",taxon_name_full,"<br/>",
+    #    "<b>Source database:</b> ",database,"<br/>",
+    #    "<b>All databases with duplicate record:</b> ",all_source_databases,"<br/>",
+    #    "<b>Year:</b> ",year,"<br/>",
+    #    "<b>Basis of record:</b> ",basisOfRecord,"<br/>",
+    #    "<b>Dataset name:</b> ",datasetName,"<br/>",
+    #    "<b>Establishment means:</b> ",establishmentMeans,"<br/>",
+    #    "<b>Coordinate uncertainty:</b> ",coordinateUncertaintyInMeters,"<br/>",
+    #    "<b>ID:</b> ",UID),
+    #  radius=5,stroke=T,color="black",weight=2,fillColor="red",fillOpacity=0.8,
+    #  group = "In urban area (.urb)") %>%
     addCircleMarkers(data = spp.now %>% filter(!.inst & database!="Ex_situ"),
       ~decimalLongitude, ~decimalLatitude,
       popup = ~paste0(
@@ -337,7 +334,7 @@ for(i in 1:length(spp.all)){
       #               "Esri.WorldTopoMap",
       #               "Stamen.Watercolor"),
       overlayGroups = c("Within 500m of country/state centroid (.cen)",
-                        "In urban area (.urb)",
+                        ###"In urban area (.urb)",
                         "Within 100m of biodiversity institution (.inst)",
                         "Not in reported country (.con)",
                         "Geographic outlier (.outl)",
@@ -351,7 +348,7 @@ for(i in 1:length(spp.all)){
                         "Year unknown (.yrna)"),
       options = layersControlOptions(collapsed = FALSE)) %>%
     #hideGroup("Within 500m of country/state centroid (.cen)") %>%
-    hideGroup("In urban area (.urb)") %>%
+    ###hideGroup("In urban area (.urb)") %>%
     #hideGroup("Within 100m of biodiversity institution (.inst)") %>%
     #hideGroup("Not in reported country (.con)") %>%
     #hideGroup("Geographic outlier (.outl)") %>%
