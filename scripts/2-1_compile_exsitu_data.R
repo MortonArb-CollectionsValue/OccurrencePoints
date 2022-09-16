@@ -125,16 +125,25 @@ remove.network.dups <- function(df,rm_inst_names,file_name){
 ##    this function also adds columns for 1) the file name [equivalent to the
 ##    "inst_short" institution nickname] 2) a sumbission year, 3) an accession
 ##    number if one isn't given
-#raw_2020 <- read.exsitu.csv(file.path(main_dir,"inputs",
-#  "exsitu_standard_column_names","data_2020"), "2020")
+## Warnings are usually ok here, but you can look at the file causing the
+#     warning to see if there is an obvious formatting issue
+raw_2021 <- read.exsitu.csv(file.path(main_dir,"inputs","raw_occurrence",
+  "exsitu_standard_column_names","2021_2022"), "2021/2022")
+raw_2020 <- read.exsitu.csv(file.path(main_dir,"inputs","raw_occurrence",
+  "exsitu_standard_column_names","2020"), "2020")
 raw_2019 <- read.exsitu.csv(file.path(main_dir,"inputs","raw_occurrence",
-  "exsitu_standard_column_names","data_2019"), "2019")
+  "exsitu_standard_column_names","2019"), "2019")
+raw_2018 <- read.exsitu.csv(file.path(main_dir,"inputs","raw_occurrence",
+  "exsitu_standard_column_names","2018"), "2018")
+raw_2017 <- read.exsitu.csv(file.path(main_dir,"inputs","raw_occurrence",
+  "exsitu_standard_column_names","2017"), "2017")
+
 # stack all data
-#to_stack <- list(raw_2020,raw_2019)
-#all_data_raw <- Reduce(rbind.fill,to_stack)
+to_stack <- list(raw_2021,raw_2020,raw_2019,raw_2018,raw_2017)
+all_data_raw <- Reduce(rbind.fill,to_stack)
 
 # create new version before big changes, so can easily go back to original
-all_data <- raw_2019
+all_data <- all_data_raw
 
 # replace non-ascii characters
   # first fix some common lat/long character issues
