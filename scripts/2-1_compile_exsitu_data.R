@@ -39,10 +39,11 @@ rm(my.packages)
 
 # either set manually:
 #  main_dir <- "/Volumes/GoogleDrive/My Drive/Conservation Consortia/Ex situ analysis"
+main_dir <- "/Volumes/GoogleDrive-103729429307302508433/Shared drives/Global Tree Conservation Program/4. GTCP_Projects/Gap Analyses/Mesoamerican Oak Gap Analysis/3. In situ/occurrence_points"
 #  script_dir <- "./Documents/GitHub/OccurrencePoints/scripts"
 
 # or use 0-1_set_workingdirectory.R script:
- source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
+# source("./Documents/GitHub/OccurrencePoints/scripts/0-1_set_workingdirectory.R")
 # source('scripts/0-1_set_workingdirectory.R')
 
 # OPTIONAL, depending on workflow: set target genus/genera name (for file reading and writing)
