@@ -480,7 +480,10 @@ write.csv(sort(unique(check$taxon_full_name)), file.path(main_dir,"outputs",
 all_data9 <- all_data8 %>% filter(!is.na(list))
 nrow(all_data9) #30731
 unique(all_data9$hybrid) # should be NA
+
+# look at institutions remaining and the files they are in
 sort(unique(all_data9$inst_short))
+sort(unique(all_data9$filename))
 
 ################################################################################
 # 4. Standardize important columns
@@ -490,7 +493,7 @@ sort(unique(all_data9$inst_short))
 all_data10 <- all_data9 %>% dplyr::select(
   # key data
   inst_short,submission_year,species_name_acc,#target_species,
-    rl_year,rl_category,
+    #rl_year,rl_category,
   prov_type,num_indiv,acc_num,
   # locality
   orig_lat,orig_long,locality,municipality,county,state,country,assoc_sp,
@@ -501,13 +504,14 @@ all_data10 <- all_data9 %>% dplyr::select(
   # other metadata
   notes,filename,list,
   # taxon name details
-  taxon_name_acc,taxon_full_name,genus,species,infra_rank,infra_name,cultivar,
+  taxon_full_name,genus,species,infra_rank,infra_name,cultivar,#taxon_name_acc,
   taxon_full_name_orig,taxon_full_name_concat,taxon_det)
 
 # add institution metadata
 inst_data <- read.csv(file.path(main_dir,"inputs",#"respondent_institution_data_table",
-  "respondent_institution_data_table_2019.csv"),stringsAsFactors = F)
+  "respondent_institution_data_table.csv"),stringsAsFactors = F)
 str(inst_data)
+inst_data <- inst_data %>% dplyr::select(inst_short,inst_lat,inst_long,inst_country)
 all_data11 <- left_join(all_data10,inst_data)
 str(all_data11)
 
@@ -581,7 +585,9 @@ nrow(all_data11) #30731
 # remove records with no individuals
 all_data11 <- all_data11[which(all_data11$num_indiv > 0),]
 nrow(all_data11) #30653
-all_data11[which(all_data11$orig_source == "dead"),]$orig_source <- "dead?"
+# if there is another column that indicates individuals are dead,
+#   look there and remove those records now
+#all_data11 <- all_data11[which(all_data11$condition != "dead"),]
 
 ##
 ## c) Combine duplicates (same institution and accession number)
@@ -613,10 +619,10 @@ all_data11 <- all_data11 %>%
   distinct(inst_short,acc_num,species_name_acc,.keep_all=T)
 nrow(all_data11) #25665
 
-# create subset of records with acc_num longer than 9 characters
+# create subset of records with acc_num longer than 8 characters
 #   (these are usually the ones with plant identifiers; some are missed
 #    but this gets most of them)
-check_accnum <- all_data11[which(nchar(all_data11$acc_num)>9),]
+check_accnum <- all_data11[which(nchar(all_data11$acc_num)>8),]
 nrow(check_accnum) #5122
 no_check_accnum <- setdiff(all_data11,check_accnum)
 nrow(no_check_accnum) #20543
@@ -627,13 +633,14 @@ sort(check_accnum[which(grepl("\\.[0-9][1-9]$",check_accnum$acc_num)),]$acc_num)
 sort(check_accnum[which(grepl("\\.[0-9][0-9][1-9]$",check_accnum$acc_num)),]$acc_num)
 sort(check_accnum[which(grepl("[A-F]$",check_accnum$acc_num)),]$acc_num)
 sort(check_accnum[which(grepl("-[1-9]$",check_accnum$acc_num)),]$acc_num)
-sort(check_accnum[which(grepl("-[0-9][1-9]$",check_accnum$acc_num)),]$acc_num)
+sort(check_accnum[which(grepl("[0-9][0-9][0-9][0-9]-[0-9][1-9]$",check_accnum$acc_num)),]$acc_num)
+sort(check_accnum[which(grepl("[A-F]$",check_accnum$acc_num)),]$acc_num)
   #as.data.frame(check_accnum[which(grepl("A 1971-432",check_accnum$acc_num)),])
 
 # remove individual-specific identifiers (to combine dup accessions)
 check_accnum <- check_accnum %>%
   separate("acc_num","acc_num",
-    sep="/[0-9][1-9]$|\\.[0-9][1-9]$|\\.[0-9][0-9][1-9]$|[A-F]$|-[1-9]$|-[0-9][1-9]$",
+    sep="/[0-9][1-9]$|\\.[0-9][1-9]$|\\.[0-9][0-9][1-9]$|[A-F]$|-[1-9]$|[0-9][0-9][0-9][0-9]-[0-9][1-9]$",
     remove=F) %>%
   group_by(inst_short,acc_num,species_name_acc) %>%
   mutate(num_indiv = sum(as.numeric(num_indiv)),
@@ -653,8 +660,7 @@ nrow(all_data12) #24948
 all_data12[which(grepl("/[0-9][1-9]$",all_data12$acc_num)),]$acc_num
 all_data12[which(grepl("\\.[0-9][1-9]$",all_data12$acc_num)),]$acc_num
 all_data12[which(grepl("\\.[0-9][0-9][1-9]$",all_data12$acc_num)),]$acc_num
-all_data12[which(grepl("[A-F]$",all_data12$acc_num)),]$acc_num
-  all_data12 <- all_data12 %>% separate("acc_num","acc_num",sep="[A-F]$",remove=F)
+#  all_data12 <- all_data12 %>% separate("acc_num","acc_num",sep="[A-F]$",remove=F)
   #as.data.frame(all_data12[which(grepl("159[A-F]",all_data12$acc_num)),])
 sort(all_data12[which(grepl("-[1-9]$",all_data12$acc_num) & nchar(all_data12$acc_num)>6),]$acc_num)
   all_data12[which(grepl("10796-",all_data12$acc_num)),]$acc_num <- "10796"
@@ -684,7 +690,7 @@ nms <- names(all_data12)
 nrow(all_data12)
 all_data12 <- all_data12 %>%
   arrange(orig_lat,locality) %>%
-  mutate(UID = paste(inst_short,acc_num,prov_type,taxon_name_acc,sep="~")) %>%
+  mutate(UID = paste(inst_short,acc_num,prov_type,species_name_acc,sep="~")) %>%
   group_by(UID) %>%
   mutate(num_indiv = sum(as.numeric(num_indiv))) %>%
   distinct(UID,.keep_all=T) %>%
@@ -740,8 +746,11 @@ all_data12$long_dd <- gsub("W","",all_data12$long_dd)
 all_data12$long_dd <- mgsub(all_data12$long_dd,c("--","- "),"-")
 all_data12$long_dd <- str_squish(all_data12$long_dd)
 #sort(unique(all_data12$long_dd))
+  # separate lat and long that were in one cell
+all_data12[which(all_data12$lat_dd == "19.1520. 96.9522"),]$lat_dd <- "19.1520"
+all_data12[which(all_data12$long_dd == "19.1520. 96.9522"),]$long_dd <- "96.9522"
 
-# convert decimal-minutes-seconds (dms) to decimal degrees (dd)
+# convert degrees-minutes-seconds (dms) to decimal degrees (dd)
 #   [d, m, and s must be in the same cell, with 1 space between each value]
 #   format = ## ## ## (DMS) OR ## ##.### (DM)
   # mark rows that need to be converted
@@ -749,6 +758,7 @@ convert <- all_data12[which(grepl(" ",all_data12$lat_dd) |
   grepl(" ",all_data12$long_dd)),]
   nrow(convert) #451
 unique(convert$lat_dd)
+
 good <- anti_join(all_data12, convert)
   # separate by dec_min_sec and deg_dec_min then convert to decimal degrees
     # latitude
@@ -807,6 +817,8 @@ all_data12$flag <- ""
 all_data12[which(all_data12$UID %in% in_water$UID),]$flag <-
   "Given lat-long is in water"
 table(all_data12$flag) #30
+  # look at these flagged points
+as.data.frame(all_data12[which(all_data12$flag == "Given lat-long is in water"),])
 #all_data12[which(all_data12$UID %in% in_water$UID),]$lat_dd <- NA
 #all_data12[which(all_data12$UID %in% in_water$UID),]$long_dd <- NA
 
@@ -854,7 +866,6 @@ all_data12$gps_det[which(!is.na(all_data12$lat_dd) &
 table(all_data12$gps_det)
 #     G     H
 #  4249  4546
-
 # where prov_type is "H" but lat-long is given, change to "H?"
   # create new prov type column
 all_data12$orig_prov_type <- all_data12$prov_type
@@ -873,7 +884,7 @@ unique(all_data12$coll_year)
 #all_data12$coll_year[which(all_data12$coll_year == "")] <- NA
 
 # remove extra elements so its just year
-all_data12$coll_year <- gsub(";[1-2][0-9][0-9][0-9]","",all_data12$coll_year)
+#all_data12$coll_year <- gsub(";[1-2][0-9][0-9][0-9]","",all_data12$coll_year)
 #all_data12$coll_year <- gsub("[0-9][0-9]/[0-9][0-9]/","",all_data12$coll_year)
 #all_data12$coll_year <- gsub("[0-9]/[0-9][0-9]/","",all_data12$coll_year)
 #all_data12$coll_year <- gsub("[0-9][0-9]/[0-9]/","",all_data12$coll_year)
@@ -883,7 +894,7 @@ all_data12$coll_year <- gsub(";[1-2][0-9][0-9][0-9]","",all_data12$coll_year)
 #all_data12$coll_year <- gsub("[1-9]-[A-Z][a-z][a-z]-","",all_data12$coll_year)
 
 # make column numeric
-all_data12$coll_year <- as.numeric(all_data12$coll_year)
+#all_data12$coll_year <- as.numeric(all_data12$coll_year)
 ## IF NEEDED: add first two numbers in year
 #  # assume 2000s if values is less than 21
 #all_data12$coll_year[which(all_data12$coll_year < 10)] <-
@@ -896,7 +907,7 @@ all_data12$coll_year <- as.numeric(all_data12$coll_year)
 #all_data12$coll_year[which(all_data12$coll_year < 100)] <-
 #  paste0("19",as.character(all_data12$coll_year[which(all_data12$coll_year < 100)]))
 #all_data12$coll_year <- as.numeric(all_data12$coll_year)
-sort(unique(all_data12$coll_year))
+#sort(unique(all_data12$coll_year))
 
 ##
 ## E) Lineage number
@@ -913,18 +924,20 @@ all_data12[which(all_data12$acc_num == all_data12$lin_num),]$lin_num <- NA
 all_data12$latitude <- round(all_data12$lat_dd,digits=3)
 all_data12$longitude <- round(all_data12$long_dd,digits=3)
 all_data12 <- unite(all_data12, "all_locality",
-  c(locality,municipality,county,state,country,orig_source,#notes,
+  c(locality,municipality,county,state,country,orig_source,notes,
     lin_num,coll_num,coll_name,coll_year,
     latitude,longitude),sep = " | ",remove = F)
 # remove NA in concatenated locality column
 all_data12$all_locality <- gsub("NA","",all_data12$all_locality)
 # if no locality info at all, make it NA
 all_data12$all_locality[which(all_data12$all_locality ==
-  " |  |  |  |  |  |  |  |  |  |  | ")] <- NA
+  " |  |  |  |  |  |  |  |  |  |  | | ")] <- NA
+# look at result
+head(all_data12$all_locality)
 
-before_dup_removal <- all_data12[,c(1:48,53:54)]
-write.csv(before_dup_removal, file.path(main_dir,"outputs",
-  paste0("ExSitu_Compiled_DupsNotCondensed_", Sys.Date(), ".csv")),row.names = F)
+#before_dup_removal <- all_data12[,c(1:48,53:54)]
+#write.csv(before_dup_removal, file.path(main_dir,"outputs",
+#  paste0("ExSitu_Compiled_DupsNotCondensed_", Sys.Date(), ".csv")),row.names = F)
 
 ##
 ## SELECT AND ORDER FINAL COLUMNS
@@ -937,25 +950,25 @@ all_data12 <- as.data.frame(lapply(all_data12, function(x) gsub(",",";",x)),
 
 all_data13 <- all_data12 %>%
   ### combine duplicates at all_locality level
-  group_by(inst_short,species_name_acc,prov_type,all_locality) %>%
-  mutate(
-    UID = paste(UID, collapse="|"),
-    notes = paste(unique(notes), collapse="; "),
-    assoc_sp = paste(unique(assoc_sp), collapse="; "),
-    acc_num = paste(acc_num, collapse="|"),
-    sum_num_indiv = sum(as.numeric(num_indiv)),
-    germ_type = paste(unique(germ_type), collapse="; "),
-    garden_loc = paste(unique(garden_loc), collapse="; "),
-    rec_as = paste(unique(rec_as), collapse="; "),
-    taxon_det = paste(unique(taxon_det), collapse="; "),
-    taxon_name_acc = paste(unique(taxon_name_acc), collapse="; "),
-    taxon_full_name = paste(unique(taxon_full_name), collapse="; "),
-    taxon_full_name_orig = paste(unique(taxon_full_name_orig), collapse="; "),
-    taxon_full_name_concat = paste(unique(taxon_full_name_concat), collapse="; "),
-    cultivar = paste(unique(cultivar), collapse="; "),
-    sum_num_acc = n()) %>%
-  ungroup() %>%
-  distinct(inst_short,species_name_acc,prov_type,all_locality,.keep_all=T) %>%
+  #group_by(inst_short,species_name_acc,prov_type,all_locality) %>%
+  #mutate(
+  #  UID = paste(UID, collapse="|"),
+  #  notes = paste(unique(notes), collapse="; "),
+  #  assoc_sp = paste(unique(assoc_sp), collapse="; "),
+  #  acc_num = paste(acc_num, collapse="|"),
+  #  sum_num_indiv = sum(as.numeric(num_indiv)),
+  #  germ_type = paste(unique(germ_type), collapse="; "),
+  #  garden_loc = paste(unique(garden_loc), collapse="; "),
+  #  rec_as = paste(unique(rec_as), collapse="; "),
+  #  taxon_det = paste(unique(taxon_det), collapse="; "),
+  #  taxon_name_acc = paste(unique(taxon_name_acc), collapse="; "),
+  #  taxon_full_name = paste(unique(taxon_full_name), collapse="; "),
+  #  taxon_full_name_orig = paste(unique(taxon_full_name_orig), collapse="; "),
+  #  taxon_full_name_concat = paste(unique(taxon_full_name_concat), collapse="; "),
+  #  cultivar = paste(unique(cultivar), collapse="; "),
+  #  sum_num_acc = n()) %>%
+  #ungroup() %>%
+  #distinct(inst_short,species_name_acc,prov_type,all_locality,.keep_all=T) %>%
   dplyr::select(
     # grouping data
     inst_short,species_name_acc,prov_type,all_locality,
@@ -967,20 +980,23 @@ all_data13 <- all_data12 %>%
     # source
     acc_num,lin_num,coll_num,coll_name,coll_year,
     # material info
-    sum_num_indiv,sum_num_acc,germ_type,garden_loc,rec_as,taxon_det,
+    germ_type,garden_loc,rec_as,taxon_det,#sum_num_indiv,sum_num_acc,
     # taxon name
-    list,taxon_name_acc,taxon_full_name,genus,
+    list,taxon_full_name,genus,#taxon_name_acc,
     taxon_full_name_orig,taxon_full_name_concat,cultivar,
     # species metadata
-    rl_year,rl_category,
+    #rl_year,rl_category,
     # institution metadata
-    inst_name,inst_country,inst_lat,inst_long,filename)
+    inst_country,inst_lat,inst_long,filename)
 nrow(all_data13) #13867
 head(as.data.frame(all_data13))
 
 # write file
 write.csv(all_data13, file.path(main_dir,"outputs",
   paste0("ExSitu_Compiled_Standardized_", Sys.Date(), ".csv")),row.names = F)
+
+
+
 
 
 
