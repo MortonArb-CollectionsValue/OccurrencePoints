@@ -332,7 +332,7 @@ summary_tbl <- data.frame(
 for(sp in 1:length(target_sp)){
 
 ## can test with one species first if you'd like (skip loop line above)
-#sp <- 1
+sp <- 1
 
 	# print progress
   cat("\nStarting ", target_sp[sp], "\n")
@@ -432,8 +432,7 @@ for(sp in 1:length(target_sp)){
 			eco_sm = NA, eco_md = NA, eco_lg = NA,
 			eco_usl4_sm = NA, eco_usl4_md = NA, eco_usl4_lg = NA,
 			EOO = hull_area,
-				### turn the next row off for gap analysis of US oaks 2020
-			#dist_filter = dist_filter_val,
+			dist_filter = dist_filter_val,
 			stringsAsFactors=F)
 		print("No ex situ points; skipping buffer calculations")
 	} else {
@@ -544,6 +543,8 @@ for(sp in 1:length(target_sp)){
 
   ##
   ## MAP VERSION 1 (Quercus havardii paper version)
+  ##  See article here: https://onlinelibrary.wiley.com/doi/pdf/10.1111/eva.13391
+  ##  Map is in supp materials
   ##
 
   # create ecoregion color palette, based on RColorBrewer palette
@@ -616,6 +617,7 @@ for(sp in 1:length(target_sp)){
 
   ##
   ## MAP VERSION 2 (gap analysis of nine genera version)
+  ##  See example here (p.12): https://mortonarb.org/app/uploads/2021/08/conservation-gap-analysis-of-native-us-walnuts.pdf
   ##
 
   # another way to create ecoregion color palette, based on
@@ -690,6 +692,7 @@ for(sp in 1:length(target_sp)){
 
   ##
   ## MAP VERSION 3 (GCC version)
+  ##  See example here (p.94): https://usercontent.one/wp/www.globalconservationconsortia.org/wp-content/uploads/2022/04/GapAnalysisMagnoliaReduced.pdf
   ##
 
   # we use ecregion color palette created in map version 2
