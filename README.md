@@ -1,4 +1,6 @@
 
+## [note that some edits and updates are needed]
+
 ## This workflow is meant for downloading and cleaning occurrence point data for target species. The following outline gives an overview of each script.
 ### Final output is a folder of "spp_edited_points" with CSV of occurrence points for each target species; a variety of standardized columns are included for sorting and filtering, based on specific project goals (see 3-1 below for details). An interactive map (HTML) for each target species is located in "spp_interactive_maps" folder, and can be used for visualizing standard columns and flags.
 
