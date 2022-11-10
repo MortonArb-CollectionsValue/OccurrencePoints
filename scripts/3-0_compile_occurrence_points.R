@@ -114,7 +114,7 @@ taxon_list <- taxon_list %>%
     infra_name,list,species_name_acc)
 
 # full join to taxon list
-all_data_raw <- all_data_raw %>% select(-genus)
+all_data_raw <- all_data_raw %>% select(-genus,-list)
 all_data_raw <- left_join(all_data_raw,taxon_list)
 # join again just by species name if no taxon match
 need_match <- all_data_raw[which(is.na(all_data_raw$list)),]

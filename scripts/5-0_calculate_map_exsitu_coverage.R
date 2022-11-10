@@ -44,13 +44,15 @@
 
 my.packages <- c(
   # for mapping
-  "leaflet","rnaturalearth","Polychrome","polylabelr",#"RColorBrewer"
+  "leaflet","rnaturalearth","Polychrome","polylabelr","RColorBrewer","mapview",
   # for calculations
   "dplyr","terra"
 )
 #install.packages(my.packages) #Turn on to install current versions
 lapply(my.packages, require, character.only=TRUE)
   rm(my.packages)
+# needed to save maps as static images:
+webshot::install_phantomjs()
 
 ################################################################################
 # Set working directory
@@ -329,7 +331,7 @@ summary_tbl <- data.frame(
 
 ### CYCLE THROUGH TARGET SPECIES TO CALCULATE EX SITU COVERAGE
 
-for(sp in 1:length(target_sp)){
+#for(sp in 1:length(target_sp)){
 
 ## can test with one species first if you'd like (skip loop line above)
 sp <- 1
@@ -609,11 +611,18 @@ sp <- 1
   # view map
   coverage_map
 
-  # save map
+  # save leaflet map (interactive html)
   # if you have too many points/layers, the map will be too big and can't save
   htmlwidgets::saveWidget(coverage_map,
   	file = file.path(main_dir,"outputs","exsitu_coverage",
   		paste0(target_sp[sp],"-exsitu_coverage_interactive_map1.html")))
+
+  # save image of map (png, pdf, or jpeg)
+  mapview::mapshot(coverage_map,
+    file = paste0(main_dir,"/outputs","/exsitu_coverage/",target_sp[sp],
+      "-exsitu_coverage_static_map1-1.png"),
+    remove_controls = c("zoomControl","layersControl"),
+    zoom=3)
 
   ##
   ## MAP VERSION 2 (gap analysis of nine genera version)

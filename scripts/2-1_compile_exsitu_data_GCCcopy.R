@@ -993,7 +993,7 @@ all_data14 <- all_data12 %>%
   # order with NA lat-long records on top
   arrange(locality.string) %>%
   arrange(!is.na(latitude),latitude) %>%
-  # replace NA with "" to maek simpler to view in GEOLocate
+  # replace NA with "" to make simpler to view in GEOLocate
   replace(., is.na(.), "") %>%
   # group by all non-ID fields
   group_by(locality.string,country,state,county,latitude,longitude,
